@@ -312,7 +312,7 @@ export default function PromotionsPage() {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="group border-0 shadow-lg dark:shadow-none dark:bg-[#162236] hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col">
+                <Card className="group border-0 shadow-lg dark:shadow-none dark:bg-[#162236] hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col card-lift">
                   {/* Promo badge */}
                   <div className="absolute top-0 left-0 right-0 z-10">
                     <div className="flex items-center justify-between p-3">
@@ -467,7 +467,7 @@ export default function PromotionsPage() {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden border-t-2" style={{ borderTopColor: '#F0C05A' }}>
+                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden border-t-2 card-lift" style={{ borderTopColor: '#F0C05A' }}>
                   <div className="h-36 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: 'rgba(30,58,95,0.03)' }}>
                     {item.image ? (
                       <img

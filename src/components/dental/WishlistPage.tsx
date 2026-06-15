@@ -309,7 +309,7 @@ export default function WishlistPage() {
                   layout
                 >
                   <Card
-                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer relative"
+                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer relative card-lift"
                     style={{ borderTop: '2px solid #F0C05A' }}
                   >
                     {/* Remove button */}

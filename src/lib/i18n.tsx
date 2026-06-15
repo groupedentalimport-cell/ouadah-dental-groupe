@@ -539,6 +539,24 @@ const fr: Translations = {
 
   // --- PRODUCTS ADDITIONAL ---
   'products.comingSoon': 'Bientôt disponible',
+
+  // --- TRUSTED BRANDS ---
+  'home.trustedBrands': 'Marques de confiance',
+
+  // --- NAV CATALOGUE DROPDOWN ---
+  'nav.allCategories': 'Toutes les catégories',
+  'nav.viewAllProducts': 'Voir tous les produits',
+
+  // --- PRODUCT REVIEWS ---
+  'product.reviews': 'Avis clients',
+  'product.seeAllReviews': 'Voir tous les avis',
+  'product.verifiedPurchase': 'Achat vérifié',
+  'product.monthsAgo': 'Il y a {n} mois',
+  'product.weeksAgo': 'Il y a {n} semaine(s)',
+  'product.delivery48h': 'Livraison 48h',
+  'products.inStockOnly': 'En stock uniquement',
+  'products.productsFound': '{n} produits trouvés',
+  'products.viewDetails': 'Voir détails',
 };
 
 // ============================================================
@@ -1056,7 +1074,25 @@ const ar: Translations = {
 
   // --- PRODUCTS ADDITIONAL ---
   'products.comingSoon': 'قريباً',
-};
+
+  // --- TRUSTED BRANDS ---
+  'home.trustedBrands': 'العلامات الموثوقة',
+
+  // --- NAV CATALOGUE DROPDOWN ---
+  'nav.allCategories': 'جميع الفئات',
+  'nav.viewAllProducts': 'عرض جميع المنتجات',
+
+  // --- PRODUCT REVIEWS ---
+  'product.reviews': 'آراء العملاء',
+  'product.seeAllReviews': 'عرض جميع الآراء',
+  'product.verifiedPurchase': 'شراء موثق',
+  'product.monthsAgo': 'منذ {n} أشهر',
+  'product.weeksAgo': 'منذ {n} أسبوع',
+  'product.delivery48h': 'توصيل 48 ساعة',
+  'products.inStockOnly': 'المتوفر فقط',
+  'products.productsFound': '{n} منتجات موجودة',
+  'products.viewDetails': 'عرض التفاصيل',
+}
 
 const translations: Record<Language, Translations> = { fr, ar };
 

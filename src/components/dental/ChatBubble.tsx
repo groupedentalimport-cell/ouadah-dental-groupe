@@ -12,6 +12,32 @@ interface Message {
   timestamp: Date;
 }
 
+// Typing indicator with three bouncing dots
+function TypingIndicator() {
+  return (
+    <div className="flex gap-1.5 items-center px-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"
+          animate={{ y: [0, -6, 0] }}
+          transition={{
+            duration: 0.6,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Format timestamp to HH:MM
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function ChatBubble() {
   const { t, isRTL } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,39 +111,44 @@ export default function ChatBubble() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 25 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }}
             className={`fixed bottom-[5.5rem] z-50 ${
               isRTL ? 'left-4' : 'right-4'
-            } w-[calc(100vw-2rem)] sm:w-[380px] max-h-[70vh] sm:max-h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
+            } w-[calc(100vw-2rem)] sm:w-[400px] max-h-[75vh] sm:max-h-[540px] bg-white dark:bg-[#162236] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 flex flex-col overflow-hidden`}
           >
-            {/* Header */}
+            {/* Header with gradient */}
             <div
-              className="px-4 py-3 flex items-center justify-between"
-              style={{ backgroundColor: '#1E3A5F' }}
+              className="px-4 py-3.5 flex items-center justify-between"
+              style={{
+                background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #1E3A5F 100%)',
+              }}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0C05A' }}>
-                  <Bot className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F0C05A' }}>
+                  <Bot className="w-4.5 h-4.5" style={{ color: '#1E3A5F' }} />
                 </div>
                 <div>
                   <h3 className="text-white text-sm font-semibold">ODG Assistant</h3>
-                  <p className="text-blue-200 text-[10px]">En ligne</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <p className="text-blue-200 text-[10px]">En ligne</p>
+                  </div>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                 aria-label={isRTL ? 'إغلاق' : 'Fermer'}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[350px]" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[380px] custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -125,25 +156,30 @@ export default function ChatBubble() {
                 >
                   {msg.role === 'assistant' && (
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1"
                       style={{ backgroundColor: '#1E3A5F' }}
                     >
                       <Bot className="w-3.5 h-3.5 text-white" />
                     </div>
                   )}
-                  <div
-                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'text-white rounded-br-md'
-                        : 'text-gray-700 bg-gray-100 rounded-bl-md'
-                    }`}
-                    style={msg.role === 'user' ? { backgroundColor: '#1E3A5F' } : {}}
-                  >
-                    {msg.content}
+                  <div className="max-w-[80%] flex flex-col">
+                    <div
+                      className={`px-3.5 py-2.5 text-sm leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'text-white rounded-2xl rounded-br-md'
+                          : 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-[#1a2d45] rounded-2xl rounded-bl-md'
+                      }`}
+                      style={msg.role === 'user' ? { backgroundColor: '#1E3A5F' } : {}}
+                    >
+                      {msg.content}
+                    </div>
+                    <span className={`text-[10px] text-gray-400 dark:text-gray-500 mt-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                      {formatTime(msg.timestamp)}
+                    </span>
                   </div>
                   {msg.role === 'user' && (
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1"
                       style={{ backgroundColor: '#F0C05A' }}
                     >
                       <User className="w-3.5 h-3.5" style={{ color: '#1E3A5F' }} />
@@ -154,17 +190,13 @@ export default function ChatBubble() {
               {isTyping && (
                 <div className="flex gap-2 justify-start">
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1"
                     style={{ backgroundColor: '#1E3A5F' }}
                   >
                     <Bot className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <div className="px-4 py-2.5 bg-gray-100 rounded-2xl rounded-bl-md">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+                  <div className="px-4 py-3 bg-gray-100 dark:bg-[#1a2d45] rounded-2xl rounded-bl-md">
+                    <TypingIndicator />
                   </div>
                 </div>
               )}
@@ -172,7 +204,7 @@ export default function ChatBubble() {
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-gray-100">
+            <div className="p-3 border-t border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-[#0f1d2e]/50">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -186,12 +218,12 @@ export default function ChatBubble() {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={isRTL ? 'اكتب رسالتك...' : 'Tapez votre message...'}
                   aria-label={isRTL ? 'اكتب رسالتك' : 'Votre message'}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1E3A5F] transition-colors"
+                  className="flex-1 px-3.5 py-2.5 text-sm bg-white dark:bg-[#1a2d45] rounded-xl border border-gray-200 dark:border-white/10 focus:outline-none focus:border-[#1E3A5F] dark:focus:border-[#7AB0E0] focus:ring-2 focus:ring-[#1E3A5F]/10 dark:focus:ring-[#7AB0E0]/10 transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white disabled:opacity-50 transition-opacity focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-all duration-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                   style={{ backgroundColor: '#1E3A5F' }}
                   aria-label={isRTL ? 'إرسال' : 'Envoyer'}
                 >

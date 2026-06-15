@@ -136,7 +136,7 @@ export default function BlogPage() {
               </span>
             </div>
             <Card
-              className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer"
+              className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer card-lift"
               onClick={() => navigate(`/article/${featuredPost.slug}`)}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -210,14 +210,14 @@ export default function BlogPage() {
             {regularPosts.map((post, i) => (
               <motion.div
                 key={post.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 <motion.div whileHover={{ y: -5 }} className="h-full">
                   <Card
-                    className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col"
+                    className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col card-lift"
                     onClick={() => navigate(`/article/${post.slug}`)}
                   >
                     <div className="h-48 overflow-hidden relative" style={{ backgroundColor: '#f0f4f8' }}>

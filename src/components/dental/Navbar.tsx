@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle, Sun, Moon, Clock, Tag, FileText, Package, ArrowRight } from 'lucide-react';
+import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle, Sun, Moon, Clock, Tag, FileText, Package, ArrowRight, Armchair, Monitor, Scan, ShieldCheck, Wind, WrenchIcon, Lamp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useSiteSettings } from '@/lib/site-settings';
@@ -19,6 +19,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
+
+// Category icon mapping for catalogue dropdown
+const navCategoryIcons: Record<string, React.ReactNode> = {
+  Armchair: <Armchair className="w-4 h-4" />,
+  Monitor: <Monitor className="w-4 h-4" />,
+  Scan: <Scan className="w-4 h-4" />,
+  Shield: <ShieldCheck className="w-4 h-4" />,
+  Wind: <Wind className="w-4 h-4" />,
+  Package: <Package className="w-4 h-4" />,
+  Wrench: <WrenchIcon className="w-4 h-4" />,
+  Lamp: <Lamp className="w-4 h-4" />,
+};
 
 // Recent searches localStorage helpers
 const RECENT_SEARCHES_KEY = 'odg-recent-searches';
@@ -71,6 +83,8 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => getRecentSearches());
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  const [catalogueDropdownOpen, setCatalogueDropdownOpen] = useState(false);
+  const catalogueTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +113,24 @@ export default function Navbar() {
 
   const brandName = getText('brand_name') || 'ODG';
   const logoUrl = getText('logo_url');
+
+  // Catalogue dropdown hover helpers
+  const openCatalogueDropdown = () => {
+    if (catalogueTimeoutRef.current) clearTimeout(catalogueTimeoutRef.current);
+    setCatalogueDropdownOpen(true);
+  };
+  const closeCatalogueDropdown = () => {
+    catalogueTimeoutRef.current = setTimeout(() => setCatalogueDropdownOpen(false), 200);
+  };
+
+  // Count products per category
+  const categoryProductCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    categories.forEach((cat) => {
+      counts[cat.id] = products.filter((p) => p.category_id === cat.id).length;
+    });
+    return counts;
+  }, [categories, products]);
 
   const navLinks = [
     { label: t('nav.catalogue'), path: '/catalogue', routeName: 'catalogue' },
@@ -357,32 +389,95 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = route === link.routeName;
+              const isCatalogue = link.routeName === 'catalogue';
               return (
-                <button
+                <div
                   key={link.routeName}
-                  onClick={() => handleNav(link.path)}
-                  className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
-                    isActive
-                      ? 'text-[#1E3A5F] dark:text-[#7AB0E0]'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
+                  className="relative"
+                  onMouseEnter={isCatalogue ? openCatalogueDropdown : undefined}
+                  onMouseLeave={isCatalogue ? closeCatalogueDropdown : undefined}
                 >
-                  {link.label}
-                  {/* Red dot indicator for promotions link */}
-                  {'isPromo' in link && link.isPromo && (
-                    <span className="absolute -top-0.5 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#C0564F' }} />
+                  <button
+                    onClick={() => handleNav(link.path)}
+                    className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+                      isActive
+                        ? 'text-[#1E3A5F] dark:text-[#7AB0E0] border-b-2 border-[#F0C05A]'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {link.label}
+                    {isCatalogue && (
+                      <ChevronDown className={`w-3.5 h-3.5 inline-block ml-0.5 transition-transform duration-200 ${catalogueDropdownOpen ? 'rotate-180' : ''}`} />
+                    )}
+                    {/* Red dot indicator for promotions link */}
+                    {'isPromo' in link && link.isPromo && (
+                      <span className="absolute -top-0.5 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#C0564F' }} />
+                    )}
+                    {/* Gold accent line under active item */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeNavIndicator"
+                        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+                        style={{ backgroundColor: '#F0C05A', width: '60%' }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </button>
+
+                  {/* Catalogue dropdown */}
+                  {isCatalogue && (
+                    <AnimatePresence>
+                      {catalogueDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[480px] bg-white dark:bg-[#1a2d45] rounded-xl shadow-lg border border-gray-100 dark:border-white/10 p-3 z-50"
+                        >
+                          <div className="flex items-center justify-between mb-2 px-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-400">{t('nav.allCategories')}</span>
+                            <button
+                              onClick={() => handleNav('/catalogue')}
+                              className="text-xs font-medium hover:underline"
+                              style={{ color: '#1E3A5F' }}
+                            >
+                              {t('nav.viewAllProducts')} →
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {categories.map((cat) => {
+                              const catName = getCategoryName(cat, language);
+                              const count = categoryProductCounts[cat.id] || 0;
+                              const iconKey = cat.icon || cat.slug;
+                              return (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => {
+                                    handleNav(`/catalogue?category=${cat.slug}`);
+                                    setCatalogueDropdownOpen(false);
+                                  }}
+                                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left group"
+                                >
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
+                                    {navCategoryIcons[iconKey] || (
+                                      <Package className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate dark:text-white group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{catName}</p>
+                                    <p className="text-[10px] text-gray-400">{count} {language === 'ar' ? 'منتج' : 'produits'}</p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   )}
-                  {/* Gold accent line under active item */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNavIndicator"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
-                      style={{ backgroundColor: '#F0C05A', width: '60%' }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                </button>
+                </div>
               );
             })}
           </div>

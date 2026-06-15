@@ -98,7 +98,7 @@ function AnimatedCounter({ end, suffix, delay = 0 }: { end: number; suffix: stri
   }, [end, delay]);
 
   return (
-    <div ref={ref} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1">
+    <div ref={ref} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1 animate-float-subtle">
       {count}<span style={{ color: '#F0C05A' }}>{suffix}</span>
     </div>
   );
@@ -431,7 +431,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
-            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-3 sm:mb-5 hero-title-responsive"
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-3 sm:mb-5 hero-title-responsive bg-gradient-to-r from-[#1E3A5F] via-[#2A5F8F] to-[#F0C05A] dark:from-[#7AB0E0] dark:via-[#A8D0F0] dark:to-[#F0C05A] bg-clip-text text-transparent"
           >
             {t('hero.title')}
           </motion.h1>
@@ -455,7 +455,7 @@ export default function HomePage() {
               <Button
                 onClick={() => navigate('/catalogue')}
                 size="lg"
-                className="text-sm sm:text-base font-semibold px-6 sm:px-8 h-12 sm:h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group min-h-[44px]"
+                className="text-base font-semibold px-8 py-3.5 h-auto shadow-lg shadow-[#1E3A5F]/20 hover:shadow-xl hover:shadow-[#1E3A5F]/30 transition-all duration-300 gap-2 group min-h-[44px]"
                 style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
               >
                 {t('hero.cta.catalogue')}
@@ -467,10 +467,10 @@ export default function HomePage() {
                 onClick={() => navigate('/devis')}
                 size="lg"
                 variant="outline"
-                className="text-sm sm:text-base font-semibold px-6 sm:px-8 h-12 sm:h-13 border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg bg-white/10 min-h-[44px]"
+                className="text-base font-semibold px-8 py-3.5 h-auto border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg shadow-[#F0C05A]/20 hover:shadow-xl hover:shadow-[#F0C05A]/30 bg-white/10 min-h-[44px] group"
               >
                 {t('hero.cta.quote')}
-                <ChevronRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
           </motion.div>
@@ -616,10 +616,10 @@ export default function HomePage() {
             {stats.map((stat, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
+                transition={{ delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="text-center group py-6 sm:py-8 px-4"
               >
                 <div
@@ -650,14 +650,63 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ==================== TRUSTED BRANDS SECTION ==================== */}
+      <section className="py-6 sm:py-10 bg-gray-50 dark:bg-[#0c1622]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-4 sm:mb-6"
+          >
+            <h3 className="text-lg sm:text-xl font-bold relative inline-block gradient-border-animated px-4 py-1" style={{ color: '#1E3A5F' }}>
+              <span className="dark:text-[#7AB0E0]">
+                {t('home.trustedBrands')}
+              </span>
+            </h3>
+          </motion.div>
+          <motion.div
+            variants={sectionVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            className="flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+          >
+            {Array.from(new Set(products.map((p) => p.brand))).filter(Boolean).slice(0, 8).map((brand, i) => {
+              const brandProductCount = products.filter((p) => p.brand === brand).length;
+              return (
+                <motion.div
+                  key={brand}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.05 }}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/catalogue?brand=${encodeURIComponent(brand)}`)}
+                >
+                  <div className="flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:shadow-md transition-all duration-300">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0" style={{ backgroundColor: '#1E3A5F', color: '#F0C05A' }}>
+                      {brand.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate dark:text-white" style={{ color: '#1E3A5F' }}>{brand}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">{brandProductCount} {language === 'ar' ? 'منتج' : 'produits'}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ==================== CATEGORIES SECTION ==================== */}
       <section className="py-8 sm:py-16 bg-gray-50 dark:bg-[#0c1622]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-6 sm:mb-10"
           >
             <h2 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight relative inline-block gradient-border-animated px-4 sm:px-6 py-1.5 sm:py-2" style={{ color: '#1E3A5F' }}>
@@ -696,7 +745,7 @@ export default function HomePage() {
                   transition={{ duration: 0.2 }}
                 >
                   <div
-                    className="group cursor-pointer relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift"
+                    className="group cursor-pointer relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift card-lift"
                     onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
                   >
                     {/* Background image */}
@@ -764,10 +813,10 @@ export default function HomePage() {
       <section className="py-12 sm:py-16 bg-white dark:bg-[#0f1d2e]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="flex items-center justify-between mb-8"
           >
             <div className="flex items-center gap-3">
@@ -795,13 +844,13 @@ export default function HomePage() {
             {featuredProducts.map((product, idx) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 25 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: idx * 0.08, duration: 0.4 }}
+                transition={{ delay: idx * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="min-w-[260px] sm:min-w-0"
               >
-                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col hover-lift" style={{ borderTop: '2px solid #F0C05A' }}>
+                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col hover-lift card-lift" style={{ borderTop: '2px solid #F0C05A' }}>
                   <div
                     className="h-48 flex items-center justify-center relative overflow-hidden product-img-placeholder"
                   >
@@ -927,10 +976,10 @@ export default function HomePage() {
         <section className="py-10 sm:py-12 bg-gray-50 dark:bg-[#0c1622]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-between mb-6"
             >
               <div className="flex items-center gap-3">
@@ -961,7 +1010,7 @@ export default function HomePage() {
                   className="min-w-[220px] sm:min-w-[240px] max-w-[260px]"
                 >
                   <Card
-                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer hover-lift"
+                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer hover-lift card-lift"
                     style={{ borderTop: '2px solid #F0C05A' }}
                     onClick={() => navigate(`/product/${item.slug}`)}
                   >
@@ -1045,10 +1094,10 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-10"
           >
             <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0 dark:bg-[#7AB0E0]/10 dark:text-[#7AB0E0]" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
@@ -1074,7 +1123,7 @@ export default function HomePage() {
           >
             {whyChooseUs.map((item, i) => (
               <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
-                <div className="group glass rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 h-full relative overflow-hidden">
+                <div className="group glass rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 h-full relative overflow-hidden card-lift">
                   {/* Accent bar at top */}
                   <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300" style={{ backgroundColor: item.accent, opacity: 0.6 }} />
                   {/* Subtle bg glow on hover */}
@@ -1121,10 +1170,10 @@ export default function HomePage() {
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-8"
           >
             <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#1E3A5F' }}>
@@ -1149,7 +1198,7 @@ export default function HomePage() {
               const avatarColors = ['#2A5F8F', '#3B8C6E', '#C0564F'];
               return (
                 <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} style={{ transform: `translateY(${i * 8}px)` }}>
-                  <Card className="h-full glass shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 relative overflow-hidden">
+                  <Card className="h-full glass shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 relative overflow-hidden card-lift">
                     {/* Colored top accent */}
                     <div className="h-1 w-full" style={{ backgroundColor: avatarColors[i % 3] }} />
                     {/* Decorative large quote mark */}
@@ -1312,10 +1361,10 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
               <Mail className="w-7 h-7" style={{ color: '#F0C05A' }} />
@@ -1401,10 +1450,10 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Decorative icon */}
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.12)' }}>

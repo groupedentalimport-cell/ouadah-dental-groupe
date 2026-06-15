@@ -232,13 +232,13 @@ export default function ContactPage() {
           {contactCards.map((card, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-80px' }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
               <motion.div whileHover={{ y: -5 }} className="h-full">
-                <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 h-full overflow-hidden group">
+                <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 h-full overflow-hidden group card-lift">
                   <div className="h-1" style={{ backgroundColor: card.color }} />
                   <CardContent className="p-6 text-center">
                     <div
@@ -277,7 +277,7 @@ export default function ContactPage() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="border-0 shadow-sm overflow-hidden">
+            <Card className="border-0 shadow-sm overflow-hidden card-lift">
               <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
               <CardContent className="p-6 sm:p-8">
                 {/* Quick Action Buttons - Call & WhatsApp */}
@@ -413,7 +413,7 @@ export default function ContactPage() {
             className="space-y-6"
           >
             {/* Map Section - With decorative overlay */}
-            <Card className="border-0 shadow-sm overflow-hidden">
+            <Card className="border-0 shadow-sm overflow-hidden card-lift">
               <CardContent className="p-0">
                 {/* Map Header */}
                 <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-white/5" style={{ backgroundColor: '#f8fafc' }}>
@@ -469,7 +469,7 @@ export default function ContactPage() {
             </Card>
 
             {/* Social Links - Enhanced */}
-            <Card className="border-0 shadow-sm overflow-hidden">
+            <Card className="border-0 shadow-sm overflow-hidden card-lift">
               <div className="h-1" style={{ backgroundColor: '#F0C05A' }} />
               <CardContent className="p-6">
                 <h3 className="font-bold text-sm mb-4 uppercase tracking-wide dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
@@ -535,9 +535,10 @@ export default function ContactPage() {
 
         {/* FAQ Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mt-16"
         >
           <div className="text-center mb-10">
@@ -555,7 +556,7 @@ export default function ContactPage() {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            <Card className="border-0 shadow-sm overflow-hidden">
+            <Card className="border-0 shadow-sm overflow-hidden card-lift">
               <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
               <CardContent className="p-0">
                 {faqs.map((faq, i) => (

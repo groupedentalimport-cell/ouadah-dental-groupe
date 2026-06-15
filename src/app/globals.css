@@ -200,6 +200,72 @@
   text-decoration: underline;
 }
 
+/* Subtle float animation for badges/counters */
+.float-subtle {
+  animation: float-subtle 4s ease-in-out infinite;
+}
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Glow effect for CTA buttons */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(240, 192, 90, 0.3), 0 0 40px rgba(240, 192, 90, 0.1);
+}
+.glow-navy {
+  box-shadow: 0 0 20px rgba(30, 58, 95, 0.3), 0 0 40px rgba(30, 58, 95, 0.1);
+}
+
+/* Card lift effect with shadow */
+.card-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+.dark .card-lift:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Gradient text utility */
+.text-gradient-navy-gold {
+  background: linear-gradient(135deg, #1E3A5F, #2A5F8F, #F0C05A);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pulse dot for stock indicators */
+.pulse-dot {
+  position: relative;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+/* Smooth section reveal */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-up.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Animation utilities */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -483,6 +549,16 @@ html.dark {
   display: block;
   width: 100%;
   line-height: 0;
+}
+
+/* Subtle floating animation for stats numbers */
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-float-subtle {
+  animation: float-subtle 3.5s ease-in-out infinite;
 }
 
 /* Responsive hero text sizing */

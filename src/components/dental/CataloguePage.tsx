@@ -38,6 +38,7 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Toggle } from '@/components/ui/toggle';
+import { Switch } from '@/components/ui/switch';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
@@ -174,6 +175,7 @@ export default function CataloguePage() {
   const priceMax = useMemo(() => pricesWithValues.length > 0 ? Math.max(...pricesWithValues) : 10000000, [pricesWithValues]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [includeOnQuote, setIncludeOnQuote] = useState(true);
+  const [inStockOnly, setInStockOnly] = useState(false);
 
   // Brand extraction with product counts (case-insensitive normalization)
   const brandsWithCounts = useMemo(() => {
@@ -249,6 +251,11 @@ export default function CataloguePage() {
       );
     }
 
+    // Filter by in-stock only
+    if (inStockOnly) {
+      result = result.filter((p) => p.in_stock);
+    }
+
     // Filter by price range
     result = result.filter((p) => {
       const hasPrice = p.price && p.price > 0;
@@ -280,14 +287,14 @@ export default function CataloguePage() {
     }
 
     return result;
-  }, [products, categories, selectedCategory, selectedBrands, search, sort, language, priceRange, includeOnQuote]);
+  }, [products, categories, selectedCategory, selectedBrands, search, sort, language, priceRange, includeOnQuote, inStockOnly]);
 
   const formatPrice = (price: number | undefined) => {
     if (price == null || isNaN(price) || price === 0) return null;
     return price.toLocaleString('fr-DZ') + ' DA';
   };
 
-  const isFiltering = selectedCategory !== 'all' || selectedBrands.size > 0 || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote;
+  const isFiltering = selectedCategory !== 'all' || selectedBrands.size > 0 || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote || inStockOnly;
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -296,8 +303,9 @@ export default function CataloguePage() {
     if (search.length > 0) count++;
     if (priceRange[0] > 0 || priceRange[1] < priceMax) count++;
     if (!includeOnQuote) count++;
+    if (inStockOnly) count++;
     return count;
-  }, [selectedCategory, selectedBrands, search, priceRange, priceMax, includeOnQuote]);
+  }, [selectedCategory, selectedBrands, search, priceRange, priceMax, includeOnQuote, inStockOnly]);
 
   const handleClearFilters = () => {
     setSearch('');
@@ -306,6 +314,7 @@ export default function CataloguePage() {
     setSort('newest');
     setPriceRange([0, priceMax]);
     setIncludeOnQuote(true);
+    setInStockOnly(false);
   };
 
   return (
@@ -392,6 +401,60 @@ export default function CataloguePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Product Count Summary & Active Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4"
+        >
+          <div className="flex items-center flex-wrap gap-2">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">
+              {t('products.productsFound').replace('{n}', String(filteredProducts.length))}
+            </p>
+            {/* Active filter tags */}
+            {selectedCategory !== 'all' && (() => {
+              const cat = categories.find((c) => c.slug === selectedCategory);
+              return cat ? (
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                >
+                  {getCategoryName(cat, language)}
+                  <X className="w-3 h-3" />
+                </button>
+              ) : null;
+            })()}
+            {Array.from(selectedBrands).map((brand) => (
+              <button
+                key={brand}
+                onClick={() => toggleBrand(brand)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+              >
+                {brand}
+                <X className="w-3 h-3" />
+              </button>
+            ))}
+            {inStockOnly && (
+              <button
+                onClick={() => setInStockOnly(false)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+              >
+                {t('products.inStockOnly')}
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            {search.length > 0 && (
+              <button
+                onClick={() => setSearch('')}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                &ldquo;{search}&rdquo;
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+
         {/* Mobile filter button + results count + view toggle */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500 dark:text-gray-300">
@@ -481,6 +544,24 @@ export default function CataloguePage() {
                   </button>
                 )}
               </div>
+              {/* In-Stock Filter Toggle */}
+              <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/10">
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors flex items-center gap-2">
+                    {t('products.inStockOnly')}
+                    <Badge
+                      className="text-[10px] h-4 min-w-[16px] flex items-center justify-center p-0 font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                    >
+                      {products.filter(p => p.in_stock).length}
+                    </Badge>
+                  </span>
+                  <Switch
+                    checked={inStockOnly}
+                    onCheckedChange={setInStockOnly}
+                  />
+                </label>
+              </div>
+
               <div className="space-y-1">
                 {/* "Tous" - prominent option */}
                 <button
@@ -675,6 +756,23 @@ export default function CataloguePage() {
               </SheetHeader>
 
               <div className="px-4 mt-2">
+                {/* In-Stock Filter Toggle - Mobile */}
+                <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/10">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors flex items-center gap-2">
+                      {t('products.inStockOnly')}
+                      <Badge
+                        className="text-[10px] h-4 min-w-[16px] flex items-center justify-center p-0 font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                      >
+                        {products.filter(p => p.in_stock).length}
+                      </Badge>
+                    </span>
+                    <Switch
+                      checked={inStockOnly}
+                      onCheckedChange={setInStockOnly}
+                    />
+                  </label>
+                </div>
                 {/* Categories */}
                 <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('nav.categories')}
@@ -908,13 +1006,13 @@ function ProductCard({
   if (isListView) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ delay: Math.min(index * 0.05, 0.2) }}
+        transition={{ delay: Math.min(index * 0.05, 0.2), duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         <Card
-          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative"
+          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative card-lift"
           onClick={() => navigate(`/product/${product.slug}`)}
           onMouseLeave={handleMouseLeave}
           onMouseEnter={handleMouseEnter}
@@ -1050,10 +1148,10 @@ function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ delay: Math.min(index * 0.08, 0.3) }}
+      transition={{ delay: Math.min(index * 0.08, 0.3), duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <div
         className="tilt-card gold-bottom-hover"
@@ -1061,7 +1159,7 @@ function ProductCard({
         onMouseEnter={handleMouseEnter}
       >
         <Card
-          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative"
+          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative card-lift"
           onClick={() => navigate(`/product/${product.slug}`)}
         >
           {/* Category color accent bottom border */}
@@ -1167,20 +1265,39 @@ function ProductCard({
             <Eye className="w-4 h-4" style={{ color: '#1E3A5F' }} />
           </button>
 
-          {/* Hover overlay with "Voir détails" button */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-            <Button
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg translate-y-2 group-hover:translate-y-0"
-              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/product/${product.slug}`);
-              }}
-            >
-              <Eye className="w-4 h-4 mr-1.5" />
-              {t('products.viewDetails')}
-            </Button>
+          {/* Hover overlay with gradient + quick-action bar */}
+          <div className="absolute inset-0 transition-all duration-300 pointer-events-none">
+            {/* Gradient overlay from transparent to dark at the bottom */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+            {/* Bottom gradient overlay */}
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Quick-action bar that slides up */}
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 p-2.5 translate-y-full group-hover:translate-y-0 transition-all duration-300 pointer-events-auto">
+              <Button
+                size="sm"
+                className="flex-1 h-8 text-xs font-semibold shadow-lg gap-1"
+                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/product/${product.slug}`);
+                }}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {t('products.viewDetails')}
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 px-3 text-xs font-semibold shadow-lg gap-1"
+                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
+                }}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                {t('products.addQuote')}
+              </Button>
+            </div>
           </div>
         </div>
 

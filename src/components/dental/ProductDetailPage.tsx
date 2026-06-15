@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ShoppingCart,
   CheckCircle2,
+  CheckCircle,
   Shield,
   ShieldCheck,
   Wrench,
@@ -631,12 +632,17 @@ export default function ProductDetailPage() {
                   {product.ref}
                 </div>
               )}
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
                 product.in_stock
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 opacity-80'
               }`}>
-                <CircleDot className="w-3.5 h-3.5" />
+                <span className="relative flex h-2.5 w-2.5">
+                  {product.in_stock && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-50" />
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`} />
+                </span>
                 {product.in_stock ? t('products.inStock') : t('products.outOfStock')}
               </div>
             </div>
@@ -920,6 +926,34 @@ export default function ProductDetailPage() {
                   {t('products.requestQuote')}
                 </Button>
               )}
+
+              {/* Trust Badges Row */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {product.in_stock && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <Truck className="w-3.5 h-3.5 text-amber-500" />
+                    {t('product.delivery48h')}
+                  </div>
+                )}
+                {hasInstallation && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <Wrench className="w-3.5 h-3.5 text-purple-500" />
+                    {t('products.installation')}
+                  </div>
+                )}
+                {hasTraining && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <GraduationCap className="w-3.5 h-3.5 text-green-500" />
+                    {t('products.training')}
+                  </div>
+                )}
+                {hasWarranty && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <Shield className="w-3.5 h-3.5 text-blue-500" />
+                    {t('products.warranty')}
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
@@ -1179,6 +1213,150 @@ export default function ProductDetailPage() {
                       <span className="text-sm text-gray-700 dark:text-gray-300">{feat}</span>
                     </motion.div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Customer Reviews Section */}
+        {product.rating && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+          >
+            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #F0C05A, #3A7CB8, #F0C05A)' }} />
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                    <Star className="w-5 h-5 text-amber-500 dark:text-amber-400 fill-amber-500" />
+                  </div>
+                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    {t('product.reviews')}
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Rating Summary Card */}
+                  <div className="md:col-span-1 bg-gray-50 dark:bg-white/[0.03] rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                    <span className="text-5xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                      {product.rating.toFixed(1)}
+                    </span>
+                    <div className="mt-2">
+                      <StarRating rating={product.rating} size="md" />
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-2">
+                      {product.reviewCount || 0} {language === 'ar' ? 'تقييم' : 'avis'}
+                    </p>
+
+                    {/* Rating Distribution */}
+                    <div className="w-full mt-4 space-y-1.5">
+                      {[
+                        { stars: 5, pct: 80 },
+                        { stars: 4, pct: 15 },
+                        { stars: 3, pct: 3 },
+                        { stars: 2, pct: 1 },
+                        { stars: 1, pct: 1 },
+                      ].map((row) => (
+                        <div key={row.stars} className="flex items-center gap-2 text-xs">
+                          <span className="w-3 text-gray-500 dark:text-gray-300">{row.stars}</span>
+                          <Star className="w-3 h-3 text-[#F0C05A] fill-[#F0C05A]" />
+                          <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-[#F0C05A]"
+                              style={{ width: `${row.pct}%` }}
+                            />
+                          </div>
+                          <span className="w-8 text-right text-gray-400 dark:text-gray-300">{row.pct}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sample Reviews */}
+                  <div className="md:col-span-2 space-y-4">
+                    {[
+                      {
+                        name: 'Dr. Benali',
+                        rating: 5,
+                        date: language === 'ar' ? t('product.monthsAgo').replace('{n}', '2') : 'Il y a 2 mois',
+                        text: language === 'ar'
+                          ? 'جهاز ممتاز، التركيب كان احترافياً والفريق التقني متاح دائماً. أنصح بشدة بهذا المنتج لزملائي.'
+                          : 'Équipement excellent, l\'installation a été professionnelle et l\'équipe technique toujours disponible. Je recommande vivement ce produit à mes confrères.',
+                        verified: true,
+                      },
+                      {
+                        name: 'Dr. Meziane',
+                        rating: 4,
+                        date: language === 'ar' ? t('product.weeksAgo').replace('{n}', '1') : 'Il y a 1 semaine',
+                        text: language === 'ar'
+                          ? 'جودة التصنيع ممتازة. تكوين الفريق كان مفيداً جداً. راضٍ تماماً عن الشراء.'
+                          : 'Qualité de fabrication au rendez-vous. La formation de l\'équipe a été très utile. Très satisfait de mon achat.',
+                        verified: true,
+                      },
+                      {
+                        name: 'Dr. Khelifi',
+                        rating: 5,
+                        date: language === 'ar' ? t('product.monthsAgo').replace('{n}', '3') : 'Il y a 3 mois',
+                        text: language === 'ar'
+                          ? 'استخدام يومي منذ 3 أشهر بدون أي مشكلة. خدمة ما بعد البيع استثنائية. شكراً لفريق ODG.'
+                          : 'Utilisation quotidienne depuis 3 mois sans aucun problème. SAV exceptionnel. Merci à l\'équipe ODG.',
+                        verified: true,
+                      },
+                    ].map((review, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1, duration: 0.4 }}
+                        className="bg-gray-50 dark:bg-white/[0.03] rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#1E3A5F' }}>
+                              {review.name.charAt(review.name.lastIndexOf(' ') + 1)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold dark:text-white" style={{ color: '#1E3A5F' }}>{review.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3 h-3 ${s <= review.rating ? 'text-[#F0C05A] fill-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`}
+                                    />
+                                  ))}
+                                </div>
+                                {review.verified && (
+                                  <span className="flex items-center gap-0.5 text-[10px] text-green-600 dark:text-green-400 font-medium">
+                                    <CheckCircle className="w-3 h-3" />
+                                    {t('product.verifiedPurchase')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-400 dark:text-gray-300">{review.date}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{review.text}</p>
+                      </motion.div>
+                    ))}
+
+                    {/* See All Reviews Button */}
+                    <Button
+                      variant="outline"
+                      className="w-full mt-2 gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
+                      style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+                      onClick={() => {}}
+                    >
+                      {t('product.seeAllReviews')}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

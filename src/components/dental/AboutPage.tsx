@@ -164,9 +164,10 @@ export default function AboutPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         {/* History Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
           <Card className="glass border-0 shadow-sm overflow-hidden">
@@ -190,9 +191,10 @@ export default function AboutPage() {
 
         {/* Mission Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
           <div className="text-center max-w-3xl mx-auto">
@@ -277,9 +279,10 @@ export default function AboutPage() {
 
         {/* Key Figures Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
           <div className="text-center mb-10">
@@ -300,13 +303,13 @@ export default function AboutPage() {
             {keyFigures.map((fig, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -5 }}
               >
-                <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full">
+                <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full card-lift">
                   <CardContent className="p-6">
                     <div
                       className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-md"
@@ -353,7 +356,7 @@ export default function AboutPage() {
                   whileHover={{ y: -5 }}
                   className="h-full"
                 >
-                  <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full overflow-hidden">
+                  <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full overflow-hidden card-lift">
                     <div className="h-1.5" style={{ backgroundColor: value.color }} />
                     <CardContent className="p-6">
                       <div
@@ -376,9 +379,10 @@ export default function AboutPage() {
 
         {/* Team / Services Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
           <Card className="border-0 shadow-sm overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
@@ -393,10 +397,10 @@ export default function AboutPage() {
                 ].map((item, i) => (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-80px' }}
-                    transition={{ delay: i * 0.08 }}
+                    transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     className="text-center"
                   >
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
@@ -440,7 +444,7 @@ export default function AboutPage() {
                   whileHover={{ y: -5 }}
                   className="h-full"
                 >
-                  <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full overflow-hidden">
+                  <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full overflow-hidden card-lift">
                     <div className="h-1.5" style={{ backgroundColor: cert.color }} />
                     <CardContent className="p-6">
                       <div
