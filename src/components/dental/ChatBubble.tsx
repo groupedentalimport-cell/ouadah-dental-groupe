@@ -109,7 +109,8 @@ export default function ChatBubble() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white transition-colors"
+                className="text-white/70 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                aria-label={isRTL ? 'إغلاق' : 'Fermer'}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -183,14 +184,16 @@ export default function ChatBubble() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Tapez votre message..."
+                  placeholder={isRTL ? 'اكتب رسالتك...' : 'Tapez votre message...'}
+                  aria-label={isRTL ? 'اكتب رسالتك' : 'Votre message'}
                   className="flex-1 px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1E3A5F] transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white disabled:opacity-50 transition-opacity focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                   style={{ backgroundColor: '#1E3A5F' }}
+                  aria-label={isRTL ? 'إرسال' : 'Envoyer'}
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -208,8 +211,9 @@ export default function ChatBubble() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-shadow"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-shadow focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
         style={{ backgroundColor: isOpen ? '#64748b' : '#1E3A5F' }}
+        aria-label={isOpen ? (isRTL ? 'إغلاق المحادثة' : 'Fermer la discussion') : (isRTL ? 'فتح المحادثة' : 'Ouvrir la discussion')}
       >
         {isOpen ? (
           <X className="w-6 h-6 text-white" />

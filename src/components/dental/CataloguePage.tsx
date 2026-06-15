@@ -17,6 +17,9 @@ import {
   FileText,
   Heart,
   Star,
+  LayoutGrid,
+  List,
+  Filter,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -26,6 +29,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import { Toggle } from '@/components/ui/toggle';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
@@ -35,6 +47,7 @@ import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/S
 import QuickViewModal from '@/components/dental/QuickViewModal';
 
 type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
+type ViewMode = 'grid' | 'list';
 
 // Star Rating component
 function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
@@ -50,11 +63,11 @@ function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: nu
     <div className="flex items-center gap-1">
       <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
         {stars.map((type, i) => (
-          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-500'}`} />
         ))}
       </div>
       {count !== undefined && (
-        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
       )}
     </div>
   );
@@ -91,7 +104,7 @@ function PriceRangeFilterSection({ t, priceRange, setPriceRange, priceMax, inclu
         />
         <div className="flex items-center gap-2">
           <div className="flex-1">
-            <label className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">{t('products.priceRange.min')}</label>
+            <label className="text-[10px] text-gray-400 dark:text-gray-300 uppercase">{t('products.priceRange.min')}</label>
             <Input
               type="number"
               value={priceRange[0]}
@@ -104,9 +117,9 @@ function PriceRangeFilterSection({ t, priceRange, setPriceRange, priceMax, inclu
               max={priceRange[1]}
             />
           </div>
-          <span className="text-gray-300 dark:text-gray-600 mt-4">—</span>
+          <span className="text-gray-300 dark:text-gray-500 mt-4">—</span>
           <div className="flex-1">
-            <label className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">{t('products.priceRange.max')}</label>
+            <label className="text-[10px] text-gray-400 dark:text-gray-300 uppercase">{t('products.priceRange.max')}</label>
             <Input
               type="number"
               value={priceRange[1]}
@@ -128,7 +141,7 @@ function PriceRangeFilterSection({ t, priceRange, setPriceRange, priceMax, inclu
             onChange={(e) => setIncludeOnQuote(e.target.checked)}
             className="w-4 h-4 rounded border-gray-300 dark:border-white/20 accent-[#1E3A5F]"
           />
-          <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
+          <span className="text-xs text-gray-600 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
             {t('products.priceRange.includeOnQuote')}
           </span>
         </label>
@@ -152,6 +165,7 @@ export default function CataloguePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
 
   // Price range filter state
@@ -275,6 +289,16 @@ export default function CataloguePage() {
 
   const isFiltering = selectedCategory !== 'all' || selectedBrands.size > 0 || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote;
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory !== 'all') count++;
+    count += selectedBrands.size;
+    if (search.length > 0) count++;
+    if (priceRange[0] > 0 || priceRange[1] < priceMax) count++;
+    if (!includeOnQuote) count++;
+    return count;
+  }, [selectedCategory, selectedBrands, search, priceRange, priceMax, includeOnQuote]);
+
   const handleClearFilters = () => {
     setSearch('');
     setSelectedCategory('all');
@@ -368,9 +392,9 @@ export default function CataloguePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Mobile filter button + results count */}
+        {/* Mobile filter button + results count + view toggle */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-300">
             <span className="font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{filteredProducts.length}</span>{' '}
             {language === 'ar' ? 'منتج' : 'produit(s)'}
           </p>
@@ -387,14 +411,41 @@ export default function CataloguePage() {
                 {t('products.clearFilters')}
               </Button>
             )}
+            {/* View toggle - desktop only */}
+            <div className="hidden lg:flex items-center border border-gray-200 dark:border-white/10 rounded-md overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-[#1E3A5F] text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                aria-label={t('products.gridView')}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-[#1E3A5F] text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                aria-label={t('products.listView')}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Mobile filter button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden gap-2 dark:border-white/10 dark:text-gray-300"
+              onClick={() => setShowFilters(true)}
+              className="lg:hidden gap-2 dark:border-white/10 dark:text-gray-300 relative min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={t('products.filter')}
             >
-              <SlidersHorizontal className="w-4 h-4" />
-              {t('products.filter')}
+              <Filter className="w-4 h-4" />
+              {t('products.filters')}
+              {activeFilterCount > 0 && (
+                <Badge
+                  className="h-5 min-w-[20px] flex items-center justify-center p-0 text-[10px] font-bold ml-1"
+                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
           </div>
         </div>
@@ -408,9 +459,28 @@ export default function CataloguePage() {
             className="hidden lg:block w-60 shrink-0"
           >
             <div className="bg-white dark:bg-[#162236] rounded-xl shadow-sm dark:shadow-none p-4 sticky top-24">
-              <h3 className="font-semibold text-sm mb-4 uppercase tracking-wider dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                {t('nav.categories')}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm uppercase tracking-wider dark:text-[#7AB0E0] flex items-center gap-2" style={{ color: '#1E3A5F' }}>
+                  {t('products.filters')}
+                  {activeFilterCount > 0 && (
+                    <Badge
+                      className="text-[10px] h-5 min-w-[20px] flex items-center justify-center p-0 font-bold"
+                      style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </h3>
+                {isFiltering && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-xs text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    {t('products.clearFilters')}
+                  </button>
+                )}
+              </div>
               <div className="space-y-1">
                 {/* "Tous" - prominent option */}
                 <button
@@ -418,7 +488,7 @@ export default function CataloguePage() {
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
                     selectedCategory === 'all'
                       ? 'font-semibold shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                   style={
                     selectedCategory === 'all'
@@ -433,7 +503,7 @@ export default function CataloguePage() {
                   <Badge
                     variant="secondary"
                     className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
-                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
                     }`}
                   >
                     {products.length}
@@ -456,11 +526,11 @@ export default function CataloguePage() {
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 group relative overflow-hidden ${
                         isActive
                           ? 'font-medium shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}
                       style={
                         isActive
-                          ? { backgroundColor: `${accentColor}15`, color: accentColor }
+                          ? { backgroundColor: `rgba(240,192,90,0.15)`, color: accentColor }
                           : {}
                       }
                     >
@@ -471,7 +541,11 @@ export default function CataloguePage() {
                         }`}
                         style={{ backgroundColor: isActive ? '#F0C05A' : accentColor }}
                       />
-                      <span className="pl-2 flex-1">{getCategoryName(cat, language)}</span>
+                      {/* Active checkmark indicator */}
+                      {isActive && (
+                        <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />
+                      )}
+                      <span className={`${isActive ? '' : 'pl-2'} flex-1`}>{getCategoryName(cat, language)}</span>
                       <motion.span
                         key={`${cat.id}-${count}`}
                         initial={{ scale: 1.3, opacity: 0.5 }}
@@ -481,7 +555,7 @@ export default function CataloguePage() {
                         <Badge
                           variant="secondary"
                           className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
-                            isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                            isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
                           }`}
                           style={isActive ? { backgroundColor: accentColor } : {}}
                         >
@@ -506,7 +580,7 @@ export default function CataloguePage() {
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
                         selectedBrands.size === 0
                           ? 'font-semibold shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}
                       style={
                         selectedBrands.size === 0
@@ -532,7 +606,7 @@ export default function CataloguePage() {
                             className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
                               isActive
                                 ? 'font-medium shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                             }`}
                             style={
                               isActive
@@ -547,7 +621,7 @@ export default function CataloguePage() {
                             <Badge
                               variant="secondary"
                               className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center shrink-0 ml-1 ${
-                                isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                                isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
                               }`}
                               style={isActive ? { backgroundColor: '#F0C05A', color: '#1E3A5F' } : {}}
                             >
@@ -567,105 +641,130 @@ export default function CataloguePage() {
           </motion.div>
 
           {/* Mobile Filter Sheet */}
-          <AnimatePresence>
-            {showFilters && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-                  onClick={() => setShowFilters(false)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, y: 100 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 100 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#162236] rounded-t-2xl shadow-2xl p-5 max-h-[70vh] overflow-y-auto"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                      {t('nav.categories')}
-                    </h3>
-                    <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+            <SheetContent
+              side={isRTL ? 'left' : 'right'}
+              className="w-[320px] sm:w-[380px] dark:bg-[#162236] overflow-y-auto"
+            >
+              <SheetHeader>
+                <div className="flex items-center justify-between">
+                  <SheetTitle
+                    className="dark:text-[#7AB0E0] flex items-center gap-2"
+                    style={{ color: '#1E3A5F' }}
+                  >
+                    {t('products.filters')}
+                    {activeFilterCount > 0 && (
+                      <Badge
+                        className="text-[10px] h-5 min-w-[20px] flex items-center justify-center p-0 font-bold"
+                        style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                      >
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </SheetTitle>
+                  {isFiltering && (
                     <button
-                      onClick={() => { setSelectedCategory('all'); setShowFilters(false); }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        selectedCategory === 'all'
-                          ? 'text-white shadow-sm'
-                          : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
-                      }`}
-                      style={selectedCategory === 'all' ? { backgroundColor: '#1E3A5F' } : {}}
+                      onClick={handleClearFilters}
+                      className="text-xs text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1"
                     >
-                      {t('products.all')} ({products.length})
+                      <RotateCcw className="w-3 h-3" />
+                      {t('products.clearFilters')}
                     </button>
-                    {categories.map((cat) => {
-                      const count = products.filter((p) => p.category_id === cat.id).length;
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => { setSelectedCategory(cat.slug); setShowFilters(false); }}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                            selectedCategory === cat.slug
-                              ? 'text-white shadow-sm'
-                              : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
-                          }`}
-                          style={selectedCategory === cat.slug ? { backgroundColor: '#1E3A5F' } : {}}
-                        >
-                          {getCategoryName(cat, language)} ({count})
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {/* Brand filter in mobile */}
-                  {brandsWithCounts.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
-                      <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                        {t('catalogue.brands')}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => setSelectedBrands(new Set())}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selectedBrands.size === 0
-                              ? 'text-white shadow-sm'
-                              : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
-                          }`}
-                          style={selectedBrands.size === 0 ? { backgroundColor: '#1E3A5F' } : {}}
-                        >
-                          {t('catalogue.allBrands')}
-                        </button>
-                        {brandsWithCounts.map(({ brand, count }) => {
-                          const isActive = selectedBrands.has(brand);
-                          return (
-                            <button
-                              key={brand}
-                              onClick={() => toggleBrand(brand)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                                isActive
-                                  ? 'shadow-sm'
-                                  : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
-                              }`}
-                              style={isActive ? { backgroundColor: '#F0C05A', color: '#1E3A5F' } : {}}
-                            >
-                              {brand} ({count})
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
                   )}
-                  {/* Price Range in mobile filter */}
-                  <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                </div>
+              </SheetHeader>
+
+              <div className="px-4 mt-2">
+                {/* Categories */}
+                <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                  {t('nav.categories')}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
+                      selectedCategory === 'all'
+                        ? 'text-white shadow-sm'
+                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                    }`}
+                    style={selectedCategory === 'all' ? { backgroundColor: '#1E3A5F' } : {}}
+                  >
+                    {t('products.all')} ({products.length})
+                  </button>
+                  {categories.map((cat) => {
+                    const count = products.filter((p) => p.category_id === cat.id).length;
+                    const isActive = selectedCategory === cat.slug;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.slug)}
+                        className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 min-h-[36px] ${
+                          isActive
+                            ? 'shadow-sm'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                        }`}
+                        style={isActive ? { backgroundColor: 'rgba(240,192,90,0.2)', color: '#1E3A5F' } : {}}
+                      >
+                        {isActive && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />}
+                        {getCategoryName(cat, language)} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Brand filter in mobile */}
+                {brandsWithCounts.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                      {t('catalogue.brands')}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelectedBrands(new Set())}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          selectedBrands.size === 0
+                            ? 'text-white shadow-sm'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                        }`}
+                        style={selectedBrands.size === 0 ? { backgroundColor: '#1E3A5F' } : {}}
+                      >
+                        {t('catalogue.allBrands')}
+                      </button>
+                      {brandsWithCounts.map(({ brand, count }) => {
+                        const isActive = selectedBrands.has(brand);
+                        return (
+                          <button
+                            key={brand}
+                            onClick={() => toggleBrand(brand)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                              isActive
+                                ? 'shadow-sm'
+                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+                            }`}
+                            style={isActive ? { backgroundColor: 'rgba(240,192,90,0.2)', color: '#1E3A5F' } : {}}
+                          >
+                            {isActive && <Check className="w-3 h-3 shrink-0" style={{ color: '#F0C05A' }} />}
+                            {brand} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* Price Range in mobile filter */}
+                <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
+              </div>
+
+              <SheetFooter className="mt-4">
+                <Button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full text-white font-semibold min-h-[44px]"
+                  style={{ backgroundColor: '#1E3A5F' }}
+                >
+                  {language === 'ar' ? 'عرض النتائج' : 'Voir les résultats'} ({filteredProducts.length})
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
 
           {/* Product Grid */}
           <div className="flex-1 min-w-0">
@@ -681,8 +780,8 @@ export default function CataloguePage() {
                 >
                   <Stethoscope className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">{t('products.noResults')}</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm max-w-md mx-auto mb-6">
+                <p className="text-gray-500 dark:text-gray-300 text-lg font-medium mb-2">{t('products.noResults')}</p>
+                <p className="text-gray-400 dark:text-gray-300 text-sm max-w-md mx-auto mb-6">
                   {t('products.noResultsTip')}
                 </p>
                 {isFiltering && (
@@ -698,33 +797,46 @@ export default function CataloguePage() {
                 )}
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-                {filteredProducts.map((product, i) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    index={i}
-                    language={language}
-                    getProductName={getProductName}
-                    getProductShortDescription={getProductShortDescription}
-                    formatPrice={formatPrice}
-                    t={t}
-                    navigate={navigate}
-                    addItem={addItem}
-                    isInCompare={isInCompare}
-                    addCompareProduct={addCompareProduct}
-                    removeCompareProduct={removeCompareProduct}
-                    compareFull={productIds.length >= 4}
-                    isInWishlist={isInWishlist}
-                    toggleWishlistItem={toggleWishlistItem}
-                    onQuickView={() => {
-                      setQuickViewProduct(product);
-                      setQuickViewOpen(true);
-                      addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
-                    }}
-                  />
-                ))}
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={viewMode}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={viewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5'
+                    : 'flex flex-col gap-3 sm:gap-4'
+                  }
+                >
+                  {filteredProducts.map((product, i) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      index={i}
+                      language={language}
+                      getProductName={getProductName}
+                      getProductShortDescription={getProductShortDescription}
+                      formatPrice={formatPrice}
+                      t={t}
+                      navigate={navigate}
+                      addItem={addItem}
+                      isInCompare={isInCompare}
+                      addCompareProduct={addCompareProduct}
+                      removeCompareProduct={removeCompareProduct}
+                      compareFull={productIds.length >= 4}
+                      isInWishlist={isInWishlist}
+                      toggleWishlistItem={toggleWishlistItem}
+                      viewMode={viewMode}
+                      onQuickView={() => {
+                        setQuickViewProduct(product);
+                        setQuickViewOpen(true);
+                        addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
+                      }}
+                    />
+                  ))}
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
         </div>
@@ -756,6 +868,7 @@ function ProductCard({
   compareFull,
   isInWishlist,
   toggleWishlistItem,
+  viewMode = 'grid',
   onQuickView,
 }: {
   product: Product;
@@ -773,35 +886,167 @@ function ProductCard({
   compareFull: boolean;
   isInWishlist: (slug: string) => boolean;
   toggleWishlistItem: (slug: string) => void;
+  viewMode?: ViewMode;
   onQuickView: () => void;
 }) {
   const priceDisplay = formatPrice(product.price);
   const isOnQuote = !priceDisplay; // price is 0 or missing
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    // Max 5 degrees tilt
-    const rotateY = ((x - centerX) / centerX) * 5;
-    const rotateX = ((centerY - y) / centerY) * 5;
-    setTilt({ x: rotateX, y: rotateY });
-  }, []);
+  const isListView = viewMode === 'list';
+
+  const categoryAccent = categoryColors[index % categoryColors.length];
 
   const handleMouseLeave = useCallback(() => {
-    setTilt({ x: 0, y: 0 });
     setIsHovered(false);
   }, []);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
   }, []);
+
+  if (isListView) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ delay: Math.min(index * 0.05, 0.2) }}
+      >
+        <Card
+          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative"
+          onClick={() => navigate(`/product/${product.slug}`)}
+          onMouseLeave={handleMouseLeave}
+          onMouseEnter={handleMouseEnter}
+        >
+          {/* Category color accent bottom border */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300"
+            style={{ backgroundColor: isHovered ? categoryAccent : 'transparent' }}
+          />
+          <div className="flex flex-row">
+            {/* Image area - compact for list view */}
+            <div className="w-32 sm:w-44 shrink-0 relative overflow-hidden">
+              {product.images && product.images.length > 0 ? (
+                <img
+                  src={product.images[0]}
+                  alt={getProductName(product, language)}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div
+                  className="w-full h-full min-h-[120px] flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)' }}
+                >
+                  <Package className="w-10 h-10 text-white/40" />
+                </div>
+              )}
+              {/* Badges on image */}
+              <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-[2]">
+                {product.is_new && (
+                  <Badge className="text-[9px] px-1.5 py-0 border-0 text-white" style={{ backgroundColor: '#3B8C6E' }}>
+                    {t('products.new')}
+                  </Badge>
+                )}
+                {product.is_best_seller && (
+                  <Badge className="text-[9px] px-1.5 py-0 border-0 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+                    {t('products.bestSeller')}
+                  </Badge>
+                )}
+              </div>
+              {product.in_stock ? (
+                <Badge variant="outline" className="absolute top-2 left-2 text-[9px] px-1.5 py-0 bg-white/90 dark:bg-[#162236]/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 backdrop-blur-sm z-[2]">
+                  {t('products.inStock')}
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="absolute top-2 left-2 text-[9px] px-1.5 py-0 z-[2]">
+                  {t('products.outOfStock')}
+                </Badge>
+              )}
+            </div>
+            {/* Info area */}
+            <CardContent className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
+              {/* Brand badge */}
+              {product.brand && (
+                <Badge
+                  className="text-[9px] px-1.5 py-0 h-4 border-0 font-semibold uppercase tracking-wider w-fit mb-1"
+                  style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
+                >
+                  {product.brand}
+                </Badge>
+              )}
+              <h3
+                className="font-semibold text-sm mb-1 line-clamp-1 leading-snug dark:text-white"
+                style={{ color: '#1E3A5F' }}
+              >
+                {getProductName(product, language)}
+              </h3>
+              {product.rating && (
+                <div className="mb-1">
+                  <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+                </div>
+              )}
+              <p className="text-xs text-gray-500 dark:text-gray-300 mb-2 line-clamp-2 flex-1">
+                {getProductShortDescription(product, language)}
+              </p>
+              {/* Price + Actions */}
+              <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-white/10">
+                <div className="flex-1 min-w-0">
+                  {priceDisplay ? (
+                    <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                      {priceDisplay}
+                    </span>
+                  ) : (
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded"
+                      style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+                    >
+                      {t('products.priceOnQuote')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+                      isInCompare(product.id)
+                        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+                        : 'text-gray-400 dark:text-gray-300'
+                    }`}
+                    disabled={!isInCompare(product.id) && compareFull}
+                    aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isInCompare(product.id)) removeCompareProduct(product.id);
+                      else addCompareProduct(product.id);
+                    }}
+                  >
+                    {isInCompare(product.id) ? <Check className="w-3.5 h-3.5" /> : <GitCompareArrows className="w-3.5 h-3.5" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="text-xs h-8 gap-1.5 shadow-sm min-h-[36px] font-semibold"
+                    style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
+                    }}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </div>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // Grid view (default)
 
   return (
     <motion.div
@@ -811,30 +1056,26 @@ function ProductCard({
       transition={{ delay: Math.min(index * 0.08, 0.3) }}
     >
       <div
-        ref={cardRef}
         className="tilt-card gold-bottom-hover"
-        onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onMouseEnter={handleMouseEnter}
-        style={{
-          transform: isHovered
-            ? `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1.02)`
-            : 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)',
-          boxShadow: isHovered
-            ? '0 20px 40px -12px rgba(30, 58, 95, 0.25)'
-            : undefined,
-        }}
       >
         <Card
-          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40"
+          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative"
           onClick={() => navigate(`/product/${product.slug}`)}
         >
+          {/* Category color accent bottom border */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300 z-10"
+            style={{ backgroundColor: isHovered ? categoryAccent : 'transparent' }}
+          />
           {/* Image area */}
           <div className="h-48 relative overflow-hidden">
             {product.images && product.images.length > 0 ? (
               <img
                 src={product.images[0]}
                 alt={getProductName(product, language)}
+                loading="lazy"
                 className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-105' : 'scale-100'}`}
               />
           ) : (
@@ -869,11 +1110,12 @@ function ProductCard({
           <motion.button
             whileHover={{ scale: 1.2 }}
             whileTap={{ scale: 0.85 }}
-            className={`absolute bottom-3 right-3 z-[3] w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm ${
+            className={`absolute bottom-3 right-3 z-[3] w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
               isInWishlist(product.slug)
                 ? 'bg-white/90 dark:bg-[#162236]/90 text-rose-500'
                 : 'bg-white/70 dark:bg-[#162236]/70 text-white/50 hover:text-rose-400'
             }`}
+            aria-label={isInWishlist(product.slug) ? t('products.removeFromWishlist') : t('products.addToWishlist')}
             onClick={(e) => {
               e.stopPropagation();
               toggleWishlistItem(product.slug);
@@ -914,11 +1156,12 @@ function ProductCard({
 
           {/* Quick View button - visible on hover (desktop), always on mobile */}
           <button
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 dark:bg-[#162236]/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-[#1a2d45] hover:scale-110"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 dark:bg-[#162236]/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-[#1a2d45] hover:scale-110 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:opacity-100"
             onClick={(e) => {
               e.stopPropagation();
               onQuickView();
             }}
+            aria-label={t('products.quickView')}
             title={t('products.quickView')}
           >
             <Eye className="w-4 h-4" style={{ color: '#1E3A5F' }} />
@@ -942,14 +1185,14 @@ function ProductCard({
         </div>
 
         <CardContent className="p-4 flex flex-col flex-1">
-          {/* Brand tag */}
+          {/* Brand badge */}
           {product.brand && (
-            <span
-              className="text-[10px] font-semibold uppercase tracking-wider mb-1 dark:text-[#F0C05A]"
-              style={{ color: '#F0C05A' }}
+            <Badge
+              className="text-[9px] px-1.5 py-0 h-4 border-0 font-semibold uppercase tracking-wider w-fit mb-1.5"
+              style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
             >
               {product.brand}
-            </span>
+            </Badge>
           )}
 
           {/* Product name */}
@@ -981,7 +1224,7 @@ function ProductCard({
                 </span>
               ) : (
                 <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded dark:text-[#F0C05A]"
+                  className="text-xs font-semibold px-2 py-0.5 rounded"
                   style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
                 >
                   {t('products.priceOnQuote')}
@@ -993,12 +1236,13 @@ function ProductCard({
               <Button
                 size="sm"
                 variant="outline"
-                className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 ${
+                className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                   isInCompare(product.id)
                     ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
+                    : 'text-gray-400 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
                 }`}
                 disabled={!isInCompare(product.id) && compareFull}
+                aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
                 title={
                   isInCompare(product.id)
                     ? t('compare.remove')
@@ -1024,7 +1268,7 @@ function ProductCard({
               {/* Add to Quote button */}
               <Button
                 size="sm"
-                className="text-xs h-8 gap-1.5 shadow-sm touch-target"
+                className="text-xs h-8 gap-1.5 shadow-sm font-semibold min-h-[36px] transition-all hover:shadow-md"
                 style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1038,7 +1282,7 @@ function ProductCard({
                 }}
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
-                {t('products.addQuote')}
+                {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
               </Button>
             </div>
           </div>

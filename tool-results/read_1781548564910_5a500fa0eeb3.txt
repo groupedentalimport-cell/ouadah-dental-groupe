@@ -1,0 +1,1043 @@
+     1→'use client';
+     2→
+     3→import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+     4→
+     5→export type Language = 'fr' | 'ar';
+     6→
+     7→interface Translations {
+     8→  [key: string]: string;
+     9→}
+    10→
+    11→interface I18nContextType {
+    12→  language: Language;
+    13→  setLanguage: (lang: Language) => void;
+    14→  t: (key: string) => string;
+    15→  dir: 'ltr' | 'rtl';
+    16→  isRTL: boolean;
+    17→}
+    18→
+    19→const I18nContext = createContext<I18nContextType>({
+    20→  language: 'fr',
+    21→  setLanguage: () => {},
+    22→  t: (key: string) => key,
+    23→  dir: 'ltr',
+    24→  isRTL: false,
+    25→});
+    26→
+    27→// ============================================================
+    28→// FRENCH TRANSLATIONS
+    29→// ============================================================
+    30→const fr: Translations = {
+    31→  // --- NAV ---
+    32→  'nav.home': 'Accueil',
+    33→  'nav.catalogue': 'Catalogue',
+    34→  'nav.about': 'À propos',
+    35→  'nav.blog': 'Blog',
+    36→  'nav.contact': 'Contact',
+    37→  'nav.quote': 'Demander un devis',
+    38→  'nav.admin': 'Administration',
+    39→  'nav.login': 'Connexion',
+    40→  'nav.logout': 'Déconnexion',
+    41→  'nav.dashboard': 'Tableau de bord',
+    42→  'nav.products': 'Produits',
+    43→  'nav.blogPosts': 'Articles',
+    44→  'nav.quotes': 'Devis',
+    45→  'nav.messages': 'Messages',
+    46→  'nav.language': 'Langue',
+    47→  'nav.cart': 'Panier devis',
+    48→  'nav.search': 'Rechercher...',
+    49→  'nav.menu': 'Menu',
+    50→  'nav.close': 'Fermer',
+    51→  'nav.categories': 'Catégories',
+    52→  'nav.settings': 'Paramètres',
+    53→  'nav.allProducts': 'Tous les produits',
+    54→  'nav.newArrivals': 'Nouveautés',
+    55→  'nav.bestSellers': 'Meilleures ventes',
+    56→  'nav.brand': 'ODG',
+    57→
+    58→  // --- HERO ---
+    59→  'hero.title': 'Équipements Dentaires Professionnels',
+    60→  'hero.subtitle': 'Fournisseur leader en Algérie depuis 2009',
+    61→  'hero.description': 'Distributeur exclusif des plus grandes marques mondiales. Installation, formation et SAV sur tout le territoire.',
+    62→  'hero.cta.catalogue': 'Voir le catalogue',
+    63→  'hero.cta.quote': 'Demander un devis',
+    64→
+    65→  // --- STATS ---
+    66→  'stats.clinics': 'Cliniques équipées',
+    67→  'stats.wilayas': 'Wilayas couvertes',
+    68→  'stats.brands': 'Marques distribuées',
+    69→  'stats.sav': 'Heures SAV',
+    70→
+    71→  // --- CATEGORIES ---
+    72→  'categories.title': 'Nos Catégories',
+    73→  'categories.subtitle': 'Découvrez notre gamme complète d\'équipements dentaires',
+    74→  'categories.fauteuils': 'Fauteuils Dentaires',
+    75→  'categories.unites': 'Unités Dentaires',
+    76→  'categories.radiologie': 'Radiologie',
+    77→  'categories.sterilisation': 'Stérilisation',
+    78→  'categories.pneumatiques': 'Pneumatiques',
+    79→  'categories.consommables': 'Consommables',
+    80→  'categories.instruments': 'Instruments',
+    81→  'categories.mobilier': 'Mobilier',
+    82→
+    83→  // --- PRODUCTS ---
+    84→  'products.title': 'Notre Catalogue',
+    85→  'products.subtitle': 'Découvrez notre gamme complète d\'équipements dentaires professionnels',
+    86→  'products.featured': 'Produits vedettes',
+    87→  'products.new': 'Nouveau',
+    88→  'products.bestSeller': 'Best-seller',
+    89→  'catalogue.brands': 'Marques',
+    90→  'catalogue.allBrands': 'Toutes les marques',
+    91→  'products.inStock': 'En stock',
+    92→  'products.outOfStock': 'Rupture de stock',
+    93→  'products.addQuote': 'Ajouter au devis',
+    94→  'products.viewDetails': 'Voir les détails',
+    95→  'products.compare': 'Comparer',
+    96→  'products.filter': 'Filtrer',
+    97→  'products.sort': 'Trier',
+    98→  'products.sort.newest': 'Plus récent',
+    99→  'products.sort.priceAsc': 'Prix croissant',
+   100→  'products.sort.priceDesc': 'Prix décroissant',
+   101→  'products.sort.name': 'Nom A-Z',
+   102→  'products.noResults': 'Aucun produit trouvé',
+   103→  'products.all': 'Tous',
+   104→  'products.specs': 'Caractéristiques',
+   105→  'products.features': 'Points forts',
+   106→  'products.warranty': 'Garantie',
+   107→  'products.delivery': 'Livraison',
+   108→  'products.installation': 'Installation incluse',
+   109→  'products.training': 'Formation incluse',
+   110→  'products.brand': 'Marque',
+   111→  'products.origin': 'Origine',
+   112→  'products.ref': 'Référence',
+   113→  'products.downloadPdf': 'Télécharger la fiche technique',
+   114→  'products.videos': 'Vidéos',
+   115→  'products.priceOnQuote': 'Sur devis',
+   116→  'products.requestQuote': 'Demander un devis',
+   117→  'products.clearFilters': 'Réinitialiser les filtres',
+   118→  'products.noResultsTip': 'Essayez de modifier vos critères de recherche ou de réinitialiser les filtres',
+   119→  'products.relatedProducts': 'Produits similaires',
+   120→  'products.description': 'Description',
+   121→  'products.availability': 'Disponibilité',
+   122→
+   123→  // --- COMPARE ---
+   124→  'compare.title': 'Comparaison de produits',
+   125→  'compare.add': 'Comparer',
+   126→  'compare.added': 'Ajouté',
+   127→  'compare.remove': 'Retirer',
+   128→  'compare.clear': 'Vider la liste',
+   129→  'compare.now': 'Comparer maintenant',
+   130→  'compare.empty': 'Aucun produit à comparer',
+   131→  'compare.maxReached': 'Maximum atteint (4)',
+   132→  'compare.selectMin': 'Sélectionnez au moins 2 produits',
+   133→  'compare.specs': 'Caractéristiques',
+   134→  'compare.features': 'Points forts',
+   135→  'compare.brand': 'Marque',
+   136→  'compare.price': 'Prix',
+   137→  'compare.stock': 'Disponibilité',
+   138→  'compare.warranty': 'Garantie',
+   139→  'compare.image': 'Image',
+   140→  'compare.name': 'Nom',
+   141→  'compare.origin': 'Origine',
+   142→  'compare.ref': 'Référence',
+   143→  'compare.category': 'Catégorie',
+   144→  'compare.backToCatalogue': 'Retour au catalogue',
+   145→  'compare.items': 'produit(s) sélectionné(s)',
+   146→  'compare.highlightDiff': 'Différences',
+   147→  'compare.noSpecs': 'Aucune spécification',
+   148→  'compare.noFeatures': 'Aucun point fort',
+   149→
+   150→  // --- WISHLIST ---
+   151→  'wishlist.title': 'Mes favoris',
+   152→  'wishlist.empty': 'Aucun produit dans vos favoris',
+   153→  'wishlist.added': 'Ajouté aux favoris',
+   154→  'wishlist.removed': 'Retiré des favoris',
+   155→  'wishlist.viewAll': 'Voir tout',
+   156→  'wishlist.clearAll': 'Tout supprimer',
+   157→  'products.addToWishlist': 'Ajouter aux favoris',
+   158→  'products.removeFromWishlist': 'Retirer des favoris',
+   159→
+   160→  // --- BLOG ---
+   161→  'blog.title': 'Blog & Actualités',
+   162→  'blog.subtitle': 'Restez informé des dernières tendances en équipement dentaire',
+   163→  'blog.readMore': 'Lire la suite',
+   164→  'blog.readTime': 'min de lecture',
+   165→  'blog.share': 'Partager',
+   166→  'blog.copyLink': 'Copier le lien',
+   167→  'blog.backToBlog': 'Retour au blog',
+   168→  'blog.related': 'Articles similaires',
+   169→  'blog.by': 'Par',
+   170→
+   171→  // --- ABOUT ---
+   172→  'about.title': 'À propos d\'ODG',
+   173→  'about.subtitle': 'Votre partenaire de confiance depuis 2009',
+   174→  'about.history': 'Notre Histoire',
+   175→  'about.history.p1': 'Fondée en 2009, OUADAH DENTAL GROUPE (ODG) est devenue en quelques années le leader de la distribution d\'équipements dentaires en Algérie. Notre engagement : fournir aux professionnels de santé dentaire les meilleurs outils pour exercer leur métier dans les meilleures conditions.',
+   176→  'about.history.p2': 'Avec une présence dans 48 wilayas et un réseau de techniciens qualifiés, ODG assure l\'installation, la formation et le service après-vente sur l\'ensemble du territoire algérien. Notre partenariat avec les plus grandes marques mondiales garantit un accès aux technologies les plus avancées.',
+   177→  'about.mission': 'Notre Mission',
+   178→  'about.mission.text': 'Rendre les équipements dentaires de qualité mondiale accessibles à tous les praticiens en Algérie, avec un service après-vente irréprochable.',
+   179→  'about.values': 'Nos Valeurs',
+   180→  'about.values.excellence': 'Excellence',
+   181→  'about.values.excellence.text': 'Nous sélectionnons uniquement les meilleurs produits des marques les plus reconnues.',
+   182→  'about.values.proximity': 'Proximité',
+   183→  'about.values.proximity.text': 'Un réseau de techniciens couvrant 48 wilayas pour un SAV réactif.',
+   184→  'about.values.innovation': 'Innovation',
+   185→  'about.values.innovation.text': 'Nous introduisons en Algérie les dernières technologies dentaires mondiales.',
+   186→  'about.values.trust': 'Confiance',
+   187→  'about.values.trust.text': 'Plus de 500 cliniques nous font confiance depuis 2009.',
+   188→
+   189→  // --- CONTACT ---
+   190→  'contact.title': 'Contactez-nous',
+   191→  'contact.subtitle': 'Notre équipe est à votre disposition',
+   192→  'contact.phone': 'Téléphone',
+   193→  'contact.email': 'Email',
+   194→  'contact.address': 'Adresse',
+   195→  'contact.hours': 'Horaires',
+   196→  'contact.form.name': 'Nom complet',
+   197→  'contact.form.email': 'Adresse email',
+   198→  'contact.form.phone': 'Téléphone',
+   199→  'contact.form.subject': 'Sujet',
+   200→  'contact.form.message': 'Message',
+   201→  'contact.form.send': 'Envoyer le message',
+   202→  'contact.form.sending': 'Envoi en cours...',
+   203→  'contact.form.success': 'Message envoyé avec succès !',
+   204→  'contact.form.error': 'Erreur lors de l\'envoi. Veuillez réessayer.',
+   205→  'contact.findUs': 'Comment nous trouver',
+   206→  'contact.callUs': 'Appelez-nous',
+   207→  'contact.whatsappUs': 'WhatsApp',
+   208→
+   209→  // --- QUOTE ---
+   210→  'quote.title': 'Demander un Devis',
+   211→  'quote.subtitle': 'Remplissez le formulaire ci-dessous pour recevoir un devis personnalisé sous 24h',
+   212→  'quote.step1': 'Vos Informations',
+   213→  'quote.step2': 'Sélection Produits',
+   214→  'quote.step3': 'Récapitulatif',
+   215→  'quote.clientType': 'Type de client',
+   216→  'quote.clientType.clinic': 'Clinique dentaire',
+   217→  'quote.clientType.reseller': 'Revendeur',
+   218→  'quote.clientType.counter': 'Comptoir',
+   219→  'quote.fullName': 'Nom complet',
+   220→  'quote.email': 'Adresse email',
+   221→  'quote.phone': 'Téléphone',
+   222→  'quote.wilaya': 'Wilaya',
+   223→  'quote.message': 'Message (optionnel)',
+   224→  'quote.products': 'Produits sélectionnés',
+   225→  'quote.quantity': 'Quantité',
+   226→  'quote.total': 'Total estimé',
+   227→  'quote.submit': 'Envoyer la demande',
+   228→  'quote.submitting': 'Envoi en cours...',
+   229→  'quote.success': 'Demande de devis envoyée avec succès ! Nous vous contacterons sous 24h.',
+   230→  'quote.error': 'Erreur lors de l\'envoi. Veuillez réessayer.',
+   231→  'quote.empty': 'Votre sélection est vide',
+   232→  'quote.addProducts': 'Ajoutez des produits depuis le catalogue',
+   233→  'quote.next': 'Suivant',
+   234→  'quote.prev': 'Précédent',
+   235→
+   236→  // --- FOOTER ---
+   237→  'footer.description': 'Distributeur exclusif d\'équipements dentaires professionnels en Algérie depuis 2009.',
+   238→  'footer.quickLinks': 'Liens rapides',
+   239→  'footer.contact': 'Contact',
+   240→  'footer.legal': 'Légal',
+   241→  'footer.legal.mentions': 'Mentions légales',
+   242→  'footer.legal.cgv': 'Conditions générales de vente',
+   243→  'footer.privacy': 'Politique de confidentialité',
+   244→  'footer.algeria': 'Algérie',
+   245→  'footer.rights': 'Tous droits réservés.',
+   246→  'footer.madeWith': 'Fait avec',
+   247→  'footer.in': 'en',
+   248→  'footer.cta': 'Équipez votre cabinet avec les meilleurs',
+   249→  'footer.newsletter.mini': 'Inscrivez-vous à notre newsletter',
+   250→  'footer.requestQuote': 'Demander un devis',
+   251→  'footer.backToTop': 'Retour en haut ↑',
+   252→
+   253→  // --- TESTIMONIALS ---
+   254→  'testimonials.title': 'Ce que disent nos clients',
+   255→  'testimonials.subtitle': 'Ils nous font confiance',
+   256→
+   257→  // --- NEWSLETTER ---
+   258→  'newsletter.title': 'Restez informé',
+   259→  'newsletter.subtitle': 'Recevez nos offres exclusives et nouveautés',
+   260→  'newsletter.placeholder': 'Votre adresse email',
+   261→  'newsletter.subscribe': 'S\'inscrire',
+   262→  'newsletter.privacy': 'Nous respectons votre vie privée. Désabonnement possible à tout moment.',
+   263→  'newsletter.success': 'Merci ! Vous êtes inscrit à notre newsletter.',
+   264→
+   265→  // --- ADMIN ---
+   266→  'admin.login.title': 'Connexion Admin',
+   267→  'admin.login.password': 'Mot de passe',
+   268→  'admin.login.submit': 'Se connecter',
+   269→  'admin.login.error': 'Mot de passe incorrect',
+   270→  'admin.dashboard.title': 'Tableau de bord',
+   271→  'admin.dashboard.totalProducts': 'Total Produits',
+   272→  'admin.dashboard.totalQuotes': 'Total Devis',
+   273→  'admin.dashboard.newQuotes': 'Nouveaux Devis',
+   274→  'admin.dashboard.totalBlog': 'Articles Blog',
+   275→  'admin.products.title': 'Gestion des Produits',
+   276→  'admin.products.add': 'Ajouter un produit',
+   277→  'admin.products.edit': 'Modifier',
+   278→  'admin.products.delete': 'Supprimer',
+   279→  'admin.products.save': 'Enregistrer',
+   280→  'admin.products.cancel': 'Annuler',
+   281→  'admin.products.name': 'Nom du produit',
+   282→  'admin.products.category': 'Catégorie',
+   283→  'admin.products.price': 'Prix',
+   284→  'admin.products.description': 'Description',
+   285→  'admin.products.images': 'Images',
+   286→  'admin.blog.title': 'Gestion du Blog',
+   287→  'admin.blog.add': 'Ajouter un article',
+   288→  'admin.quotes.title': 'Gestion des Devis',
+   289→  'admin.quotes.status': 'Statut',
+   290→  'admin.quotes.new': 'Nouveau',
+   291→  'admin.quotes.inProgress': 'En cours',
+   292→  'admin.quotes.processed': 'Traité',
+   293→  'admin.quotes.archived': 'Archivé',
+   294→  'admin.settings.title': 'Paramètres',
+   295→  'admin.settings.logo': 'Logo & Marque',
+   296→  'admin.settings.contact': 'Contact',
+   297→  'admin.settings.map': 'Carte & Localisation',
+   298→  'admin.settings.productInfo': 'Infos Produits',
+   299→  'admin.settings.social': 'Réseaux Sociaux',
+   300→  'admin.settings.stats': 'Statistiques',
+   301→  'admin.settings.about': 'À propos',
+   302→  'admin.settings.save': 'Enregistrer',
+   303→  'admin.settings.saved': 'Paramètres enregistrés !',
+   304→  'admin.categories.title': 'Gestion des Catégories',
+   305→
+   306→  // --- COMMON ---
+   307→  'common.loading': 'Chargement...',
+   308→  'common.error': 'Une erreur est survenue',
+   309→  'common.retry': 'Réessayer',
+   310→  'common.save': 'Enregistrer',
+   311→  'common.cancel': 'Annuler',
+   312→  'common.delete': 'Supprimer',
+   313→  'common.edit': 'Modifier',
+   314→  'common.add': 'Ajouter',
+   315→  'common.search': 'Rechercher',
+   316→  'common.filter': 'Filtrer',
+   317→  'common.sort': 'Trier',
+   318→  'common.noResults': 'Aucun résultat',
+   319→  'common.back': 'Retour',
+   320→  'common.next': 'Suivant',
+   321→  'common.prev': 'Précédent',
+   322→  'common.seeAll': 'Voir tout',
+   323→  'common.or': 'ou',
+   324→  'common.and': 'et',
+   325→  'common.da': 'DA',
+   326→
+   327→  // --- ABOUT MILESTONES ---
+   328→  'about.milestones.title': 'Nos Étapes Clés',
+   329→  'about.milestones.2009': 'Création d\'ODG à Oran',
+   330→  'about.milestones.2009.desc': 'Fondation de la société avec 3 employés et une vision claire.',
+   331→  'about.milestones.2012': 'Partenariat Owandy',
+   332→  'about.milestones.2012.desc': 'Premier partenariat exclusif avec une marque internationale.',
+   333→  'about.milestones.2015': 'Couverture nationale',
+   334→  'about.milestones.2015.desc': 'Expansion dans les 48 wilayas avec un réseau de techniciens.',
+   335→  'about.milestones.2018': 'Centre de formation',
+   336→  'about.milestones.2018.desc': 'Ouverture du centre de formation continue pour les praticiens.',
+   337→  'about.milestones.2021': '15+ marques partenaires',
+   338→  'about.milestones.2021.desc': 'Élargissement du portefeuille avec les leaders mondiaux.',
+   339→  'about.milestones.2024': 'Nouveau show-room',
+   340→  'about.milestones.2024.desc': 'Inauguration d\'un espace de démonstration de 500m².',
+   341→
+   342→  // --- ABOUT KEY FIGURES ---
+   343→  'about.figures.title': 'ODG en Chiffres',
+   344→
+   345→  // --- ABOUT CERTIFICATIONS ---
+   346→  'about.certifications.title': 'Certifications & Accréditations',
+   347→  'about.certifications.iso': 'ISO 9001:2015',
+   348→  'about.certifications.iso.desc': 'Système de management de la qualité certifié.',
+   349→  'about.certifications.ce': 'Marquage CE',
+   350→  'about.certifications.ce.desc': 'Conformité aux normes européennes.',
+   351→  'about.certifications.fda': 'Enregistré FDA',
+   352→  'about.certifications.fda.desc': 'Conformité aux réglementations américaines.',
+   353→
+   354→  // --- CONTACT FAQ ---
+   355→  'contact.faq.title': 'Questions Fréquentes',
+   356→  'contact.faq.q1': 'Quels sont vos délais de livraison ?',
+   357→  'contact.faq.a1': 'Nos délais de livraison varient de 48h à 2 semaines selon le produit et la wilaya. Les produits en stock sont livrés sous 48h.',
+   358→  'contact.faq.q2': 'Proposez-vous l\'installation des équipements ?',
+   359→  'contact.faq.a2': 'Oui, l\'installation est incluse pour tous les équipements. Nos techniciens certifiés se déplacent dans tout le territoire.',
+   360→  'contact.faq.q3': 'Comment demander un devis ?',
+   361→  'contact.faq.a3': 'Vous pouvez demander un devis directement sur notre site via le formulaire de devis, par téléphone ou par email. Réponse sous 24h.',
+   362→  'contact.faq.q4': 'Quelle est votre politique de garantie ?',
+   363→  'contact.faq.a4': 'Tous nos équipements sont garantis minimum 2 ans, avec extension possible. Le SAV est assuré sur tout le territoire algérien.',
+   364→  'contact.faq.q5': 'Proposez-vous des formations ?',
+   365→  'contact.faq.a5': 'Oui, nous organisons des formations régulières dans notre centre à Oran et des sessions pratiques dans les cliniques.',
+   366→  'contact.faq.q6': 'Quels modes de paiement acceptez-vous ?',
+   367→  'contact.faq.a6': 'Nous acceptons les virements bancaires, chèques et facilités de paiement en 3 fois pour les professionnels.',
+   368→
+   369→  // --- BLOG ENHANCED ---
+   370→  'blog.featured': 'Article à la une',
+   371→  'blog.allCategories': 'Toutes les catégories',
+   372→  'blog.readTimeBadge': 'min',
+   373→  'blog.category': 'Catégorie',
+   374→
+   375→  // --- FOOTER ENHANCED ---
+   376→  'footer.social': 'Suivez-nous',
+   377→  'footer.newsletter.title': 'Newsletter',
+   378→
+   379→  // --- NAVBAR ENHANCED ---
+   380→  'nav.searchPlaceholder': 'Rechercher un produit...',
+   381→
+   382→  // --- PRODUCT DETAIL ENHANCED ---
+   383→  'products.share': 'Partager',
+   384→  'products.linkCopied': 'Lien copié !',
+   385→  'products.print': 'Imprimer',
+   386→  'products.breadcrumb.home': 'Accueil',
+   387→  'products.addToQuoteSticky': 'Ajouter au devis',
+   388→  'products.downloadInfo': 'Télécharger',
+   389→
+   390→  // --- SHARE ---
+   391→  'share.copyLink': 'Copier le lien',
+   392→  'share.whatsapp': 'Partager sur WhatsApp',
+   393→  'share.facebook': 'Partager sur Facebook',
+   394→  'share.linkedin': 'Partager sur LinkedIn',
+   395→  'share.linkCopied': 'Lien copié !',
+   396→
+   397→  // --- QUICK VIEW ---
+   398→  'products.quickView': 'Aperçu rapide',
+   399→  'products.quickView.title': 'Aperçu du produit',
+   400→  'products.quickView.viewFull': 'Voir la fiche complète',
+   401→  'products.quickView.addToQuote': 'Ajouter au devis',
+   402→  'products.quickView.compare': 'Comparer',
+   403→  'products.quickView.addedToCompare': 'Ajouté à la comparaison',
+   404→  'products.quickView.inStock': 'En stock',
+   405→  'products.quickView.outOfStock': 'Rupture de stock',
+   406→  'products.quickView.brand': 'Marque',
+   407→  'products.quickView.reference': 'Réf.',
+   408→  'products.quickView.category': 'Catégorie',
+   409→
+   410→  // --- RECENTLY VIEWED ---
+   411→  'products.recentlyViewed': 'Produits récemment consultés',
+   412→  'products.recentlyViewed.empty': 'Aucun produit consulté récemment',
+   413→  'products.recentlyViewed.clear': 'Effacer l\'historique',
+   414→
+   415→  // --- ADMIN ENHANCED ---
+   416→  'admin.export_csv': 'Exporter en CSV',
+   417→  'admin.bulk_delete': 'Supprimer la sélection',
+   418→  'admin.select_all': 'Tout sélectionner',
+   419→  'admin.deselect_all': 'Tout désélectionner',
+   420→  'admin.product_status': 'Statut du produit',
+   421→  'admin.active': 'Actif',
+   422→  'admin.inactive': 'Inactif',
+   423→  'admin.preview': 'Aperçu',
+   424→  'admin.business_hours': 'Horaires d\'ouverture',
+   425→  'admin.notifications': 'Notifications',
+   426→  'admin.no_notifications': 'Aucune notification',
+   427→  'admin.recent_orders': 'Commandes récentes',
+   428→  'admin.order_id': 'N° Commande',
+   429→  'admin.client_name': 'Nom du client',
+   430→  'admin.monthly_quotes': 'Devis mensuels',
+   431→  'admin.quick_stats': 'Statistiques rapides',
+   432→  'admin.logo_upload': 'Télécharger le logo',
+   433→  'admin.social_links': 'Liens réseaux sociaux',
+   434→  'admin.preview_changes': 'Aperçu des modifications',
+   435→  'admin.whatsapp': 'WhatsApp',
+   436→
+   437→  // --- PRODUCT ENHANCED ---
+   438→  'products.price_range': 'Gamme de prix',
+   439→  'products.min_price': 'Prix minimum',
+   440→  'products.max_price': 'Prix maximum',
+   441→  'products.on_request': 'Sur demande',
+   442→  'products.gallery': 'Galerie',
+   443→  'products.zoom': 'Zoom',
+   444→  'products.next_image': 'Image suivante',
+   445→  'products.prev_image': 'Image précédente',
+   446→  'products.close_gallery': 'Fermer la galerie',
+   447→
+   448→  // --- THEME ---
+   449→  'theme.dark_mode': 'Mode sombre',
+   450→  'theme.light_mode': 'Mode clair',
+   451→  'theme.toggle': 'Changer de thème',
+   452→
+   453→  // --- GENERAL ---
+   454→  'general.back_to_top': 'Retour en haut',
+   455→  'general.certifications': 'Certifications',
+   456→  'general.iso_certified': 'Certifié ISO',
+   457→  'general.ce_marked': 'Marqué CE',
+   458→
+   459→  // --- PRICE RANGE FILTER ---
+   460→  'products.priceRange': 'Fourchette de prix',
+   461→  'products.priceRange.min': 'Min',
+   462→  'products.priceRange.max': 'Max',
+   463→  'products.priceRange.all': 'Tous les prix',
+   464→  'products.priceRange.onQuote': 'Sur devis uniquement',
+   465→  'products.priceRange.includeOnQuote': 'Inclure sur devis',
+   466→
+   467→  // --- DARK MODE NAV ---
+   468→  'nav.darkMode': 'Mode sombre',
+   469→  'nav.lightMode': 'Mode clair',
+   470→  'nav.promotions': 'Promotions',
+   471→
+   472→  // --- PROMO BANNER ---
+   473→  'promo.text': 'Offre spéciale : Installation gratuite pour toute commande avant le 30 juin',
+   474→  'promo.cta': 'En savoir plus',
+   475→
+   476→  // --- FOOTER COMMITMENTS ---
+   477→  'footer.commitments': 'Nos engagements',
+   478→  'footer.commitments.delivery': 'Livraison 58 wilayas',
+   479→  'footer.commitments.installation': 'Installation professionnelle',
+   480→  'footer.commitments.sav': 'SAV 48h',
+   481→  'footer.commitments.warranty': 'Garantie constructeur',
+   482→  'footer.certifications': 'Certifications & Partenaires',
+   483→
+   484→  // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
+   485→  'products.youMayAlsoLike': 'Vous aimerez aussi',
+   486→  'products.relatedCategories': 'Catégories associées',
+   487→
+   488→  // --- SEARCH ENHANCED ---
+   489→  'search.recent': 'Recherches récentes',
+   490→  'search.products': 'Produits',
+   491→  'search.categories': 'Catégories',
+   492→  'search.articles': 'Articles',
+   493→  'search.noResults': 'Aucun résultat trouvé',
+   494→  'search.browseCatalogue': 'Parcourir le catalogue',
+   495→  'search.viewAll': 'Voir tous les résultats',
+   496→
+   497→  // --- RECENTLY VIEWED SECTION ---
+   498→  'recentlyViewed.title': 'Récemment consultés',
+   499→  'recentlyViewed.subtitle': 'Produits que vous avez récemment consultés',
+   500→
+   501→  // --- PROMOTIONS ---
+   502→  'promotions.title': 'Offres & Promotions',
+   503→  'promotions.subtitle': 'Profitez de nos offres exclusives',
+   504→  'promotions.active': 'Offres en cours',
+   505→  'promotions.comingSoon': 'Prochainement',
+   506→  'promotions.save': 'ÉCONOMISEZ',
+   507→  'promotions.free': 'GRATUIT',
+   508→  'promotions.newsletterCta': 'Ne manquez aucune offre',
+   509→  'promotions.newsletterSub': 'Inscrivez-vous pour être alerté des nouvelles promotions',
+   510→  'promotions.expiresIn': 'Expire dans',
+   511→  'promotions.claimOffer': "Profiter de l'offre",
+   512→  'promotions.originalPrice': 'Prix original',
+   513→  'promotions.promoPrice': 'Prix promotionnel',
+   514→};
+   515→
+   516→// ============================================================
+   517→// ARABIC TRANSLATIONS
+   518→// ============================================================
+   519→const ar: Translations = {
+   520→  // --- NAV ---
+   521→  'nav.home': 'الرئيسية',
+   522→  'nav.catalogue': 'الكتالوج',
+   523→  'nav.about': 'من نحن',
+   524→  'nav.blog': 'المدونة',
+   525→  'nav.contact': 'اتصل بنا',
+   526→  'nav.quote': 'طلب عرض سعر',
+   527→  'nav.admin': 'الإدارة',
+   528→  'nav.login': 'تسجيل الدخول',
+   529→  'nav.logout': 'تسجيل الخروج',
+   530→  'nav.dashboard': 'لوحة التحكم',
+   531→  'nav.products': 'المنتجات',
+   532→  'nav.blogPosts': 'المقالات',
+   533→  'nav.quotes': 'عروض الأسعار',
+   534→  'nav.messages': 'الرسائل',
+   535→  'nav.language': 'اللغة',
+   536→  'nav.cart': 'سلة عروض الأسعار',
+   537→  'nav.search': 'بحث...',
+   538→  'nav.menu': 'القائمة',
+   539→  'nav.close': 'إغلاق',
+   540→  'nav.categories': 'الفئات',
+   541→  'nav.settings': 'الإعدادات',
+   542→  'nav.allProducts': 'جميع المنتجات',
+   543→  'nav.newArrivals': 'وافد جديد',
+   544→  'nav.bestSellers': 'الأكثر مبيعاً',
+   545→  'nav.brand': 'ODG',
+   546→
+   547→  // --- HERO ---
+   548→  'hero.title': 'معدات طب الأسنان المهنية',
+   549→  'hero.subtitle': 'المورد الرائد في الجزائر منذ 2009',
+   550→  'hero.description': 'موزع حصري لأكبر العلامات التجارية العالمية. التركيب والتدريب وخدمة ما بعد البيع في جميع أنحاء البلاد.',
+   551→  'hero.cta.catalogue': 'عرض الكتالوج',
+   552→  'hero.cta.quote': 'طلب عرض سعر',
+   553→
+   554→  // --- STATS ---
+   555→  'stats.clinics': 'عيادات مجهزة',
+   556→  'stats.wilayas': 'ولايات مغطاة',
+   557→  'stats.brands': 'علامات تجارية',
+   558→  'stats.sav': 'ساعات ما بعد البيع',
+   559→
+   560→  // --- CATEGORIES ---
+   561→  'categories.title': 'فئاتنا',
+   562→  'categories.subtitle': 'اكتشف مجموعتنا الكاملة من معدات طب الأسنان',
+   563→  'categories.fauteuils': 'كراسي طب الأسنان',
+   564→  'categories.unites': 'وحدات طب الأسنان',
+   565→  'categories.radiologie': 'الأشعة',
+   566→  'categories.sterilisation': 'التعقيم',
+   567→  'categories.pneumatiques': 'الهوائية',
+   568→  'categories.consommables': 'المستهلكات',
+   569→  'categories.instruments': 'الأدوات',
+   570→  'categories.mobilier': 'الأثاث',
+   571→
+   572→  // --- PRODUCTS ---
+   573→  'products.title': 'الكتالوج',
+   574→  'products.subtitle': 'اكتشف مجموعتنا الكاملة من معدات طب الأسنان المهنية',
+   575→  'products.featured': 'منتجات مميزة',
+   576→  'products.new': 'جديد',
+   577→  'products.bestSeller': 'الأكثر مبيعاً',
+   578→  'catalogue.brands': 'العلامات التجارية',
+   579→  'catalogue.allBrands': 'جميع العلامات',
+   580→  'products.inStock': 'متوفر',
+   581→  'products.outOfStock': 'نفذ المخزون',
+   582→  'products.addQuote': 'أضف إلى عرض السعر',
+   583→  'products.viewDetails': 'عرض التفاصيل',
+   584→  'products.compare': 'مقارنة',
+   585→  'products.filter': 'تصفية',
+   586→  'products.sort': 'ترتيب',
+   587→  'products.sort.newest': 'الأحدث',
+   588→  'products.sort.priceAsc': 'السعر تصاعدي',
+   589→  'products.sort.priceDesc': 'السعر تنازلي',
+   590→  'products.sort.name': 'الاسم أ-ي',
+   591→  'products.noResults': 'لم يتم العثور على منتجات',
+   592→  'products.all': 'الكل',
+   593→  'products.specs': 'المواصفات',
+   594→  'products.features': 'نقاط القوة',
+   595→  'products.warranty': 'الضمان',
+   596→  'products.delivery': 'التوصيل',
+   597→  'products.installation': 'تركيب مجاني',
+   598→  'products.training': 'تدريب مجاني',
+   599→  'products.brand': 'العلامة التجارية',
+   600→  'products.origin': 'المنشأ',
+   601→  'products.ref': 'المرجع',
+   602→  'products.downloadPdf': 'تحميل البطاقة التقنية',
+   603→  'products.videos': 'فيديوهات',
+   604→  'products.priceOnQuote': 'على أساس التسعير',
+   605→  'products.requestQuote': 'طلب عرض سعر',
+   606→  'products.clearFilters': 'إعادة تعيين الفلاتر',
+   607→  'products.noResultsTip': 'حاول تعديل معايير البحث أو إعادة تعيين الفلاتر',
+   608→  'products.relatedProducts': 'منتجات مشابهة',
+   609→  'products.description': 'الوصف',
+   610→  'products.availability': 'التوفر',
+   611→
+   612→  // --- COMPARE ---
+   613→  'compare.title': 'مقارنة المنتجات',
+   614→  'compare.add': 'مقارنة',
+   615→  'compare.added': 'تمت الإضافة',
+   616→  'compare.remove': 'إزالة',
+   617→  'compare.clear': 'تفريغ القائمة',
+   618→  'compare.now': 'مقارنة الآن',
+   619→  'compare.empty': 'لا توجد منتجات للمقارنة',
+   620→  'compare.maxReached': 'الحد الأقصى (4)',
+   621→  'compare.selectMin': 'اختر منتجين على الأقل',
+   622→  'compare.specs': 'المواصفات',
+   623→  'compare.features': 'نقاط القوة',
+   624→  'compare.brand': 'العلامة التجارية',
+   625→  'compare.price': 'السعر',
+   626→  'compare.stock': 'التوفر',
+   627→  'compare.warranty': 'الضمان',
+   628→  'compare.image': 'الصورة',
+   629→  'compare.name': 'الاسم',
+   630→  'compare.origin': 'المنشأ',
+   631→  'compare.ref': 'المرجع',
+   632→  'compare.category': 'الفئة',
+   633→  'compare.backToCatalogue': 'العودة إلى الكتالوج',
+   634→  'compare.items': 'منتج(ات) محدد(ة)',
+   635→  'compare.highlightDiff': 'الاختلافات',
+   636→  'compare.noSpecs': 'لا توجد مواصفات',
+   637→  'compare.noFeatures': 'لا توجد نقاط قوة',
+   638→
+   639→  // --- WISHLIST ---
+   640→  'wishlist.title': 'المفضلة',
+   641→  'wishlist.empty': 'لا توجد منتجات في المفضلة',
+   642→  'wishlist.added': 'تمت الإضافة إلى المفضلة',
+   643→  'wishlist.removed': 'تمت الإزالة من المفضلة',
+   644→  'wishlist.viewAll': 'عرض الكل',
+   645→  'wishlist.clearAll': 'حذف الكل',
+   646→  'products.addToWishlist': 'إضافة إلى المفضلة',
+   647→  'products.removeFromWishlist': 'إزالة من المفضلة',
+   648→
+   649→  // --- BLOG ---
+   650→  'blog.title': 'المدونة والأخبار',
+   651→  'blog.subtitle': 'ابق على اطلاع بأحدث الاتجاهات في معدات طب الأسنان',
+   652→  'blog.readMore': 'اقرأ المزيد',
+   653→  'blog.readTime': 'دقيقة للقراءة',
+   654→  'blog.share': 'مشاركة',
+   655→  'blog.copyLink': 'نسخ الرابط',
+   656→  'blog.backToBlog': 'العودة إلى المدونة',
+   657→  'blog.related': 'مقالات مشابهة',
+   658→  'blog.by': 'بواسطة',
+   659→
+   660→  // --- ABOUT ---
+   661→  'about.title': 'من نحن',
+   662→  'about.subtitle': 'شريكك الموثوق منذ 2009',
+   663→  'about.history': 'قصتنا',
+   664→  'about.history.p1': 'تأسست مجموعة وقاح لطب الأسنان (ODG) في عام 2009 وأصبحت في غضون سنوات قليلة الرائدة في توزيع معدات طب الأسنان في الجزائر. التزامنا: تزويد متخصصي صحة الأسنان بأفضل الأدوات لممارسة مهنتهم في أفضل الظروف.',
+   665→  'about.history.p2': 'مع تواجد في 48 ولاية وشبكة من الفنيين المؤهلين، تضمن ODG التركيب والتدريب وخدمة ما بعد البيع في جميع أنحاء الأراضي الجزائرية. يضمن شراكتنا مع أكبر العلامات التجارية العالمية الوصول إلى أكثر التقنيات تقدماً.',
+   666→  'about.mission': 'مهمتنا',
+   667→  'about.mission.text': 'جعل معدات طب الأسنان ذات الجودة العالمية في متناول جميع الممارسين في الجزائر، مع خدمة ما بعد البيع لا تشوبها شائبة.',
+   668→  'about.values': 'قيمنا',
+   669→  'about.values.excellence': 'التميز',
+   670→  'about.values.excellence.text': 'نختار فقط أفضل المنتجات من العلامات التجارية الأكثر شهرة.',
+   671→  'about.values.proximity': 'القرب',
+   672→  'about.values.proximity.text': 'شبكة من الفنيين تغطي 48 ولاية لخدمة ما بعد البيع التفاعلية.',
+   673→  'about.values.innovation': 'الابتكار',
+   674→  'about.values.innovation.text': 'نقدم في الجزائر أحدث تقنيات طب الأسنان في العالم.',
+   675→  'about.values.trust': 'الثقة',
+   676→  'about.values.trust.text': 'أكثر من 500 عيادة تثق بنا منذ 2009.',
+   677→
+   678→  // --- CONTACT ---
+   679→  'contact.title': 'اتصل بنا',
+   680→  'contact.subtitle': 'فريقنا في خدمتكم',
+   681→  'contact.phone': 'الهاتف',
+   682→  'contact.email': 'البريد الإلكتروني',
+   683→  'contact.address': 'العنوان',
+   684→  'contact.hours': 'ساعات العمل',
+   685→  'contact.form.name': 'الاسم الكامل',
+   686→  'contact.form.email': 'عنوان البريد الإلكتروني',
+   687→  'contact.form.phone': 'الهاتف',
+   688→  'contact.form.subject': 'الموضوع',
+   689→  'contact.form.message': 'الرسالة',
+   690→  'contact.form.send': 'إرسال الرسالة',
+   691→  'contact.form.sending': 'جاري الإرسال...',
+   692→  'contact.form.success': 'تم إرسال الرسالة بنجاح!',
+   693→  'contact.form.error': 'خطأ في الإرسال. يرجى المحاولة مرة أخرى.',
+   694→  'contact.findUs': 'كيف تجدنا',
+   695→  'contact.callUs': 'اتصل بنا',
+   696→  'contact.whatsappUs': 'واتساب',
+   697→
+   698→  // --- QUOTE ---
+   699→  'quote.title': 'طلب عرض سعر',
+   700→  'quote.subtitle': 'املأ النموذج أدناه لتلقي عرض سعر مخصص خلال 24 ساعة',
+   701→  'quote.step1': 'معلوماتك',
+   702→  'quote.step2': 'اختيار المنتجات',
+   703→  'quote.step3': 'ملخص',
+   704→  'quote.clientType': 'نوع العميل',
+   705→  'quote.clientType.clinic': 'عيادة أسنان',
+   706→  'quote.clientType.reseller': 'بائع',
+   707→  'quote.clientType.counter': 'المنضدة',
+   708→  'quote.fullName': 'الاسم الكامل',
+   709→  'quote.email': 'عنوان البريد الإلكتروني',
+   710→  'quote.phone': 'الهاتف',
+   711→  'quote.wilaya': 'الولاية',
+   712→  'quote.message': 'رسالة (اختياري)',
+   713→  'quote.products': 'المنتجات المختارة',
+   714→  'quote.quantity': 'الكمية',
+   715→  'quote.total': 'الإجمالي المقدر',
+   716→  'quote.submit': 'إرسال الطلب',
+   717→  'quote.submitting': 'جاري الإرسال...',
+   718→  'quote.success': 'تم إرسال طلب عرض السعر بنجاح! سنتواصل معك خلال 24 ساعة.',
+   719→  'quote.error': 'خطأ في الإرسال. يرجى المحاولة مرة أخرى.',
+   720→  'quote.empty': 'اختيارك فارغ',
+   721→  'quote.addProducts': 'أضف منتجات من الكتالوج',
+   722→  'quote.next': 'التالي',
+   723→  'quote.prev': 'السابق',
+   724→
+   725→  // --- FOOTER ---
+   726→  'footer.description': 'موزع حصري لمعدات طب الأسنان المهنية في الجزائر منذ 2009.',
+   727→  'footer.quickLinks': 'روابط سريعة',
+   728→  'footer.contact': 'اتصل بنا',
+   729→  'footer.legal': 'قانوني',
+   730→  'footer.legal.mentions': 'إشارات قانونية',
+   731→  'footer.legal.cgv': 'شروط البيع العامة',
+   732→  'footer.privacy': 'سياسة الخصوصية',
+   733→  'footer.algeria': 'الجزائر',
+   734→  'footer.rights': 'جميع الحقوق محفوظة.',
+   735→  'footer.madeWith': 'صنع بـ',
+   736→  'footer.in': 'في',
+   737→  'footer.cta': 'جهز عيادتك بأفضل المعدات',
+   738→  'footer.newsletter.mini': 'اشترك في نشرتنا الإخبارية',
+   739→  'footer.requestQuote': 'طلب عرض سعر',
+   740→  'footer.backToTop': 'العودة للأعلى ↑',
+   741→
+   742→  // --- TESTIMONIALS ---
+   743→  'testimonials.title': 'ماذا يقول عملاؤنا',
+   744→  'testimonials.subtitle': 'يثقون بنا',
+   745→
+   746→  // --- NEWSLETTER ---
+   747→  'newsletter.title': 'ابق على اطلاع',
+   748→  'newsletter.subtitle': 'استلم عروضنا الحصرية والأخبار',
+   749→  'newsletter.placeholder': 'عنوان بريدك الإلكتروني',
+   750→  'newsletter.subscribe': 'اشترك',
+   751→  'newsletter.privacy': 'نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.',
+   752→  'newsletter.success': 'شكراً! أنت مشترك في نشرتنا الإخبارية.',
+   753→
+   754→  // --- ADMIN ---
+   755→  'admin.login.title': 'تسجيل الدخول',
+   756→  'admin.login.password': 'كلمة المرور',
+   757→  'admin.login.submit': 'تسجيل الدخول',
+   758→  'admin.login.error': 'كلمة المرور غير صحيحة',
+   759→  'admin.dashboard.title': 'لوحة التحكم',
+   760→  'admin.dashboard.totalProducts': 'إجمالي المنتجات',
+   761→  'admin.dashboard.totalQuotes': 'إجمالي عروض الأسعار',
+   762→  'admin.dashboard.newQuotes': 'عروض أسعار جديدة',
+   763→  'admin.dashboard.totalBlog': 'مقالات المدونة',
+   764→  'admin.products.title': 'إدارة المنتجات',
+   765→  'admin.products.add': 'إضافة منتج',
+   766→  'admin.products.edit': 'تعديل',
+   767→  'admin.products.delete': 'حذف',
+   768→  'admin.products.save': 'حفظ',
+   769→  'admin.products.cancel': 'إلغاء',
+   770→  'admin.products.name': 'اسم المنتج',
+   771→  'admin.products.category': 'الفئة',
+   772→  'admin.products.price': 'السعر',
+   773→  'admin.products.description': 'الوصف',
+   774→  'admin.products.images': 'الصور',
+   775→  'admin.blog.title': 'إدارة المدونة',
+   776→  'admin.blog.add': 'إضافة مقال',
+   777→  'admin.quotes.title': 'إدارة عروض الأسعار',
+   778→  'admin.quotes.status': 'الحالة',
+   779→  'admin.quotes.new': 'جديد',
+   780→  'admin.quotes.inProgress': 'قيد المعالجة',
+   781→  'admin.quotes.processed': 'تمت المعالجة',
+   782→  'admin.quotes.archived': 'مؤرشف',
+   783→  'admin.settings.title': 'الإعدادات',
+   784→  'admin.settings.logo': 'الشعار والعلامة التجارية',
+   785→  'admin.settings.contact': 'اتصل بنا',
+   786→  'admin.settings.map': 'الخريطة والموقع',
+   787→  'admin.settings.productInfo': 'معلومات المنتج',
+   788→  'admin.settings.social': 'الشبكات الاجتماعية',
+   789→  'admin.settings.stats': 'الإحصائيات',
+   790→  'admin.settings.about': 'من نحن',
+   791→  'admin.settings.save': 'حفظ',
+   792→  'admin.settings.saved': 'تم حفظ الإعدادات!',
+   793→  'admin.categories.title': 'إدارة الفئات',
+   794→
+   795→  // --- COMMON ---
+   796→  'common.loading': 'جاري التحميل...',
+   797→  'common.error': 'حدث خطأ',
+   798→  'common.retry': 'إعادة المحاولة',
+   799→  'common.save': 'حفظ',
+   800→  'common.cancel': 'إلغاء',
+   801→  'common.delete': 'حذف',
+   802→  'common.edit': 'تعديل',
+   803→  'common.add': 'إضافة',
+   804→  'common.search': 'بحث',
+   805→  'common.filter': 'تصفية',
+   806→  'common.sort': 'ترتيب',
+   807→  'common.noResults': 'لا توجد نتائج',
+   808→  'common.back': 'رجوع',
+   809→  'common.next': 'التالي',
+   810→  'common.prev': 'السابق',
+   811→  'common.seeAll': 'عرض الكل',
+   812→  'common.or': 'أو',
+   813→  'common.and': 'و',
+   814→  'common.da': 'د.ج',
+   815→
+   816→  // --- ABOUT MILESTONES ---
+   817→  'about.milestones.title': 'محطاتنا الرئيسية',
+   818→  'about.milestones.2009': 'إنشاء ODG في وهران',
+   819→  'about.milestones.2009.desc': 'تأسيس الشركة بـ 3 موظفين ورؤية واضحة.',
+   820→  'about.milestones.2012': 'شراكة مع Owandy',
+   821→  'about.milestones.2012.desc': 'أول شراكة حصرية مع علامة تجارية دولية.',
+   822→  'about.milestones.2015': 'تغطية وطنية',
+   823→  'about.milestones.2015.desc': 'التوسع في 48 ولاية مع شبكة من الفنيين.',
+   824→  'about.milestones.2018': 'مركز التكوين',
+   825→  'about.milestones.2018.desc': 'افتتاح مركز التكوين المستمر للممارسين.',
+   826→  'about.milestones.2021': '15+ علامة تجارية شريكة',
+   827→  'about.milestones.2021.desc': 'توسيع المحفظة مع قادة السوق العالميين.',
+   828→  'about.milestones.2024': 'صالة عرض جديدة',
+   829→  'about.milestones.2024.desc': 'افتتاح مساحة عرض بمساحة 500م².',
+   830→
+   831→  // --- ABOUT KEY FIGURES ---
+   832→  'about.figures.title': 'ODG بالأرقام',
+   833→
+   834→  // --- ABOUT CERTIFICATIONS ---
+   835→  'about.certifications.title': 'الشهادات والاعتمادات',
+   836→  'about.certifications.iso': 'ISO 9001:2015',
+   837→  'about.certifications.iso.desc': 'نظام إدارة الجودة معتمد.',
+   838→  'about.certifications.ce': 'علامة CE',
+   839→  'about.certifications.ce.desc': ' conformity مع المعايير الأوروبية.',
+   840→  'about.certifications.fda': 'مسجل FDA',
+   841→  'about.certifications.fda.desc': 'الامتثال للوائح الأمريكية.',
+   842→
+   843→  // --- CONTACT FAQ ---
+   844→  'contact.faq.title': 'الأسئلة المتكررة',
+   845→  'contact.faq.q1': 'ما هي آجال التوصيل لديكم؟',
+   846→  'contact.faq.a1': 'تختلف آجال التوصيل من 48 ساعة إلى أسبوعين حسب المنتج والولاية. المنتجات المتوفرة تُسلَّم خلال 48 ساعة.',
+   847→  'contact.faq.q2': 'هل تقدمون تركيب المعدات؟',
+   848→  'contact.faq.a2': 'نعم، التركيب مشمول لجميع المعدات. فنيونا المعتمدون يتنقلون في جميع أنحاء الوطن.',
+   849→  'contact.faq.q3': 'كيف أطلب عرض سعر؟',
+   850→  'contact.faq.a3': 'يمكنك طلب عرض سعر مباشرة على موقعنا عبر نموذج الطلب، بالهاتف أو بالبريد الإلكتروني. الرد خلال 24 ساعة.',
+   851→  'contact.faq.q4': 'ما هي سياسة الضمان لديكم؟',
+   852→  'contact.faq.a4': 'جميع معداتنا مضمونة لمدة سنتين كحد أدنى، مع إمكانية التمديد. ما بعد البيع مضمون في جميع أنحاء الجزائر.',
+   853→  'contact.faq.q5': 'هل تقدمون دورات تكوينية؟',
+   854→  'contact.faq.a5': 'نعم، ننظم دورات تكوينية منتظمة في مركزنا بوهران وجلسات عملية في العيادات.',
+   855→  'contact.faq.q6': 'ما هي طرق الدفع المقبولة؟',
+   856→  'contact.faq.a6': 'نقبل التحويلات المصرفية والشيكات وتسهيلات الدفع على 3 دفعات للمهنيين.',
+   857→
+   858→  // --- BLOG ENHANCED ---
+   859→  'blog.featured': 'مقال مميز',
+   860→  'blog.allCategories': 'جميع الفئات',
+   861→  'blog.readTimeBadge': 'دقيقة',
+   862→  'blog.category': 'الفئة',
+   863→
+   864→  // --- FOOTER ENHANCED ---
+   865→  'footer.social': 'تابعنا',
+   866→  'footer.newsletter.title': 'النشرة الإخبارية',
+   867→
+   868→  // --- NAVBAR ENHANCED ---
+   869→  'nav.searchPlaceholder': 'ابحث عن منتج...',
+   870→
+   871→  // --- PRODUCT DETAIL ENHANCED ---
+   872→  'products.share': 'مشاركة',
+   873→  'products.linkCopied': 'تم نسخ الرابط!',
+   874→  'products.print': 'طباعة',
+   875→  'products.breadcrumb.home': 'الرئيسية',
+   876→  'products.addToQuoteSticky': 'أضف إلى عرض السعر',
+   877→  'products.downloadInfo': 'تحميل',
+   878→
+   879→  // --- SHARE ---
+   880→  'share.copyLink': 'نسخ الرابط',
+   881→  'share.whatsapp': 'مشاركة على واتساب',
+   882→  'share.facebook': 'مشاركة على فيسبوك',
+   883→  'share.linkedin': 'مشاركة على لينكدإن',
+   884→  'share.linkCopied': 'تم نسخ الرابط!',
+   885→
+   886→  // --- QUICK VIEW ---
+   887→  'products.quickView': 'عرض سريع',
+   888→  'products.quickView.title': 'معاينة المنتج',
+   889→  'products.quickView.viewFull': 'عرض الصفحة الكاملة',
+   890→  'products.quickView.addToQuote': 'أضف إلى عرض السعر',
+   891→  'products.quickView.compare': 'مقارنة',
+   892→  'products.quickView.addedToCompare': 'تمت الإضافة للمقارنة',
+   893→  'products.quickView.inStock': 'متوفر',
+   894→  'products.quickView.outOfStock': 'نفذ المخزون',
+   895→  'products.quickView.brand': 'العلامة التجارية',
+   896→  'products.quickView.reference': 'مرجع',
+   897→  'products.quickView.category': 'الفئة',
+   898→
+   899→  // --- RECENTLY VIEWED ---
+   900→  'products.recentlyViewed': 'منتجات شاهدها مؤخراً',
+   901→  'products.recentlyViewed.empty': 'لم يتم مشاهدة أي منتج مؤخراً',
+   902→  'products.recentlyViewed.clear': 'مسح السجل',
+   903→
+   904→  // --- ADMIN ENHANCED ---
+   905→  'admin.export_csv': 'تصدير كـ CSV',
+   906→  'admin.bulk_delete': 'حذف المحدد',
+   907→  'admin.select_all': 'تحديد الكل',
+   908→  'admin.deselect_all': 'إلغاء التحديد',
+   909→  'admin.product_status': 'حالة المنتج',
+   910→  'admin.active': 'نشط',
+   911→  'admin.inactive': 'غير نشط',
+   912→  'admin.preview': 'معاينة',
+   913→  'admin.business_hours': 'ساعات العمل',
+   914→  'admin.notifications': 'الإشعارات',
+   915→  'admin.no_notifications': 'لا توجد إشعارات',
+   916→  'admin.recent_orders': 'الطلبات الأخيرة',
+   917→  'admin.order_id': 'رقم الطلب',
+   918→  'admin.client_name': 'اسم العميل',
+   919→  'admin.monthly_quotes': 'عروض الأسعار الشهرية',
+   920→  'admin.quick_stats': 'إحصائيات سريعة',
+   921→  'admin.logo_upload': 'تحميل الشعار',
+   922→  'admin.social_links': 'روابط الشبكات الاجتماعية',
+   923→  'admin.preview_changes': 'معاينة التعديلات',
+   924→  'admin.whatsapp': 'واتساب',
+   925→
+   926→  // --- PRODUCT ENHANCED ---
+   927→  'products.price_range': 'نطاق السعر',
+   928→  'products.min_price': 'الحد الأدنى للسعر',
+   929→  'products.max_price': 'الحد الأقصى للسعر',
+   930→  'products.on_request': 'على الطلب',
+   931→  'products.gallery': 'معرض الصور',
+   932→  'products.zoom': 'تكبير',
+   933→  'products.next_image': 'الصورة التالية',
+   934→  'products.prev_image': 'الصورة السابقة',
+   935→  'products.close_gallery': 'إغلاق المعرض',
+   936→
+   937→  // --- THEME ---
+   938→  'theme.dark_mode': 'الوضع الداكن',
+   939→  'theme.light_mode': 'الوضع الفاتح',
+   940→  'theme.toggle': 'تبديل السمة',
+   941→
+   942→  // --- GENERAL ---
+   943→  'general.back_to_top': 'العودة للأعلى',
+   944→  'general.certifications': 'الشهادات',
+   945→  'general.iso_certified': 'معتمد ISO',
+   946→  'general.ce_marked': 'علامة CE',
+   947→
+   948→  // --- PRICE RANGE FILTER ---
+   949→  'products.priceRange': 'نطاق السعر',
+   950→  'products.priceRange.min': 'الحد الأدنى',
+   951→  'products.priceRange.max': 'الحد الأقصى',
+   952→  'products.priceRange.all': 'جميع الأسعار',
+   953→  'products.priceRange.onQuote': 'على أساس التسعير فقط',
+   954→  'products.priceRange.includeOnQuote': 'تضمين على أساس التسعير',
+   955→
+   956→  // --- DARK MODE NAV ---
+   957→  'nav.darkMode': 'الوضع الداكن',
+   958→  'nav.lightMode': 'الوضع الفاتح',
+   959→  'nav.promotions': 'العروض',
+   960→
+   961→  // --- PROMO BANNER ---
+   962→  'promo.text': 'عرض خاص: تركيب مجاني لكل طلب قبل 30 يونيو',
+   963→  'promo.cta': 'اعرف المزيد',
+   964→
+   965→  // --- FOOTER COMMITMENTS ---
+   966→  'footer.commitments': 'التزاماتنا',
+   967→  'footer.commitments.delivery': 'توصيل 58 ولاية',
+   968→  'footer.commitments.installation': 'تركيب احترافي',
+   969→  'footer.commitments.sav': 'خدمة ما بعد البيع 48 ساعة',
+   970→  'footer.commitments.warranty': 'ضمان الشركة المصنعة',
+   971→  'footer.certifications': 'الشهادات والشركاء',
+   972→
+   973→  // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
+   974→  'products.youMayAlsoLike': 'قد يعجبك أيضاً',
+   975→  'products.relatedCategories': 'الفئات المرتبطة',
+   976→
+   977→  // --- SEARCH ENHANCED ---
+   978→  'search.recent': 'عمليات البحث الأخيرة',
+   979→  'search.products': 'المنتجات',
+   980→  'search.categories': 'الفئات',
+   981→  'search.articles': 'المقالات',
+   982→  'search.noResults': 'لا توجد نتائج',
+   983→  'search.browseCatalogue': 'تصفح الكتالوج',
+   984→  'search.viewAll': 'عرض جميع النتائج',
+   985→
+   986→  // --- RECENTLY VIEWED SECTION ---
+   987→  'recentlyViewed.title': 'شوهد مؤخراً',
+   988→  'recentlyViewed.subtitle': 'المنتجات التي شاهدتها مؤخراً',
+   989→
+   990→  // --- PROMOTIONS ---
+   991→  'promotions.title': 'العروض والتخفيضات',
+   992→  'promotions.subtitle': 'استفد من عروضنا الحصرية',
+   993→  'promotions.active': 'العروض الحالية',
+   994→  'promotions.comingSoon': 'قريباً',
+   995→  'promotions.save': 'وفّر',
+   996→  'promotions.free': 'مجاني',
+   997→  'promotions.newsletterCta': 'لا تفوت أي عرض',
+   998→  'promotions.newsletterSub': 'سجل ليتم إعلامك بالعروض الجديدة',
+   999→  'promotions.expiresIn': 'ينتهي في',
+  1000→  'promotions.claimOffer': 'استفد من العرض',
+  1001→  'promotions.originalPrice': 'السعر الأصلي',
+  1002→  'promotions.promoPrice': 'السعر الترويجي',
+  1003→};
+  1004→
+  1005→const translations: Record<Language, Translations> = { fr, ar };
+  1006→
+  1007→function getStoredLanguage(): Language {
+  1008→  if (typeof window === 'undefined') return 'fr';
+  1009→  const stored = localStorage.getItem('odg_language') as Language;
+  1010→  if (stored && (stored === 'fr' || stored === 'ar')) return stored;
+  1011→  return 'fr';
+  1012→}
+  1013→
+  1014→export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  1015→  const [language, setLanguage] = useState<Language>(getStoredLanguage);
+  1016→
+  1017→  useEffect(() => {
+  1018→    localStorage.setItem('odg_language', language);
+  1019→    document.documentElement.lang = language;
+  1020→    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  1021→  }, [language]);
+  1022→
+  1023→  const t = useCallback(
+  1024→    (key: string): string => {
+  1025→      return translations[language]?.[key] || translations.fr?.[key] || key;
+  1026→    },
+  1027→    [language]
+  1028→  );
+  1029→
+  1030→  const isRTL = language === 'ar';
+  1031→  const dir = isRTL ? 'rtl' : 'ltr';
+  1032→
+  1033→  return (
+  1034→    <I18nContext.Provider value={{ language, setLanguage, t, dir, isRTL }}>
+  1035→      {children}
+  1036→    </I18nContext.Provider>
+  1037→  );
+  1038→}
+  1039→
+  1040→export function useTranslation() {
+  1041→  return useContext(I18nContext);
+  1042→}
+  1043→

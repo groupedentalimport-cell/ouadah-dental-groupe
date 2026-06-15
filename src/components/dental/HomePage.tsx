@@ -161,11 +161,11 @@ function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: nu
     <div className="flex items-center gap-1">
       <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
         {stars.map((type, i) => (
-          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-500'}`} />
         ))}
       </div>
       {count !== undefined && (
-        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
       )}
     </div>
   );
@@ -399,14 +399,14 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 text-center">
           <motion.div
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
             <Badge
-              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5 relative overflow-hidden hero-badge-responsive"
+              className="mb-3 sm:mb-5 text-xs sm:text-sm font-medium px-3 sm:px-4 py-1 sm:py-1.5 border-0 inline-flex items-center gap-1 sm:gap-1.5 relative overflow-hidden hero-badge-responsive"
               style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
             >
               <motion.div
@@ -431,7 +431,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-5 hero-title-responsive"
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-3 sm:mb-5 hero-title-responsive"
           >
             {t('hero.title')}
           </motion.h1>
@@ -440,7 +440,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}
-            className="text-lg sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-8 leading-relaxed hero-subtitle-responsive"
+            className="text-sm sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-5 sm:mb-8 leading-relaxed hero-subtitle-responsive line-clamp-3 sm:line-clamp-none"
           >
             {t('hero.description')}
           </motion.p>
@@ -449,13 +449,13 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.36 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3"
           >
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={() => navigate('/catalogue')}
                 size="lg"
-                className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+                className="text-sm sm:text-base font-semibold px-6 sm:px-8 h-12 sm:h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group min-h-[44px]"
                 style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
               >
                 {t('hero.cta.catalogue')}
@@ -467,7 +467,7 @@ export default function HomePage() {
                 onClick={() => navigate('/devis')}
                 size="lg"
                 variant="outline"
-                className="text-base font-semibold px-8 h-13 border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg bg-white/10"
+                className="text-sm sm:text-base font-semibold px-6 sm:px-8 h-12 sm:h-13 border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg bg-white/10 min-h-[44px]"
               >
                 {t('hero.cta.quote')}
                 <ChevronRight className="w-5 h-5" />
@@ -480,7 +480,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.6 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-5 sm:gap-10"
+            className="mt-6 sm:mt-10 flex flex-nowrap sm:flex-wrap items-center justify-center gap-2 sm:gap-10 overflow-x-auto pb-2 sm:pb-0"
           >
             {[
               { icon: <Award className="w-5 h-5" />, text: language === 'ar' ? '15+ سنة خبرة' : '15+ ans d\'expérience' },
@@ -489,7 +489,7 @@ export default function HomePage() {
             ].map((badge, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2.5 text-white/80 dark:text-white/90 text-sm font-medium bg-white/5 dark:bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10 dark:border-white/15"
+                className="flex items-center gap-1.5 sm:gap-2.5 text-white/80 dark:text-white/90 text-xs sm:text-sm font-medium bg-white/5 dark:bg-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full backdrop-blur-sm border border-white/10 dark:border-white/15 whitespace-nowrap"
               >
                 <span style={{ color: '#F0C05A' }}>{badge.icon}</span>
                 {badge.text}
@@ -575,8 +575,8 @@ export default function HomePage() {
                   </Button>
                   <button
                     onClick={dismissPromo}
-                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10 touch-target flex items-center justify-center"
-                    aria-label="Fermer"
+                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10 touch-target flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                    aria-label={t('nav.close')}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -590,7 +590,7 @@ export default function HomePage() {
       </AnimatePresence>
 
       {/* ==================== STATS SECTION ==================== */}
-      <section className="py-12 sm:py-14 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+      <section className="py-8 sm:py-14 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
         {/* Animated gradient background */}
         <motion.div
           className="absolute inset-0 opacity-30"
@@ -651,16 +651,16 @@ export default function HomePage() {
       </section>
 
       {/* ==================== CATEGORIES SECTION ==================== */}
-      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-[#0c1622]">
+      <section className="py-8 sm:py-16 bg-gray-50 dark:bg-[#0c1622]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-10"
+            className="text-center mb-6 sm:mb-10"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block gradient-border-animated px-6 py-2" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight relative inline-block gradient-border-animated px-4 sm:px-6 py-1.5 sm:py-2" style={{ color: '#1E3A5F' }}>
               <span className="dark:text-[#7AB0E0]">
               {t('categories.title')}
               </span>
@@ -674,7 +674,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.3 }}
               />
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto mt-4">
+            <p className="text-gray-500 dark:text-gray-300 text-base max-w-xl mx-auto mt-4">
               {t('categories.subtitle')}
             </p>
           </motion.div>
@@ -684,7 +684,7 @@ export default function HomePage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-80px' }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4"
           >
             {categories.map((cat, idx) => {
               const imgSrc = categoryImages[cat.slug] || cat.image || '';
@@ -696,7 +696,7 @@ export default function HomePage() {
                   transition={{ duration: 0.2 }}
                 >
                   <div
-                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-44 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift"
+                    className="group cursor-pointer relative rounded-xl sm:rounded-2xl overflow-hidden h-32 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift"
                     onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
                   >
                     {/* Background image */}
@@ -726,16 +726,16 @@ export default function HomePage() {
                       </span>
                     </div>
                     {/* Content */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
-                          {categoryIcons[cat.icon] || <Package className="w-4 h-4" />}
+                    <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-5">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white/80 transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
+                          {categoryIcons[cat.icon] || <Package className="w-3 h-3 sm:w-4 sm:h-4" />}
                         </div>
-                        <h3 className="font-bold text-sm sm:text-base text-white">
+                        <h3 className="font-bold text-xs sm:text-base text-white">
                           {getCategoryName(cat, language)}
                         </h3>
                       </div>
-                      <p className="text-white/50 text-xs">
+                      <p className="text-white/50 text-[10px] sm:text-xs">
                         {products.filter((p) => p.category_id === cat.id).length}{' '}
                         {language === 'ar' ? 'منتجات' : 'produits'}
                       </p>
@@ -773,7 +773,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
               <div>
-                <h2 className="text-3xl sm:text-4xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('products.featured')}
                 </h2>
                 <div className="h-0.5 w-16 mt-1 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
@@ -809,6 +809,7 @@ export default function HomePage() {
                       <img
                         src={product.images[0]}
                         alt={getProductName(product, language)}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -850,7 +851,7 @@ export default function HomePage() {
                         <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
                       </div>
                     )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-300 mb-3 line-clamp-2 flex-1">
                       {getProductShortDescription(product, language)}
                     </p>
                     <div className="flex items-center justify-between gap-2 mt-auto">
@@ -867,7 +868,7 @@ export default function HomePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-xs h-7 px-2"
+                          className="text-xs h-7 px-2 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                           style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -875,6 +876,7 @@ export default function HomePage() {
                             setQuickViewOpen(true);
                             addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
                           }}
+                          aria-label={t('products.quickView')}
                           title={t('products.quickView')}
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -936,11 +938,11 @@ export default function HomePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }} />
-                    <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('recentlyViewed.title')}
                     </h2>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">
                     {t('recentlyViewed.subtitle')}
                   </p>
                 </div>
@@ -968,6 +970,7 @@ export default function HomePage() {
                         <img
                           src={item.image}
                           alt={item.name}
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -1051,7 +1054,7 @@ export default function HomePage() {
             <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0 dark:bg-[#7AB0E0]/10 dark:text-[#7AB0E0]" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
               {language === 'ar' ? 'مميزاتنا' : 'Nos atouts'}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'لماذا تختارنا؟' : 'Pourquoi nous choisir ?'}
             </h2>
             <p className="text-gray-500 dark:text-gray-300 text-base max-w-lg mx-auto">
@@ -1127,7 +1130,7 @@ export default function HomePage() {
             <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#1E3A5F' }}>
               {t('testimonials.subtitle')}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('testimonials.title')}
             </h2>
           </motion.div>
@@ -1160,7 +1163,7 @@ export default function HomePage() {
                           <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
                         ))}
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed flex-grow mb-4 relative z-10 italic">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed flex-grow mb-4 relative z-10 italic">
                         &ldquo;{testimonial.text}&rdquo;
                       </p>
                       <div className="mt-auto pt-4 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
@@ -1212,7 +1215,7 @@ export default function HomePage() {
             transition={{ duration: 0.4 }}
             className="text-center mb-8"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold mb-1.5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1.5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'علاماتنا الشريكة' : 'Nos Marques Partenaires'}
             </h2>
             <p className="text-gray-400 text-sm">
@@ -1318,7 +1321,7 @@ export default function HomePage() {
               <Mail className="w-7 h-7" style={{ color: '#F0C05A' }} />
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
               {t('newsletter.title')}
             </h2>
             <p className="text-blue-200/60 text-base mb-6 max-w-md mx-auto leading-relaxed">
@@ -1408,7 +1411,7 @@ export default function HomePage() {
               <Stethoscope className="w-7 h-7" style={{ color: '#F0C05A' }} />
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-3 leading-tight">
               {language === 'ar'
                 ? 'هل أنت مستعد لتجهيز عيادتك؟'
                 : 'Prêt à équiper votre cabinet ?'

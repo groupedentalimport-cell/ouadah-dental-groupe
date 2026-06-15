@@ -97,7 +97,7 @@ const pageTransition = {
 
 function AppContent() {
   const { route } = useRouter();
-  const { isRTL } = useTranslation();
+  const { isRTL, t } = useTranslation();
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -145,9 +145,12 @@ function AppContent() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#1E3A5F] focus:text-white focus:rounded-md">
+        {t('accessibility.skipToContent')}
+      </a>
       <PageTitleUpdater />
-      {!isAdminRoute && <Navbar />}
-      <main className="flex-1">
+      {!isAdminRoute && <header role="banner"><Navbar /></header>}
+      <main id="main-content" className="flex-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={route}

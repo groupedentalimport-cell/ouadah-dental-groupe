@@ -145,6 +145,7 @@ export default function BlogPage() {
                     <img
                       src={featuredPost.image}
                       alt={language === 'ar' ? featuredPost.title_ar : featuredPost.title_fr}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
@@ -163,11 +164,11 @@ export default function BlogPage() {
                         {featuredPost.category}
                       </Badge>
                     )}
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-gray-400 dark:text-gray-300 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {featuredPost.read_time} {t('blog.readTime')}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-gray-300">
                       {formatDate(featuredPost.date)}
                     </span>
                   </div>
@@ -224,6 +225,7 @@ export default function BlogPage() {
                         <img
                           src={post.image}
                           alt={language === 'ar' ? post.title_ar : post.title_fr}
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -246,11 +248,11 @@ export default function BlogPage() {
                     </div>
                     <CardContent className="p-5 flex flex-col flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                        <span className="text-xs text-gray-400 dark:text-gray-300 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {post.read_time} {t('blog.readTimeBadge')}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 dark:text-gray-300">
                           {formatDate(post.date)}
                         </span>
                       </div>
@@ -264,7 +266,7 @@ export default function BlogPage() {
                         {language === 'ar' ? post.excerpt_ar : post.excerpt_fr}
                       </p>
                       <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100 dark:border-white/5">
-                        <span className="text-xs text-gray-400">{formatDate(post.date)}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-300">{formatDate(post.date)}</span>
                         <span className="text-xs font-medium flex items-center gap-1 group-hover:gap-2 transition-all dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                           {t('blog.readMore')}
                           <ArrowRight className="w-3 h-3" />

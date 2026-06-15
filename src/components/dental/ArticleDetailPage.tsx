@@ -127,6 +127,7 @@ export default function ArticleDetailPage() {
             <img
               src={article.image}
               alt={title}
+              loading="lazy"
               className="w-full h-64 sm:h-80 object-cover"
             />
           </motion.div>
@@ -207,6 +208,7 @@ export default function ArticleDetailPage() {
                       <img
                         src={rp.image}
                         alt={language === 'ar' ? rp.title_ar : rp.title_fr}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
                     ) : (

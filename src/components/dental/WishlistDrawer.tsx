@@ -74,6 +74,7 @@ export default function WishlistDrawer() {
                         <img
                           src={product.images[0]}
                           alt={getProductName(product, language)}
+                          loading="lazy"
                           className="w-full h-full object-cover"
                         />
                       ) : (

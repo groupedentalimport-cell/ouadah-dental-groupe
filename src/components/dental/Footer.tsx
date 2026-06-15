@@ -96,7 +96,7 @@ export default function Footer() {
   ].filter(s => s.href);
 
   return (
-    <footer className="text-white">
+    <footer role="contentinfo" className="text-white">
       {/* ==================== DECORATIVE TOP GRADIENT BORDER ==================== */}
       <div className="h-1" style={{ background: 'linear-gradient(90deg, #1E3A5F, #F0C05A, #1E3A5F)' }} />
 
@@ -123,7 +123,7 @@ export default function Footer() {
       <div className="dark:bg-[#0f1d2e] bg-[#1E3A5F] relative overflow-hidden">
         {/* Decorative tooth watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-          <svg width="400" height="400" viewBox="0 0 512 512" fill="currentColor" className="text-white">
+          <svg width="400" height="400" viewBox="0 0 512 512" fill="currentColor" className="text-white" alt="" role="presentation">
             <path d="M256 0C167.6 0 96 71.6 96 160c0 52.7 25.8 99.4 65.5 128H144c-26.5 0-48 21.5-48 48v128c0 26.5 21.5 48 48 48h32c17.7 0 32-14.3 32-32V336h96v176c0 17.7 14.3 32 32 32h32c26.5 0 48-21.5 48-48V336c0-26.5-21.5-48-48-48h-17.5c39.7-28.6 65.5-75.3 65.5-128C416 71.6 344.4 0 256 0zm0 256c-53 0-96-43-96-96s43-96 96-96 96 43 96 96-43 96-96 96z"/>
           </svg>
         </div>
@@ -219,7 +219,7 @@ export default function Footer() {
                     <li key={link.path}>
                       <button
                         onClick={() => navigate(link.path)}
-                        className="text-blue-200/60 hover:text-blue-200 text-xs transition-colors"
+                        className="text-blue-200/80 hover:text-white text-xs transition-colors"
                       >
                         {link.label}
                       </button>
@@ -343,7 +343,7 @@ export default function Footer() {
               {['CE', 'ISO 9001', 'ISO 13485'].map((cert) => (
                 <span
                   key={cert}
-                  className="px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide border border-white/20 text-blue-200/80 hover:border-[#F0C05A]/50 hover:text-white transition-colors"
+                  className="px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide border border-white/20 text-blue-100 hover:border-[#F0C05A]/50 hover:text-white transition-colors"
                   style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
                 >
                   {cert}
@@ -355,7 +355,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-blue-200/60">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-blue-200/80">
             <p>
               &copy; 2026 ODG - OUADAH DENTAL GROUPE. {t('footer.rights')}
             </p>
@@ -370,7 +370,7 @@ export default function Footer() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-center">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="text-white/50 hover:text-white/80 text-xs transition-colors duration-200"
+              className="text-white/60 hover:text-white/90 text-xs transition-colors duration-200"
             >
               {t('footer.backToTop')}
             </button>

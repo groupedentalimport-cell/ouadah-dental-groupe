@@ -272,6 +272,18 @@
   border-radius: 4px;
 }
 
+/* Enhanced focus ring for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #F0C05A, 0 0 0 4px white;
+  border-radius: 4px;
+}
+
 /* Smooth image loading */
 img {
   transition: opacity 0.3s ease;

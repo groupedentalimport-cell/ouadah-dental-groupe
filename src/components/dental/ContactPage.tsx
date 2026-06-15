@@ -255,12 +255,12 @@ export default function ContactPage() {
                         href={card.href}
                         target={card.href.startsWith('http') ? '_blank' : undefined}
                         rel="noopener noreferrer"
-                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors leading-relaxed"
+                        className="text-sm text-gray-500 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors leading-relaxed"
                       >
                         {card.value}
                       </a>
                     ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{card.value}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">{card.value}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -427,7 +427,7 @@ export default function ContactPage() {
                     <h3 className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('contact.findUs')}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-300">
                       {language === 'ar' ? contactInfo.address?.ar : contactInfo.address?.fr}
                     </p>
                   </div>

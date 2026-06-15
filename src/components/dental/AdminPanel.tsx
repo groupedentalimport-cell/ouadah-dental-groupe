@@ -1709,7 +1709,7 @@ function BlogTab({ blogPosts, language, t, refresh }: any) {
                 {/* Featured Image */}
                 <div className="h-36 relative overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
                   {post.image_url ? (
-                    <img src={post.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={post.image_url} alt={post.title_fr} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${NAVY}15, ${GOLD}15)` }}>
                       <BookOpen className="w-10 h-10 text-gray-300" />

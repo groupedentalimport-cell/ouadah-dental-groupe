@@ -295,8 +295,8 @@ export default function Navbar() {
 
   const renderSectionLabel = (icon: React.ElementType, label: string) => (
     <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-white/[0.03] border-y border-gray-100 dark:border-white/5">
-      {React.createElement(icon, { className: 'w-3.5 h-3.5 text-gray-400 dark:text-gray-500' })}
-      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</span>
+      {React.createElement(icon, { className: 'w-3.5 h-3.5 text-gray-400 dark:text-gray-300' })}
+      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-300">{label}</span>
     </div>
   );
 
@@ -361,11 +361,12 @@ export default function Navbar() {
                 <button
                   key={link.routeName}
                   onClick={() => handleNav(link.path)}
-                  className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                     isActive
                       ? 'text-[#1E3A5F] dark:text-[#7AB0E0]'
                       : 'text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   {link.label}
                   {/* Red dot indicator for promotions link */}
@@ -393,7 +394,8 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => searchOpen ? setSearchOpen(false) : openSearch()}
-              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative"
+              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={t('accessibility.search')}
             >
               <Search className="w-4.5 h-4.5" />
             </Button>
@@ -403,7 +405,7 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative"
+              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
               aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
             >
               <motion.div
@@ -440,7 +442,8 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => handleNav('/devis')}
-              className="relative text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0]"
+              className="relative text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={t('accessibility.cart')}
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
@@ -474,22 +477,23 @@ export default function Navbar() {
 
           {/* Mobile Menu */}
           <div className="flex md:hidden items-center gap-0.5">
-            {/* Search Toggle Mobile */}
+            {/* Search Toggle Mobile - 44px touch target */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => searchOpen ? setSearchOpen(false) : openSearch()}
-              className="text-gray-600 dark:text-gray-300 touch-target"
+              className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={t('accessibility.search')}
             >
               <Search className="w-5 h-5" />
             </Button>
 
-            {/* Theme Toggle Mobile */}
+            {/* Theme Toggle Mobile - 44px touch target */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 touch-target"
+              className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
               aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
             >
               <motion.div
@@ -505,12 +509,13 @@ export default function Navbar() {
               </motion.div>
             </Button>
 
-            {/* Cart Mobile */}
+            {/* Cart Mobile - 44px touch target */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleNav('/devis')}
-              className="relative text-gray-600 dark:text-gray-300 touch-target"
+              className="relative text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={t('accessibility.cart')}
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
@@ -525,7 +530,7 @@ export default function Navbar() {
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300 touch-target">
+                <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none" aria-label={t('accessibility.menu')}>
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
@@ -535,14 +540,14 @@ export default function Navbar() {
               >
                 <SheetHeader>
                   <SheetTitle
-                    className="text-left dark:text-[#7AB0E0]"
+                    className={`dark:text-[#7AB0E0] ${isRTL ? 'text-right' : 'text-left'}`}
                     style={{ color: '#1E3A5F' }}
                   >
                     {brandName}
                   </SheetTitle>
                 </SheetHeader>
 
-                <div className="flex flex-col gap-1 px-4 mt-4">
+                <div className="flex flex-col gap-1.5 px-4 mt-4">
                   {navLinks.map((link, i) => {
                     const isActive = route === link.routeName;
                     return (
@@ -552,16 +557,17 @@ export default function Navbar() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className={`w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors flex items-center gap-3 ${
+                        className={`w-full ${isRTL ? 'text-right' : 'text-left'} px-4 py-3.5 text-base font-medium rounded-lg transition-colors flex items-center gap-3 min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                           isActive
                             ? 'text-[#1E3A5F] dark:text-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
                             : 'text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
                         }`}
+                        aria-current={isActive ? 'page' : undefined}
                       >
                         {isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#F0C05A' }} />
                         )}
-                        {link.label}
+                        <span className="flex-1">{link.label}</span>
                         {'isPromo' in link && link.isPromo && (
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#C0564F' }} />
                         )}
@@ -576,7 +582,7 @@ export default function Navbar() {
                     onClick={() => {
                       setLanguage(language === 'fr' ? 'ar' : 'fr');
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]`}
                   >
                     <Globe className="w-5 h-5" />
                     {language === 'fr' ? 'العربية' : 'Français'}
@@ -585,7 +591,7 @@ export default function Navbar() {
                   {/* Dark Mode Toggle Mobile */}
                   <button
                     onClick={toggleTheme}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]"
                   >
                     {mounted && (theme === 'dark' ? (
                       <Sun className="w-5 h-5 text-[#F0C05A]" />
@@ -598,7 +604,7 @@ export default function Navbar() {
                   {/* Admin */}
                   <button
                     onClick={() => handleNav('/admin-login')}
-                    className="w-full text-left px-4 py-3 text-base font-medium text-gray-500 dark:text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
+                    className={`w-full ${isRTL ? 'text-right' : 'text-left'} px-4 py-3.5 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]`}
                   >
                     {t('nav.admin')}
                   </button>
@@ -607,7 +613,7 @@ export default function Navbar() {
                 <div className="mt-auto px-4 pb-6">
                   <Button
                     onClick={() => handleNav('/devis')}
-                    className="w-full text-white font-semibold shadow-md"
+                    className="w-full text-white font-semibold shadow-md min-h-[44px]"
                     style={{ backgroundColor: '#1E3A5F' }}
                   >
                     {t('nav.quote')}
@@ -629,26 +635,29 @@ export default function Navbar() {
             transition={{ duration: 0.2 }}
             className="border-t border-gray-100 dark:border-white/5 bg-white/95 dark:bg-[#0f1d2e]/95 backdrop-blur-xl"
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-              <div className="relative max-w-xl mx-auto" data-search-area>
-                <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
-                <Input
-                  ref={searchInputRef}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t('nav.searchPlaceholder')}
-                  className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-11 bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 focus:border-[#1E3A5F] dark:focus:border-[#7AB0E0] focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:text-white dark:placeholder:text-gray-400`}
-                  autoFocus
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ${isRTL ? 'left-3' : 'right-3'}`}
-                  >
-                    <XCircle className="w-4 h-4" />
-                  </button>
-                )}
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-3">
+              {/* Mobile: full-width search with close button */}
+              <div className="relative max-w-xl mx-auto flex items-center gap-2" data-search-area>
+                <div className="relative flex-1">
+                  <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                  <Input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t('nav.searchPlaceholder')}
+                    className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 sm:h-11 text-base bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 focus:border-[#1E3A5F] dark:focus:border-[#7AB0E0] focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:text-white dark:placeholder:text-gray-400`}
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 min-w-[44px] min-h-[44px] flex items-center justify-center ${isRTL ? 'left-0' : 'right-0'}`}
+                      aria-label={t('nav.close')}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  )}
 
                 {/* Enhanced Search Results Dropdown */}
                 <AnimatePresence>
@@ -658,7 +667,7 @@ export default function Navbar() {
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1a2d45] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden z-50 max-h-[70vh] overflow-y-auto"
+                      className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1a2d45] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden z-50 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto"
                     >
                       {/* No query - show recent searches */}
                       {!hasQuery && recentSearches.length > 0 && (
@@ -676,7 +685,7 @@ export default function Navbar() {
                                 }`}
                                 onClick={() => handleRecentClick(query)}
                               >
-                                <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-gray-500 shrink-0" />
+                                <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0" />
                                 <span className="text-sm flex-1 truncate dark:text-gray-300" style={{ color: '#1E3A5F' }}>
                                   {query}
                                 </span>
@@ -685,7 +694,7 @@ export default function Navbar() {
                                     e.stopPropagation();
                                     handleRecentRemove(query);
                                   }}
-                                  className="text-gray-300 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300 shrink-0"
+                                  className="text-gray-300 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-200 shrink-0"
                                 >
                                   <X className="w-3.5 h-3.5" />
                                 </button>
@@ -717,7 +726,7 @@ export default function Navbar() {
                                   >
                                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5 shrink-0">
                                       {product.images?.[0] ? (
-                                        <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                                        <img src={product.images[0]} alt={getProductName(product, language)} loading="lazy" className="w-full h-full object-cover" />
                                       ) : (
                                         <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: '#1E3A5F10', color: '#1E3A5F' }}>
                                           ODG
@@ -777,7 +786,7 @@ export default function Navbar() {
                                     <span className="text-sm font-medium truncate dark:text-white" style={{ color: '#1E3A5F' }}>
                                       {getCategoryName(cat, language)}
                                     </span>
-                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-500 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
                                   </div>
                                 );
                               })}
@@ -808,7 +817,7 @@ export default function Navbar() {
                                     <span className="text-sm font-medium truncate dark:text-white" style={{ color: '#1E3A5F' }}>
                                       {title}
                                     </span>
-                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-500 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
                                   </div>
                                 );
                               })}
@@ -818,8 +827,8 @@ export default function Navbar() {
                           {/* No results found */}
                           {matchedProducts.length === 0 && matchedCategories.length === 0 && matchedArticles.length === 0 && (
                             <div className="px-4 py-8 text-center">
-                              <Search className="w-8 h-8 text-gray-200 dark:text-gray-600 mx-auto mb-2" />
-                              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <Search className="w-8 h-8 text-gray-200 dark:text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
                                 {t('search.noResults')}
                               </p>
                               <button
@@ -852,6 +861,16 @@ export default function Navbar() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                </div>
+                {/* Mobile close button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                  className="md:hidden shrink-0 text-gray-500 dark:text-gray-300 min-h-[44px] min-w-[44px]"
+                >
+                  {t('nav.close')}
+                </Button>
               </div>
             </div>
           </motion.div>

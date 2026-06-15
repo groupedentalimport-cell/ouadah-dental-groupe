@@ -39,7 +39,8 @@ export default function WhatsAppBubble() {
           >
             <button
               onClick={() => setShowTooltip(false)}
-              className="absolute top-1.5 right-2 text-neutral-400 hover:text-neutral-600"
+              className="absolute top-1.5 right-2 text-neutral-400 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+              aria-label={language === 'ar' ? 'إغلاق' : 'Fermer'}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -59,7 +60,7 @@ export default function WhatsAppBubble() {
         transition={{ delay: 1, type: 'spring', stiffness: 260, damping: 20 }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg text-white transition-transform hover:scale-110 active:scale-95"
+        className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg text-white transition-transform hover:scale-110 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
         style={{ backgroundColor: '#25D366' }}
         aria-label={tooltipText}
       >

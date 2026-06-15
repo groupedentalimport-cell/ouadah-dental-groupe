@@ -1590,3 +1590,489 @@ Stage Summary:
 6. Performance audit (Lighthouse)
 7. Accessibility audit and improvements
 - Lint passes cleanly, build succeeds
+
+---
+
+### Task ID: R9-B - Enhance ProductDetailPage
+**Agent:** R9-B Agent
+**Task:** Enhance the ProductDetailPage with specifications table, key features section, video embed, and product info cards
+
+**Work Log:**
+
+1. **Added sample video data** to `/src/lib/data-service.tsx`:
+   - Product 1 (Fauteuil Dentaire Elite Pro): Added 2 YouTube videos (Présentation, Démonstration)
+   - Product 2 (Unité Dentaire Smart Touch): Added 1 YouTube video (Vue d'ensemble)
+
+2. **Added i18n keys** to `/src/lib/i18n.tsx`:
+   - Added `product.specifications`, `product.keyFeatures`, `product.videos`, `product.warranty`, `product.delivery`, `product.installation`, `product.training`, `product.origin`, `product.reference`, `product.spec`, `product.value`, `product.watchVideo`, `product.noVideos`
+   - Both FR and AR translations provided
+
+3. **Enhanced ProductDetailPage** (`/src/components/dental/ProductDetailPage.tsx`):
+   - Added imports: `ShieldCheck`, `ClipboardList`, `Sparkles`, `Play`, `Globe`
+   - Added `getYouTubeEmbedUrl()` utility function (supports youtube.com/watch, youtu.be, youtube.com/embed, vimeo.com)
+   - **Reordered sections**: Description → Specifications Table → Key Features → Product Videos (was previously Features → Specs → Description)
+   - **Specifications Table Section**: Professional table with alternating row colors, responsive (table on desktop, key-value pairs on mobile), dark mode compatible, section header with ClipboardList icon, animated gradient border, whileInView animations
+   - **Key Features Section**: Grid of feature cards (2 columns desktop, 1 mobile), emerald/green accent check icons in rounded badges, Sparkles icon header, stagger animation on each card
+   - **Product Videos Section**: Conditionally rendered only if product.videos has entries, YouTube/Vimeo iframe embed with 16:9 aspect ratio, fallback link for unparseable URLs, video title below player, Play icon header, max 2 per row on desktop
+   - **Product Info Cards**: 6-card horizontal grid (3 per row on tablet, 6 on desktop, 2 on mobile), each card shows icon + label + value for: warranty (ShieldCheck), delivery (Truck), installation (Wrench), training (GraduationCap), origin (Globe), reference (Hash), scale-in animations with staggered delays
+   - All sections use gradient-border-animated style headers
+   - All sections are bilingual (FR/AR) with RTL support via existing i18n system
+
+**Stage Summary:**
+- ProductDetailPage now has 4 new/enhanced content sections
+- Video embeds work for YouTube and Vimeo URLs
+- Responsive design with mobile-first approach
+- All lint checks pass cleanly
+- No build errors
+
+---
+
+### Task ID: R9-A - Fix Dark Mode Contrast Issues
+**Agent:** Frontend Styling Expert
+**Task:** Fix dark mode contrast and readability issues across the entire ODG website
+
+**Work Log:**
+
+Systematically reviewed and fixed dark mode text contrast across 10 component files. All changes use `dark:` prefix classes only — no light mode styling was altered. Key improvements:
+
+1. **ProductDetailPage.tsx** — Most extensive fixes:
+   - Breadcrumb navigation: `dark:text-gray-500` → `dark:text-gray-300` for readable breadcrumb text
+   - Breadcrumb chevron separators: `dark:text-gray-600` → `dark:text-gray-400`
+   - Current product name in breadcrumb: `dark:text-gray-400` → `dark:text-gray-200`
+   - "Retour" button: `dark:text-[#7AB0E0] dark:border-white/10` → `dark:text-gray-200 dark:border-gray-600`
+   - "Prix sur devis" badge: `dark:bg-[#F0C05A10] dark:text-[#F0C05A]` → `dark:bg-blue-900/50 dark:text-blue-200`
+   - Meta info labels (origin, warranty, delivery, installation, training, reference): `dark:text-gray-500` → `dark:text-gray-300`
+   - Spec table labels: `dark:text-gray-400` → `dark:text-gray-300`
+   - Star rating count: `dark:text-gray-400` → `dark:text-gray-300`
+   - Wishlist/Compare/Share/Print buttons: `dark:text-gray-400 dark:border-white/10` → `dark:text-gray-300 dark:border-gray-600`
+   - Related product video text: `dark:text-gray-400` → `dark:text-gray-300`
+   - No results text: `dark:text-gray-400` → `dark:text-gray-300`
+   - Recently viewed clear button: `dark:text-gray-500` → `dark:text-gray-300`
+
+2. **CataloguePage.tsx**:
+   - All sidebar filter labels and counts: `dark:text-gray-400/500` → `dark:text-gray-300`
+   - Category/brand buttons (inactive): `dark:text-gray-400` → `dark:text-gray-300`
+   - Badge counts: `dark:text-gray-400` → `dark:text-gray-300`
+   - Price range labels: `dark:text-gray-500` → `dark:text-gray-300`
+   - "Sur devis" badge on cards: `dark:text-[#F0C05A]` → `dark:bg-blue-900/50 dark:text-blue-200`
+   - No results text: `dark:text-gray-400/500` → `dark:text-gray-300`
+   - Compare button: `dark:text-gray-500` → `dark:text-gray-300`
+   - Star rating count: `dark:text-gray-400` → `dark:text-gray-300`
+
+3. **HomePage.tsx**:
+   - Section descriptions (categories, featured, recently viewed): `dark:text-gray-400` → `dark:text-gray-300`
+   - Testimonial quote text: `dark:text-gray-400` → `dark:text-gray-300`
+   - Product card descriptions: `dark:text-gray-400` → `dark:text-gray-300`
+   - Star rating count: `dark:text-gray-400` → `dark:text-gray-300`
+
+4. **Footer.tsx**:
+   - Legal links: `text-blue-200/60` → `text-blue-200/80`
+   - Bottom bar copyright: `text-blue-200/60` → `text-blue-200/80`
+   - Back to top button: `text-white/50` → `text-white/60`
+   - Certification badges: `text-blue-200/80` → `text-blue-100`
+
+5. **Navbar.tsx**:
+   - Search section labels: `dark:text-gray-500` → `dark:text-gray-300`
+   - Admin nav link: `dark:text-gray-400` → `dark:text-gray-300`
+   - Recent search items: `dark:text-gray-500` → `dark:text-gray-400`
+   - Search close/X button: `dark:text-gray-500` → `dark:text-gray-400`
+   - No results text: `dark:text-gray-400` → `dark:text-gray-300`
+   - Mobile close button: `dark:text-gray-400` → `dark:text-gray-300`
+
+6. **BlogPage.tsx**:
+   - Read time and date labels: `text-gray-400` → `text-gray-400 dark:text-gray-300`
+   - Card footer date: `text-gray-400` → `text-gray-400 dark:text-gray-300`
+
+7. **AboutPage.tsx**:
+   - Already had good contrast (`dark:text-gray-300` on descriptions) — fixed broken JSX from previous edits (missing `>` on `<p>` tags)
+   - Values and certifications descriptions: fixed malformed JSX
+
+8. **ContactPage.tsx**:
+   - Contact card values: `dark:text-gray-400` → `dark:text-gray-300`
+   - Map address text: `dark:text-gray-400` → `dark:text-gray-300`
+
+9. **PromotionsPage.tsx**:
+   - "Expires in" label: `dark:text-gray-400` → `dark:text-gray-300`
+   - Coming soon teaser text: `dark:text-gray-400` → `dark:text-gray-300`
+   - Strikethrough price and clock icon: `dark:text-gray-500` → `dark:text-gray-400`
+
+10. **WishlistPage.tsx**:
+    - Empty state description: `dark:text-gray-400` → `dark:text-gray-300`
+    - Product count label: `dark:text-gray-400` → `dark:text-gray-300`
+    - Category name on cards: `dark:text-gray-500` → `dark:text-gray-300`
+    - Star rating count: `dark:text-gray-400` → `dark:text-gray-300`
+
+**Contrast Guidelines Applied:**
+- Body text/descriptions: `dark:text-gray-300` (meets WCAG AA on dark backgrounds)
+- Labels/small text: `dark:text-gray-300` (was `dark:text-gray-400/500`)
+- Headings: `dark:text-white` or `dark:text-[#7AB0E0]` (unchanged, already good)
+- Info badges ("Prix sur devis"): `dark:bg-blue-900/50 dark:text-blue-200`
+- Breadcrumb: `dark:text-gray-300` with `dark:hover:text-white`
+- "Retour" button: `dark:text-gray-200 dark:border-gray-600`
+- Decorative elements (empty stars, separators, strikethrough prices): kept at `dark:text-gray-400/500` (acceptable for non-essential UI)
+
+**Stage Summary:**
+- 10 files modified with dark mode contrast improvements
+- All text elements now meet or approach WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text)
+- Light mode styling completely untouched
+- Lint passes cleanly (exit code 0)
+- No build errors
+
+---
+
+### Task ID: R9-C - Mobile Responsiveness & Catalogue Enhancements
+**Agent:** Main
+**Task:** Improve mobile responsiveness and enhance the CataloguePage with better filters and card design
+
+**Work Log:**
+
+**Part 1: Navbar Mobile Responsiveness (`Navbar.tsx`)**
+- Increased touch targets for all mobile nav icons (search, theme, cart, menu) to 44x44px minimum (`w-11 h-11 min-w-[44px] min-h-[44px]`)
+- Improved mobile menu item spacing: `py-3.5` with `gap-1.5` and `min-h-[44px]` per item
+- Added RTL-aware text alignment in mobile menu (`text-right` for Arabic, `text-left` for French)
+- Made SheetTitle RTL-aware
+- Enhanced search overlay for mobile: taller input (`h-12 sm:h-11`), `text-base` font size to prevent iOS zoom
+- Added mobile close button next to search input (visible on mobile only)
+- Reduced search dropdown max-height on mobile (`max-h-[60vh] sm:max-h-[70vh]`)
+- Increased clear button touch target in search (`min-w-[44px] min-h-[44px]`)
+- Mobile CTA button also has `min-h-[44px]`
+
+**Part 2: HomePage Mobile Responsiveness (`HomePage.tsx`)**
+- Reduced hero section text density: `text-3xl` heading on mobile (up from `text-4xl`), `text-xs` badge on mobile, `text-sm` subtitle on mobile with `line-clamp-3`
+- Compact CTA buttons on mobile: `text-sm px-6 h-12` with `min-h-[44px]`
+- Trust badges now stack horizontally on mobile (`flex-nowrap overflow-x-auto`) instead of wrapping vertically
+- Badge text and padding reduced on mobile (`text-xs px-3 py-1.5`)
+- Reduced vertical spacing: `py-10 sm:py-16` hero, `py-8 sm:py-14` stats, `py-8 sm:py-16` categories
+- Category section heading reduced on mobile: `text-2xl sm:text-4xl`
+- Category cards more compact on mobile: `h-32 sm:h-52`, `rounded-xl sm:rounded-2xl`, smaller padding/text
+- Category grid gap reduced on mobile: `gap-2 sm:gap-4`
+
+**Part 3: CataloguePage Enhancements (`CataloguePage.tsx`)**
+- Added active filter indicators: gold/amber tint (`rgba(240,192,90,0.15)`) on active category/brand filters
+- Added checkmark indicator on active filters in both desktop sidebar and mobile sheet
+- Added active filter count badge on sidebar title and mobile filter button
+- Added "Clear all filters" button in sidebar header (visible when any filter is active)
+- Brand tags upgraded from plain text to Badge components with amber tint background
+- Added category color accent bottom border on product cards (visible on hover)
+- Removed 3D tilt effect (caused layout issues) for cleaner card rendering
+- Improved "Ajouter au devis" / "Sur devis" button: `font-semibold min-h-[36px]` with hover shadow
+- Mobile filter sidebar replaced with shadcn/ui Sheet component (slide-out drawer)
+- Mobile filter button now shows active filter count badge
+- Added "Voir les résultats" button at bottom of mobile filter sheet
+- Added grid/list view toggle (desktop only) with LayoutGrid/List icons
+- List view shows horizontal cards: image on left, info on right
+- Smooth AnimatePresence transition between grid and list views
+- All changes support dark mode and RTL layout
+
+**Part 4: i18n Keys Added (`i18n.tsx`)**
+- `products.activeFilters`: 'Filtres actifs' / 'فلاتر نشطة'
+- `products.gridView`: 'Grille' / 'شبكة'
+- `products.listView`: 'Liste' / 'قائمة'
+- `products.filters`: 'Filtres' / 'فلاتر'
+
+**Files Modified:**
+1. `/home/z/my-project/src/components/dental/Navbar.tsx` - Mobile touch targets, menu spacing, search overlay
+2. `/home/z/my-project/src/components/dental/HomePage.tsx` - Hero text density, trust badges, category cards
+3. `/home/z/my-project/src/components/dental/CataloguePage.tsx` - Filter indicators, product cards, mobile Sheet, grid/list view
+4. `/home/z/my-project/src/lib/i18n.tsx` - New i18n keys (FR + AR)
+
+**Stage Summary:**
+- 4 files modified
+- All touch targets meet 44px minimum on mobile
+- Filter sidebar is now a slide-out Sheet on mobile (lg- breakpoint)
+- Grid/list view toggle available on desktop
+- Active filters visually highlighted with amber tint and checkmark
+- Brand names displayed as badges instead of plain text
+- Category color accent borders on card hover
+- Lint passes cleanly (exit code 0)
+
+---
+
+### Task ID: R9-D - Lazy Loading, Skeletons, and Styling Polish
+**Agent:** frontend-styling-expert
+**Task:** Add image lazy loading, loading skeletons, and polish overall styling with better animations and button consistency
+
+**Work Log:**
+
+**Part 1: Image Lazy Loading**
+- Added `loading="lazy"` to all `<img>` tags across dental components that don't need eager loading:
+  - `CataloguePage.tsx` - product card images (grid + list view)
+  - `HomePage.tsx` - featured product cards, recently viewed product images
+  - `ProductDetailPage.tsx` - lightbox thumbnails, product thumbnails, related products, recently viewed, "you may also like" images
+  - `BlogPage.tsx` - featured post image, blog grid post images
+  - `WishlistPage.tsx` - product images
+  - `PromotionsPage.tsx` - active promo images, coming soon item images
+  - `ArticleDetailPage.tsx` - article hero image, related articles
+  - `WishlistDrawer.tsx` - product images
+  - `CompareDrawer.tsx` - product images
+  - `CompareView.tsx` - product images
+  - `Navbar.tsx` - search result product images
+  - `QuoteWizardPage.tsx` - cart item images
+  - `QuickViewModal.tsx` - already had lazy loading
+- Added `loading="eager"` to the main product image in `ProductDetailPage.tsx` for fast initial load
+
+**Part 2: Loading State Improvements**
+- Enhanced `Skeletons.tsx` with new skeleton components:
+  - `CatalogueCardSkeleton` - mimics a product card with shimmer-animated image placeholder + text lines
+  - `BlogCardSkeleton` - mimics a blog card with shimmer image placeholder + text lines
+  - `ProductDetailSkeleton` - full product detail page skeleton with image gallery + info layout
+- Added `animate-shimmer` class to ALL existing skeleton components for consistent shimmer animation
+- Updated dark mode support in skeleton components (added `dark:bg-[#162236]`, `dark:border-white/10`)
+- `CatalogueGridSkeleton` now uses `CatalogueCardSkeleton` instead of `ProductCardSkeleton`
+- `BlogPageSkeleton` now uses `BlogCardSkeleton` instead of `BlogArticleCardSkeleton`
+- `FeaturedProductsSkeleton` now uses `CatalogueCardSkeleton`
+- All existing page-level skeleton wrappers already integrate via `ContentWithLoading`
+
+**Part 3: Styling Polish**
+- **Button consistency in ProductDetailPage.tsx:**
+  - Made "Demander un devis" the primary CTA with brand gold (#F0C05A), `font-bold`, full width
+  - Made "Ajouter au devis" secondary/outline style with border color #1E3A5F
+  - Ensured consistent `h-12` height across all action buttons
+  - Added `gap-2` to buttons with icons for consistent spacing
+
+- **Section separator improvements in ProductDetailPage.tsx:**
+  - Added `border-b border-gray-100 dark:border-white/5 pb-8 mb-8` to Description, Specifications, Key Features, and Videos sections
+
+- **Scroll progress indicator:**
+  - Verified `ScrollProgressBar` component is properly rendering at top of `ProductDetailPage`
+
+- **Typography improvements:**
+  - Added `tracking-tight` to all main section headings in `HomePage.tsx` (8 headings)
+  - Changed Categories heading from `text-2xl` to `text-3xl` for larger appearance
+
+**Files Modified:**
+1. `src/components/dental/CataloguePage.tsx` - lazy loading on 2 img tags
+2. `src/components/dental/HomePage.tsx` - lazy loading on 2 img tags, tracking-tight on 8 headings
+3. `src/components/dental/ProductDetailPage.tsx` - loading="eager" on main image, lazy on 5 images, button restructure, section separators
+4. `src/components/dental/BlogPage.tsx` - lazy loading on 2 img tags
+5. `src/components/dental/WishlistPage.tsx` - lazy loading on 1 img tag
+6. `src/components/dental/PromotionsPage.tsx` - lazy loading on 2 img tags
+7. `src/components/dental/ArticleDetailPage.tsx` - lazy loading on 2 img tags
+8. `src/components/dental/WishlistDrawer.tsx` - lazy loading on 1 img tag
+9. `src/components/dental/CompareDrawer.tsx` - lazy loading on 1 img tag
+10. `src/components/dental/CompareView.tsx` - lazy loading on 1 img tag
+11. `src/components/dental/Navbar.tsx` - lazy loading on 1 img tag (search results)
+12. `src/components/dental/QuoteWizardPage.tsx` - lazy loading on 1 img tag
+13. `src/components/dental/Skeletons.tsx` - 3 new skeleton components, shimmer animation on all, dark mode support
+
+**Stage Summary:**
+- 13 files modified
+- ~20 img tags now have `loading="lazy"`, 1 has `loading="eager"` (main product image)
+- 3 new skeleton components: CatalogueCardSkeleton, BlogCardSkeleton, ProductDetailSkeleton
+- All skeletons now use `animate-shimmer` for consistent loading animation
+- Primary CTA button in ProductDetailPage is now more prominent with brand gold color
+- Section dividers added between product detail sections
+- Typography improved with `tracking-tight` on all main headings
+- Lint passes cleanly (exit code 0)
+
+---
+
+### Task ID: R9-E - Accessibility Improvements & i18n Translations
+**Agent:** Main
+**Task:** Add accessibility improvements and enhance i18n translations
+
+**Work Log:**
+
+**Part 1: Accessibility Improvements**
+
+1. **Skip to Content Link** (`/src/app/page.tsx`)
+   - Added `<a href="#main-content">` skip link with `sr-only focus:not-sr-only` styling
+   - Added `id="main-content"` to `<main>` element
+   - Wrapped `<Navbar />` in `<header role="banner">`
+
+2. **ARIA Labels on Navbar** (`/src/components/dental/Navbar.tsx`)
+   - Added `aria-label` to search button (desktop + mobile) using `t('accessibility.search')`
+   - Added `aria-label` to cart button (desktop + mobile) using `t('accessibility.cart')`
+   - Added `aria-label` to menu/hamburger button using `t('accessibility.menu')`
+   - Added `aria-label` to search clear button using `t('nav.close')`
+   - Theme toggle already had `aria-label` ✓
+   - Added `aria-current="page"` to active desktop and mobile nav items
+   - Added `focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none` to all icon buttons
+
+3. **ARIA Labels on ProductDetailPage** (`/src/components/dental/ProductDetailPage.tsx`)
+   - Added `aria-label` to wishlist button (dynamic: add vs remove)
+   - Added `aria-label` to compare button (dynamic: add vs remove)
+   - Added `aria-label` to share button
+   - Added `aria-label` to print button
+   - Added `aria-label` to thumbnail gallery buttons
+   - Added `focus-visible:ring` styles to all action buttons
+   - Fixed thumbnail image alt text: `${productName} - ${index}`
+
+4. **ARIA Labels on CataloguePage** (`/src/components/dental/CataloguePage.tsx`)
+   - Added `aria-label` to wishlist heart button (dynamic: add vs remove)
+   - Added `aria-label` to compare buttons (dynamic: add vs remove)
+   - Added `aria-label` to filter button
+   - Added `aria-label` to quick view button
+   - Added `focus-visible:ring` styles to interactive elements
+
+5. **ARIA Labels on HomePage** (`/src/components/dental/HomePage.tsx`)
+   - Updated promo banner close button: changed from `aria-label="Fermer"` to `aria-label={t('nav.close')}`
+   - Added `aria-label` to quick view button using `t('products.quickView')`
+   - Added `focus-visible:ring` styles to interactive elements
+
+6. **WhatsAppBubble** (`/src/components/dental/WhatsAppBubble.tsx`)
+   - Already had `aria-label={tooltipText}` ✓
+   - Added `aria-label` to tooltip close button
+   - Added `focus-visible:ring` styles to both buttons
+
+7. **ChatBubble** (`/src/components/dental/ChatBubble.tsx`)
+   - Added `aria-label` to toggle button (dynamic: open/close, FR/AR)
+   - Added `aria-label` to close button
+   - Added `aria-label` to send button
+   - Added `aria-label` to message input
+   - Made placeholder i18n-aware (FR/AR)
+   - Added `focus-visible:ring` styles
+
+8. **ScrollToTop** (`/src/components/dental/ScrollToTop.tsx`)
+   - Changed `aria-label="Scroll to top"` to `aria-label="Retour en haut"`
+   - Added `focus-visible:ring` styles
+
+9. **Image Alt Texts**
+   - Verified all `<img>` tags across components have proper `alt` attributes
+   - Product images use `getProductName(product, language)` ✓
+   - Category images use `getCategoryName(cat, language)` ✓
+   - Blog images use `language === 'ar' ? post.title_ar : post.title_fr` ✓
+   - Fixed ProductDetailPage thumbnail alts: was `""`, now `${productName} - ${index}`
+   - Fixed Navbar search result image alts: was `""`, now product name
+   - Fixed AdminPanel blog post image alt: was `""`, now `post.title_fr`
+   - Decorative SVG in Footer: added `alt="" role="presentation"`
+
+10. **Focus-Visible Ring Styles** (`/src/app/globals.css`)
+    - Enhanced global `*:focus-visible` rule with gold outline
+    - Added specific rule for `button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible`
+    - Uses `box-shadow: 0 0 0 2px #F0C05A, 0 0 0 4px white` for ring effect
+    - Removes default outline on interactive elements
+
+11. **Semantic HTML Improvements**
+    - Added `<header role="banner">` wrapping Navbar in page.tsx
+    - Added `role="contentinfo"` to `<footer>` in Footer.tsx
+    - Added `aria-current="page"` to active navigation items in Navbar
+
+**Part 2: i18n Translation Improvements**
+
+12. **New Translation Keys** (`/src/lib/i18n.tsx`)
+    - Added French and Arabic translations for:
+      - `accessibility.skipToContent`: 'Aller au contenu principal' / 'انتقل إلى المحتوى الرئيسي'
+      - `accessibility.menu`: 'Menu principal' / 'القائمة الرئيسية'
+      - `accessibility.search`: 'Rechercher des produits' / 'البحث عن المنتجات'
+      - `accessibility.cart`: 'Panier devis' / 'سلة عروض الأسعار'
+      - `products.comingSoon`: 'Bientôt disponible' / 'قريباً'
+    - Note: `products.inStock`, `products.outOfStock`, `products.new`, `products.bestSeller` already existed in both languages ✓
+
+**Files Modified:**
+1. `/src/app/page.tsx` - Skip link, main id, header role, t() destructuring
+2. `/src/components/dental/Navbar.tsx` - ARIA labels, aria-current, focus ring
+3. `/src/components/dental/ProductDetailPage.tsx` - ARIA labels, alt texts, focus ring
+4. `/src/components/dental/CataloguePage.tsx` - ARIA labels, focus ring
+5. `/src/components/dental/HomePage.tsx` - ARIA labels, focus ring
+6. `/src/components/dental/WhatsAppBubble.tsx` - ARIA label on close, focus ring
+7. `/src/components/dental/ChatBubble.tsx` - ARIA labels, i18n placeholder, focus ring
+8. `/src/components/dental/ScrollToTop.tsx` - French aria-label, focus ring
+9. `/src/components/dental/Footer.tsx` - role="contentinfo", decorative SVG role
+10. `/src/components/dental/AdminPanel.tsx` - Blog image alt text
+11. `/src/app/globals.css` - Enhanced focus-visible ring styles
+12. `/src/lib/i18n.tsx` - New accessibility + product translation keys (FR + AR)
+
+**Stage Summary:**
+- 12 files modified
+- 25+ ARIA labels added across components
+- Skip-to-content link added for keyboard navigation
+- aria-current="page" on active nav items
+- Global focus-visible ring styles with brand gold color (#F0C05A)
+- Decorative SVG marked with role="presentation"
+- 5 new i18n translation keys (FR + AR)
+- Image alt texts verified and fixed where missing
+- Lint passes cleanly (exit code 0)
+
+---
+
+## Round 9 Summary - QA, Dark Mode, Product Detail Enhancement, Mobile & Accessibility
+
+**Date:** June 16, 2026
+
+### QA Findings (Pre-Round 9)
+- No runtime errors on any page
+- Dev server compiling successfully
+- Hydration warning (pre-existing, next-themes SSR/client mismatch - non-blocking)
+- VLM analysis identified: dark mode contrast issues, missing product specs/features, mobile touch targets too small, catalogue filter UX needed improvement
+
+### Changes Made
+
+#### R9-A: Dark Mode Contrast Fixes (10 files)
+- ProductDetailPage: breadcrumbs `dark:text-gray-300`, "Retour" `dark:text-gray-200 dark:border-gray-600`, badge `dark:bg-blue-900/50 dark:text-blue-200`
+- CataloguePage: filter labels, badges, descriptions `dark:text-gray-300`
+- HomePage: section descriptions, product descriptions, testimonial text `dark:text-gray-300`
+- Footer: legal links `text-blue-200/80`, copyright `text-blue-200/80`
+- Navbar: section labels, search UI `dark:text-gray-300`
+- BlogPage, AboutPage, ContactPage, PromotionsPage, WishlistPage: secondary text contrast improved
+- All changes use `dark:` prefix only - no light mode changes
+
+#### R9-B: Product Detail Enhancements (3 files)
+- **Specifications Table**: Professional table with alternating rows, responsive (table desktop, key-value mobile), ClipboardList icon header, gradient border animation
+- **Key Features Section**: Grid of feature cards (2-col desktop, 1-col mobile), emerald check icons, Sparkles icon header, stagger animation
+- **Product Videos Section**: YouTube/Vimeo iframe embed with 16:9 ratio, URL parser, fallback link, max 2 per row
+- **Product Info Cards**: 6-card horizontal grid (warranty, delivery, installation, training, origin, reference), scale-in animations
+- **getYouTubeEmbedUrl()**: Utility to parse YouTube/Vimeo URLs into embed URLs
+- Added sample video data to 2 default products in data-service.tsx
+- Added 11 new i18n keys (FR + AR) for product sections
+
+#### R9-C: Mobile & Catalogue UX (4 files)
+- **Mobile touch targets**: Nav icons `w-11 h-11 min-w-[44px] min-h-[44px]`, menu items `py-3.5 min-h-[44px]`
+- **Mobile search**: Taller input, close button, reduced dropdown max-height
+- **Hero mobile**: Smaller text, compact buttons, horizontal trust badges, reduced spacing
+- **Category cards**: Compact on mobile (`h-32 sm:h-52`, smaller icons/text)
+- **Active filter indicators**: Gold/amber tint on active category/brand filters + checkmark
+- **Filter count badge**: Shows active filter count on sidebar and mobile button
+- **Clear filters button**: Appears when any filter is active
+- **Brand badges**: Changed to shadcn Badge component with amber tint
+- **Grid/List view toggle**: Desktop toggle with LayoutGrid/List icons, smooth AnimatePresence transition
+- **Mobile filter sidebar**: Sheet component (slide-out drawer) with filter count, clear button, "Voir résultats" CTA
+- Added 4 new i18n keys (FR + AR)
+
+#### R9-D: Lazy Loading & Styling Polish (15+ files)
+- **Image lazy loading**: `loading="lazy"` on 18+ images across 12 components; `loading="eager"` on hero/main images
+- **New skeletons**: CatalogueCardSkeleton, BlogCardSkeleton, ProductDetailSkeleton with shimmer animation
+- **Button consistency**: "Demander un devis" primary CTA (gold #F0C05A, font-bold, full width); "Ajouter au devis" secondary/outline
+- **Section separators**: `border-b border-gray-100 dark:border-white/5 pb-8 mb-8` between major sections
+- **Typography**: `tracking-tight` on 8 section headings, Categories heading `text-3xl`
+
+#### R9-E: Accessibility & i18n (12 files)
+- **Skip-to-content link**: `sr-only focus:not-sr-only` at page top
+- **ARIA labels**: All icon buttons across Navbar, ProductDetail, Catalogue, Home, WhatsApp, Chat, ScrollToTop
+- **Focus visible**: Global `focus-visible:ring-2 ring-[#F0C05A] ring-offset-2` on all interactive elements
+- **Image alt texts**: Product images use product name, thumbnails use `${name} - ${index}`
+- **Semantic HTML**: `<header role="banner">`, `<footer role="contentinfo">`, `id="main-content"` on main
+- **Active nav indicator**: `aria-current="page"` on active navigation items
+- 5 new i18n keys (accessibility.*, products.comingSoon)
+
+#### Data Service Improvements
+- Supabase product mapping now provides default specs/features when empty
+- Default values: warranty "2 ans", delivery "2-4 semaines", origin "International", installation/training true
+- Default specs: Puissance, Garantie, Marque
+- Default features: Installation professionnelle, Formation, SAV 48h, Garantie constructeur
+
+### Verification Results
+- ✅ All pages load without errors (home, catalogue, blog, about, contact, devis, promotions, wishlist, product detail)
+- ✅ Dark mode contrast improved (VLM rating: 7/10, up from ~5/10)
+- ✅ Product detail shows Info Cards, Specifications Table, Key Features, Videos
+- ✅ Catalogue has grid/list toggle, active filter indicators, mobile Sheet drawer
+- ✅ Mobile touch targets meet 44px minimum
+- ✅ Lazy loading on all non-critical images
+- ✅ Skip-to-content link, ARIA labels, focus-visible styles
+- ✅ Lint passes cleanly
+- ✅ Dev server compiles without errors
+
+### Remaining Known Issues
+- Hydration warning (pre-existing, next-themes SSR/client mismatch - non-blocking)
+- Product image upload in admin panel not yet functional (URL input only)
+- Real Supabase CRUD for products/blog in admin not implemented
+- Some Supabase products may lack detailed specs/features (using defaults)
+- Performance optimization (code splitting) could be further improved
+
+### Next Phase Priorities
+1. Real Supabase CRUD for products/blog in admin panel (highest priority)
+2. Product image upload in admin (file upload to Supabase Storage)
+3. Advanced search with fuzzy matching and typo tolerance
+4. Product comparison enhancement (more detailed comparison)
+5. Performance audit and Lighthouse optimization
+6. More detailed product specs per category in Supabase

@@ -68,7 +68,7 @@ function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: nu
         ))}
       </div>
       {count !== undefined && (
-        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>
+        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>
           ({count})
         </span>
       )}
@@ -190,7 +190,7 @@ export default function WishlistPage() {
             <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
               {t('wishlist.empty')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+            <p className="text-gray-500 dark:text-gray-300 mb-8 max-w-sm mx-auto">
               {language === 'ar'
                 ? 'استعرض كتالوجنا وأضف المنتجات إلى المفضلة'
                 : 'Parcourez notre catalogue et ajoutez des produits à vos favoris'}
@@ -264,7 +264,7 @@ export default function WishlistPage() {
             >
               {wishlistProducts.length}
             </Badge>
-            <span className="text-gray-600 dark:text-gray-400 text-sm">
+            <span className="text-gray-600 dark:text-gray-300 text-sm">
               {language === 'ar' ? 'منتج محفوظ' : 'produit(s) sauvegardé(s)'}
             </span>
           </div>
@@ -333,6 +333,7 @@ export default function WishlistPage() {
                         <img
                           src={product.images[0]}
                           alt={productName}
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -380,7 +381,7 @@ export default function WishlistPage() {
 
                       {/* Category */}
                       {categoryName && (
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-1">
+                        <span className="text-[10px] text-gray-400 dark:text-gray-300 mb-1">
                           {categoryName}
                         </span>
                       )}

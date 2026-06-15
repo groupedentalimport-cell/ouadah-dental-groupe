@@ -404,7 +404,7 @@ export default function QuoteWizardPage() {
                         >
                           <div className="w-12 h-12 rounded-lg overflow-hidden bg-white shrink-0">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              <img src={item.image} alt={item.name} loading="lazy" className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <Package className="w-5 h-5 text-gray-300" />

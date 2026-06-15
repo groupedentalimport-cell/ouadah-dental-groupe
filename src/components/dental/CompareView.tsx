@@ -169,6 +169,7 @@ export default function CompareView() {
             <img
               src={p.images[0]}
               alt={getProductName(p, language)}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : (

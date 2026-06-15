@@ -1,0 +1,1460 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import React, { useEffect, useRef, useState, useCallback } from 'react';
+     4→     4→import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+     5→     5→import {
+     6→     6→  ArrowRight,
+     7→     7→  Shield,
+     8→     8→  Wrench,
+     9→     9→  Headphones,
+    10→    10→  Truck,
+    11→    11→  Armchair,
+    12→    12→  Monitor,
+    13→    13→  Scan,
+    14→    14→  ShieldCheck,
+    15→    15→  Wind,
+    16→    16→  Package,
+    17→    17→  WrenchIcon,
+    18→    18→  Lamp,
+    19→    19→  Building2,
+    20→    20→  MapPin,
+    21→    21→  Award,
+    22→    22→  Eye,
+    23→    23→  Stethoscope,
+    24→    24→  Quote,
+    25→    25→  Star,
+    26→    26→  Mail,
+    27→    27→  CheckCircle,
+    28→    28→  Clock,
+    29→    29→  Sparkles,
+    30→    30→  ChevronDown,
+    31→    31→  ChevronRight,
+    32→    32→  Play,
+    33→    33→  Users,
+    34→    34→  ArrowUp,
+    35→    35→  X,
+    36→    36→} from 'lucide-react';
+    37→    37→import { useTranslation } from '@/lib/i18n';
+    38→    38→import { useRouter } from '@/lib/router';
+    39→    39→import { useData } from '@/lib/data-service';
+    40→    40→import { Button } from '@/components/ui/button';
+    41→    41→import { Card, CardContent } from '@/components/ui/card';
+    42→    42→import { Badge } from '@/components/ui/badge';
+    43→    43→import { Input } from '@/components/ui/input';
+    44→    44→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    45→    45→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    46→    46→import QuickViewModal from '@/components/dental/QuickViewModal';
+    47→    47→import type { Product } from '@/lib/data-service';
+    48→    48→
+    49→    49→// Animated counter component - counts up with smooth easing
+    50→    50→function AnimatedCounter({ end, suffix, delay = 0 }: { end: number; suffix: string; delay?: number }) {
+    51→    51→  const [count, setCount] = useState(end); // Show final value immediately
+    52→    52→  const [animated, setAnimated] = useState(false);
+    53→    53→  const hasStartedRef = useRef(false);
+    54→    54→
+    55→    55→  // Use IntersectionObserver directly for more reliable detection
+    56→    56→  const ref = useRef<HTMLDivElement>(null);
+    57→    57→
+    58→    58→  useEffect(() => {
+    59→    59→    const el = ref.current;
+    60→    60→    if (!el || hasStartedRef.current) return;
+    61→    61→
+    62→    62→    const observer = new IntersectionObserver(
+    63→    63→      (entries) => {
+    64→    64→        entries.forEach((entry) => {
+    65→    65→          if (entry.isIntersecting && !hasStartedRef.current) {
+    66→    66→            hasStartedRef.current = true;
+    67→    67→            // Start from 0 and count up
+    68→    68→            setCount(0);
+    69→    69→            setAnimated(true);
+    70→    70→            const startTime = performance.now() + delay;
+    71→    71→            const duration = 1800;
+    72→    72→            let rafId: number;
+    73→    73→
+    74→    74→            const animate = (currentTime: number) => {
+    75→    75→              const elapsed = currentTime - startTime;
+    76→    76→              if (elapsed < 0) {
+    77→    77→                rafId = requestAnimationFrame(animate);
+    78→    78→                return;
+    79→    79→              }
+    80→    80→              const progress = Math.min(elapsed / duration, 1);
+    81→    81→              const eased = 1 - Math.pow(1 - progress, 3);
+    82→    82→              setCount(Math.round(eased * end));
+    83→    83→              if (progress < 1) {
+    84→    84→                rafId = requestAnimationFrame(animate);
+    85→    85→              }
+    86→    86→            };
+    87→    87→
+    88→    88→            rafId = requestAnimationFrame(animate);
+    89→    89→            observer.disconnect();
+    90→    90→          }
+    91→    91→        });
+    92→    92→      },
+    93→    93→      { threshold: 0.1 }
+    94→    94→    );
+    95→    95→
+    96→    96→    observer.observe(el);
+    97→    97→    return () => observer.disconnect();
+    98→    98→  }, [end, delay]);
+    99→    99→
+   100→   100→  return (
+   101→   101→    <div ref={ref} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1">
+   102→   102→      {count}<span style={{ color: '#F0C05A' }}>{suffix}</span>
+   103→   103→    </div>
+   104→   104→  );
+   105→   105→}
+   106→   106→
+   107→   107→const categoryIcons: Record<string, React.ReactNode> = {
+   108→   108→  Armchair: <Armchair className="w-8 h-8" />,
+   109→   109→  Monitor: <Monitor className="w-8 h-8" />,
+   110→   110→  Scan: <Scan className="w-8 h-8" />,
+   111→   111→  Shield: <ShieldCheck className="w-8 h-8" />,
+   112→   112→  Wind: <Wind className="w-8 h-8" />,
+   113→   113→  Package: <Package className="w-8 h-8" />,
+   114→   114→  Wrench: <WrenchIcon className="w-8 h-8" />,
+   115→   115→  Lamp: <Lamp className="w-8 h-8" />,
+   116→   116→};
+   117→   117→
+   118→   118→// Category image mapping based on slug
+   119→   119→const categoryImages: Record<string, string> = {
+   120→   120→  fauteuils: '/categories/fauteuils.jpg',
+   121→   121→  unites: '/categories/unites.jpg',
+   122→   122→  radiologie: '/categories/radiologie.jpg',
+   123→   123→  sterilisation: '/categories/sterilisation.jpg',
+   124→   124→  pneumatiques: '/categories/pneumatiques.jpg',
+   125→   125→  consommables: '/categories/consommables.jpg',
+   126→   126→  instruments: '/categories/instruments.jpg',
+   127→   127→  mobilier: '/categories/mobilier.jpg',
+   128→   128→};
+   129→   129→
+   130→   130→// Floating geometric particles for hero background
+   131→   131→const heroParticles = [
+   132→   132→  // Circles
+   133→   133→  { shape: 'circle' as const, x: '8%', size: 6, color: '#F0C05A', opacity: 0.12, duration: 18, delay: 0 },
+   134→   134→  { shape: 'circle' as const, x: '92%', size: 4, color: '#1E3A5F', opacity: 0.15, duration: 22, delay: 3 },
+   135→   135→  { shape: 'circle' as const, x: '45%', size: 5, color: '#F0C05A', opacity: 0.08, duration: 20, delay: 7 },
+   136→   136→  { shape: 'circle' as const, x: '72%', size: 3, color: '#F0C05A', opacity: 0.10, duration: 16, delay: 5 },
+   137→   137→  // Diamonds
+   138→   138→  { shape: 'diamond' as const, x: '18%', size: 8, color: '#1E3A5F', opacity: 0.10, duration: 24, delay: 2 },
+   139→   139→  { shape: 'diamond' as const, x: '65%', size: 6, color: '#F0C05A', opacity: 0.08, duration: 20, delay: 8 },
+   140→   140→  { shape: 'diamond' as const, x: '88%', size: 5, color: '#1E3A5F', opacity: 0.12, duration: 26, delay: 11 },
+   141→   141→  // Crosses
+   142→   142→  { shape: 'cross' as const, x: '30%', size: 7, color: '#F0C05A', opacity: 0.10, duration: 19, delay: 4 },
+   143→   143→  { shape: 'cross' as const, x: '78%', size: 5, color: '#1E3A5F', opacity: 0.08, duration: 23, delay: 9 },
+   144→   144→  { shape: 'cross' as const, x: '52%', size: 6, color: '#F0C05A', opacity: 0.06, duration: 21, delay: 13 },
+   145→   145→  // Extra subtle circles
+   146→   146→  { shape: 'circle' as const, x: '25%', size: 3, color: '#F0C05A', opacity: 0.06, duration: 28, delay: 6 },
+   147→   147→  { shape: 'circle' as const, x: '58%', size: 4, color: '#1E3A5F', opacity: 0.08, duration: 25, delay: 15 },
+   148→   148→];
+   149→   149→
+   150→   150→// Star Rating component
+   151→   151→function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+   152→   152→  const stars = [];
+   153→   153→  const fullStars = Math.floor(rating);
+   154→   154→  const hasHalf = rating - fullStars >= 0.5;
+   155→   155→  for (let i = 0; i < 5; i++) {
+   156→   156→    if (i < fullStars) stars.push('full');
+   157→   157→    else if (i === fullStars && hasHalf) stars.push('half');
+   158→   158→    else stars.push('empty');
+   159→   159→  }
+   160→   160→  return (
+   161→   161→    <div className="flex items-center gap-1">
+   162→   162→      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+   163→   163→        {stars.map((type, i) => (
+   164→   164→          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+   165→   165→        ))}
+   166→   166→      </div>
+   167→   167→      {count !== undefined && (
+   168→   168→        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+   169→   169→      )}
+   170→   170→    </div>
+   171→   171→  );
+   172→   172→}
+   173→   173→
+   174→   174→export default function HomePage() {
+   175→   175→  const { t, language, isRTL } = useTranslation();
+   176→   176→  const { navigate } = useRouter();
+   177→   177→  const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
+   178→   178→  const addItem = useQuoteCart((s) => s.addItem);
+   179→   179→  const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
+   180→   180→  const recentlyViewedItems = useRecentlyViewed((s) => s.items);
+   181→   181→
+   182→   182→  const featuredProducts = products.filter((p) => p.is_featured).slice(0, 6);
+   183→   183→
+   184→   184→  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+   185→   185→  const [quickViewOpen, setQuickViewOpen] = useState(false);
+   186→   186→
+   187→   187→  // Parallax scroll for hero background
+   188→   188→  const heroRef = useRef<HTMLElement>(null);
+   189→   189→  const { scrollY } = useScroll();
+   190→   190→  const heroY = useTransform(scrollY, [0, 600], [0, 200]);
+   191→   191→  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0.3]);
+   192→   192→
+   193→   193→  // Stats with icons
+   194→   194→  const stats = [
+   195→   195→    { end: 500, suffix: '+', label: t('stats.clinics'), icon: <Building2 className="w-7 h-7" /> },
+   196→   196→    { end: 48, suffix: '', label: t('stats.wilayas'), icon: <MapPin className="w-7 h-7" /> },
+   197→   197→    { end: 15, suffix: '+', label: t('stats.brands'), icon: <Award className="w-7 h-7" /> },
+   198→   198→    { end: 48, suffix: 'h', label: t('stats.sav'), icon: <Headphones className="w-7 h-7" /> },
+   199→   199→  ];
+   200→   200→
+   201→   201→  const whyChooseUs = [
+   202→   202→    {
+   203→   203→      icon: <Shield className="w-7 h-7" />,
+   204→   204→      title: t('products.warranty'),
+   205→   205→      desc: language === 'ar'
+   206→   206→        ? 'ضمان من 2 إلى 5 سنوات حسب المنتج، مع خدمة ما بعد البيع سريعة'
+   207→   207→        : 'Garantie de 2 à 5 ans selon le produit, avec service après-vente réactif',
+   208→   208→      accent: '#2A5F8F',
+   209→   209→      bgColor: 'rgba(42,95,143,0.08)',
+   210→   210→    },
+   211→   211→    {
+   212→   212→      icon: <Wrench className="w-7 h-7" />,
+   213→   213→      title: t('products.installation'),
+   214→   214→      desc: language === 'ar'
+   215→   215→        ? 'تركيب احترافي وتدريب مشمولان مع كل معدات'
+   216→   216→        : 'Installation professionnelle et formation incluses avec chaque équipement',
+   217→   217→      accent: '#F0C05A',
+   218→   218→      bgColor: 'rgba(240,192,90,0.10)',
+   219→   219→    },
+   220→   220→    {
+   221→   221→      icon: <Headphones className="w-7 h-7" />,
+   222→   222→      title: 'SAV 48h',
+   223→   223→      desc: language === 'ar'
+   224→   224→        ? 'خدمة ما بعد البيع السريعة تغطي 48 ولاية في أقل من 48 ساعة'
+   225→   225→        : 'Service après-vente réactif couvrant 48 wilayas en moins de 48h',
+   226→   226→      accent: '#3B8C6E',
+   227→   227→      bgColor: 'rgba(59,140,110,0.08)',
+   228→   228→    },
+   229→   229→    {
+   230→   230→      icon: <Truck className="w-7 h-7" />,
+   231→   231→      title: t('products.delivery'),
+   232→   232→      desc: language === 'ar'
+   233→   233→        ? 'توصيل في 58 ولاية جزائرية، مدة التسليم من 1 إلى 6 أسابيع'
+   234→   234→        : 'Livraison dans les 58 wilayas algériennes, délai de 1 à 6 semaines',
+   235→   235→      accent: '#C0564F',
+   236→   236→      bgColor: 'rgba(192,86,79,0.08)',
+   237→   237→    },
+   238→   238→  ];
+   239→   239→
+   240→   240→  const partnerBrands = [
+   241→   241→    { name: 'OWANDY', subtext: 'Radiologie' },
+   242→   242→    { name: 'DENTALEZ', subtext: 'Fauteuils' },
+   243→   243→    { name: 'RITTER', subtext: 'Unités' },
+   244→   244→    { name: 'NSK', subtext: 'Instruments' },
+   245→   245→    { name: 'VDW', subtext: 'Endodontie' },
+   246→   246→    { name: 'SEILER', subtext: 'Microscopes' },
+   247→   247→  ];
+   248→   248→
+   249→   249→  const testimonials = [
+   250→   250→    {
+   251→   251→      text: language === 'ar'
+   252→   252→        ? 'زودنا ODG بكرسي أسنان بجودة استثنائية. كان التركيب سريعاً والفريق محترفاً جداً.'
+   253→   253→        : 'ODG nous a fourni un fauteuil dentaire de qualité exceptionnelle. L\'installation a été rapide et l\'équipe très professionnelle.',
+   254→   254→      author: 'Dr. Karim Benali',
+   255→   255→      clinic: language === 'ar' ? 'عيادة الأسنان الأمل، وهران' : 'Clinique Dentaire El Amel, Oran',
+   256→   256→      stars: 5,
+   257→   257→    },
+   258→   258→    {
+   259→   259→      text: language === 'ar'
+   260→   260→        ? 'خدمة ما بعد البيع رائعة. في أقل من 48 ساعة، كان الفني في الموقع لحل المشكلة التقنية.'
+   261→   261→        : 'Le service après-vente est remarquable. En moins de 48h, un technicien était sur place pour résoudre un problème technique.',
+   262→   262→      author: 'Dr. Sarah Mansouri',
+   263→   263→      clinic: language === 'ar' ? 'عيادة ميدستار، الجزائر' : 'Cabinet Dentaire Medstar, Alger',
+   264→   264→      stars: 5,
+   265→   265→    },
+   266→   266→    {
+   267→   267→      text: language === 'ar'
+   268→   268→        ? 'نجهز عياداتنا الـ 12 حصرياً مع ODG منذ 2015. جودة المنتجات وخدمة ما بعد البيع لا مثيل لها.'
+   269→   269→        : 'Nous équipons nos 12 cabinets exclusivement avec ODG depuis 2015. La qualité des produits et le SAV sont incomparables.',
+   270→   270→      author: 'Dr. Ahmed Tlemçani',
+   271→   271→      clinic: language === 'ar' ? 'مجموعة دنتال بلس، قسنطينة' : 'Groupe Dental Plus, Constantine',
+   272→   272→      stars: 5,
+   273→   273→    },
+   274→   274→  ];
+   275→   275→
+   276→   276→  const [newsletterEmail, setNewsletterEmail] = useState('');
+   277→   277→  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+   278→   278→  const [newsletterLoading, setNewsletterLoading] = useState(false);
+   279→   279→  const [promoDismissed, setPromoDismissed] = useState(false);
+   280→   280→
+   281→   281→  useEffect(() => {
+   282→   282→    const dismissed = localStorage.getItem('odg_promo_dismissed');
+   283→   283→    if (dismissed === 'true') setPromoDismissed(true);
+   284→   284→  }, []);
+   285→   285→
+   286→   286→  const dismissPromo = useCallback(() => {
+   287→   287→    setPromoDismissed(true);
+   288→   288→    localStorage.setItem('odg_promo_dismissed', 'true');
+   289→   289→  }, []);
+   290→   290→
+   291→   291→  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+   292→   292→    e.preventDefault();
+   293→   293→    if (newsletterEmail.trim()) {
+   294→   294→      setNewsletterLoading(true);
+   295→   295→      try {
+   296→   296→        const res = await fetch('/api/newsletter', {
+   297→   297→          method: 'POST',
+   298→   298→          headers: { 'Content-Type': 'application/json' },
+   299→   299→          body: JSON.stringify({ email: newsletterEmail.trim() }),
+   300→   300→        });
+   301→   301→        if (res.ok) {
+   302→   302→          setNewsletterSubmitted(true);
+   303→   303→          setNewsletterEmail('');
+   304→   304→          setTimeout(() => setNewsletterSubmitted(false), 5000);
+   305→   305→        }
+   306→   306→      } catch {
+   307→   307→        setNewsletterSubmitted(true);
+   308→   308→        setNewsletterEmail('');
+   309→   309→        setTimeout(() => setNewsletterSubmitted(false), 5000);
+   310→   310→      } finally {
+   311→   311→        setNewsletterLoading(false);
+   312→   312→      }
+   313→   313→    }
+   314→   314→  };
+   315→   315→
+   316→   316→  const sectionVariants = {
+   317→   317→    hidden: { opacity: 0 },
+   318→   318→    visible: {
+   319→   319→      opacity: 1,
+   320→   320→      transition: { staggerChildren: 0.08 },
+   321→   321→    },
+   322→   322→  };
+   323→   323→
+   324→   324→  const itemVariants = {
+   325→   325→    hidden: { opacity: 0, y: 25 },
+   326→   326→    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
+   327→   327→  };
+   328→   328→
+   329→   329→  return (
+   330→   330→    <div className="overflow-hidden">
+   331→   331→      {/* ==================== HERO SECTION ==================== */}
+   332→   332→      <section ref={heroRef} className="relative min-h-[82vh] flex items-center justify-center overflow-hidden">
+   333→   333→
+   334→   334→        {/* Background image with parallax effect */}
+   335→   335→        <motion.div
+   336→   336→          className="absolute inset-0 bg-cover bg-center -top-20 -bottom-20"
+   337→   337→          style={{
+   338→   338→            backgroundImage: `url('/images/hero-dental.jpg')`,
+   339→   339→            y: heroY,
+   340→   340→          }}
+   341→   341→        />
+   342→   342→        {/* Animated gradient overlay */}
+   343→   343→        <motion.div
+   344→   344→          className="absolute inset-0"
+   345→   345→          animate={{
+   346→   346→            background: [
+   347→   347→              'linear-gradient(135deg, rgba(30,58,95,0.82) 0%, rgba(45,90,142,0.72) 40%, rgba(26,74,110,0.78) 70%, rgba(15,43,71,0.85) 100%)',
+   348→   348→              'linear-gradient(135deg, rgba(15,43,71,0.85) 0%, rgba(30,58,95,0.75) 40%, rgba(45,90,142,0.72) 70%, rgba(30,58,95,0.82) 100%)',
+   349→   349→              'linear-gradient(135deg, rgba(30,58,95,0.82) 0%, rgba(45,90,142,0.72) 40%, rgba(26,74,110,0.78) 70%, rgba(15,43,71,0.85) 100%)',
+   350→   350→            ],
+   351→   351→          }}
+   352→   352→          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+   353→   353→        />
+   354→   354→        {/* Floating geometric particles as background decoration */}
+   355→   355→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   356→   356→          {heroParticles.map((p, i) => (
+   357→   357→            <div
+   358→   358→              key={i}
+   359→   359→              className="hero-particle absolute"
+   360→   360→              style={{
+   361→   361→                left: p.x,
+   362→   362→                bottom: '-10px',
+   363→   363→                width: p.size,
+   364→   364→                height: p.size,
+   365→   365→                backgroundColor: p.color,
+   366→   366→                opacity: p.opacity,
+   367→   367→                borderRadius: p.shape === 'circle' ? '50%' : p.shape === 'diamond' ? '2px' : '0',
+   368→   368→                transform: p.shape === 'diamond' ? 'rotate(45deg)' : 'none',
+   369→   369→                animationDuration: `${p.duration}s`,
+   370→   370→                animationDelay: `${p.delay}s`,
+   371→   371→                ...(p.shape === 'cross' ? {
+   372→   372→                  backgroundColor: 'transparent',
+   373→   373→                  width: p.size,
+   374→   374→                  height: p.size,
+   375→   375→                  position: 'absolute' as const,
+   376→   376→                } : {}),
+   377→   377→              }}
+   378→   378→            >
+   379→   379→              {p.shape === 'cross' && (
+   380→   380→                <svg width={p.size} height={p.size} viewBox={`0 0 ${p.size} ${p.size}`} style={{ opacity: p.opacity / 0.1 }}>
+   381→   381→                  <line x1="50%" y1="0" x2="50%" y2="100%" stroke={p.color} strokeWidth="1.5" />
+   382→   382→                  <line x1="0" y1="50%" x2="100%" y2="50%" stroke={p.color} strokeWidth="1.5" />
+   383→   383→                </svg>
+   384→   384→              )}
+   385→   385→            </div>
+   386→   386→          ))}
+   387→   387→        </div>
+   388→   388→        {/* Decorative shapes */}
+   389→   389→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   390→   390→          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
+   391→   391→          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+   392→   392→          <div className="absolute top-1/4 right-1/4 w-48 h-48 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+   393→   393→          {/* Grid pattern */}
+   394→   394→          <div className="absolute inset-0 opacity-[0.04]"
+   395→   395→            style={{
+   396→   396→              backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+   397→   397→              backgroundSize: '40px 40px',
+   398→   398→            }}
+   399→   399→          />
+   400→   400→        </div>
+   401→   401→
+   402→   402→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+   403→   403→          <motion.div
+   404→   404→            initial={{ opacity: 0, y: 35 }}
+   405→   405→            animate={{ opacity: 1, y: 0 }}
+   406→   406→            transition={{ duration: 0.7, ease: 'easeOut' }}
+   407→   407→          >
+   408→   408→            <Badge
+   409→   409→              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5 relative overflow-hidden hero-badge-responsive"
+   410→   410→              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   411→   411→            >
+   412→   412→              <motion.div
+   413→   413→                className="absolute inset-0"
+   414→   414→                style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)' }}
+   415→   415→                animate={{ x: ['-100%', '100%'] }}
+   416→   416→                transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+   417→   417→              />
+   418→   418→              <Sparkles className="w-3.5 h-3.5 relative z-10" />
+   419→   419→              <motion.span
+   420→   420→                className="relative z-10 inline-block overflow-hidden whitespace-nowrap"
+   421→   421→                initial={{ maxWidth: 0 }}
+   422→   422→                animate={{ maxWidth: 300 }}
+   423→   423→                transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
+   424→   424→              >
+   425→   425→                {t('hero.subtitle')}
+   426→   426→              </motion.span>
+   427→   427→            </Badge>
+   428→   428→          </motion.div>
+   429→   429→
+   430→   430→          <motion.h1
+   431→   431→            initial={{ opacity: 0, y: 35 }}
+   432→   432→            animate={{ opacity: 1, y: 0 }}
+   433→   433→            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
+   434→   434→            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-5 hero-title-responsive"
+   435→   435→          >
+   436→   436→            {t('hero.title')}
+   437→   437→          </motion.h1>
+   438→   438→
+   439→   439→          <motion.p
+   440→   440→            initial={{ opacity: 0, y: 35 }}
+   441→   441→            animate={{ opacity: 1, y: 0 }}
+   442→   442→            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}
+   443→   443→            className="text-lg sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-8 leading-relaxed hero-subtitle-responsive"
+   444→   444→          >
+   445→   445→            {t('hero.description')}
+   446→   446→          </motion.p>
+   447→   447→
+   448→   448→          <motion.div
+   449→   449→            initial={{ opacity: 0, y: 35 }}
+   450→   450→            animate={{ opacity: 1, y: 0 }}
+   451→   451→            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.36 }}
+   452→   452→            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+   453→   453→          >
+   454→   454→            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+   455→   455→              <Button
+   456→   456→                onClick={() => navigate('/catalogue')}
+   457→   457→                size="lg"
+   458→   458→                className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+   459→   459→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   460→   460→              >
+   461→   461→                {t('hero.cta.catalogue')}
+   462→   462→                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+   463→   463→              </Button>
+   464→   464→            </motion.div>
+   465→   465→            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+   466→   466→              <Button
+   467→   467→                onClick={() => navigate('/devis')}
+   468→   468→                size="lg"
+   469→   469→                variant="outline"
+   470→   470→                className="text-base font-semibold px-8 h-13 border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg bg-white/10"
+   471→   471→              >
+   472→   472→                {t('hero.cta.quote')}
+   473→   473→                <ChevronRight className="w-5 h-5" />
+   474→   474→              </Button>
+   475→   475→            </motion.div>
+   476→   476→          </motion.div>
+   477→   477→
+   478→   478→          {/* Trust badges */}
+   479→   479→          <motion.div
+   480→   480→            initial={{ opacity: 0, y: 20 }}
+   481→   481→            animate={{ opacity: 1, y: 0 }}
+   482→   482→            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.6 }}
+   483→   483→            className="mt-10 flex flex-wrap items-center justify-center gap-5 sm:gap-10"
+   484→   484→          >
+   485→   485→            {[
+   486→   486→              { icon: <Award className="w-5 h-5" />, text: language === 'ar' ? '15+ سنة خبرة' : '15+ ans d\'expérience' },
+   487→   487→              { icon: <Clock className="w-5 h-5" />, text: language === 'ar' ? 'خدمة 48 ساعة' : 'Service 48h' },
+   488→   488→              { icon: <Wrench className="w-5 h-5" />, text: language === 'ar' ? 'تركيب مشمول' : 'Installation incluse' },
+   489→   489→            ].map((badge, i) => (
+   490→   490→              <div
+   491→   491→                key={i}
+   492→   492→                className="flex items-center gap-2.5 text-white/80 dark:text-white/90 text-sm font-medium bg-white/5 dark:bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10 dark:border-white/15"
+   493→   493→              >
+   494→   494→                <span style={{ color: '#F0C05A' }}>{badge.icon}</span>
+   495→   495→                {badge.text}
+   496→   496→              </div>
+   497→   497→            ))}
+   498→   498→          </motion.div>
+   499→   499→
+   500→   500→          {/* Floating "Trusted by" badge */}
+   501→   501→          <motion.div
+   502→   502→            initial={{ opacity: 0, scale: 0.8 }}
+   503→   503→            animate={{ opacity: 1, scale: 1 }}
+   504→   504→            transition={{ duration: 0.6, ease: 'easeOut', delay: 1 }}
+   505→   505→            className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20"
+   506→   506→          >
+   507→   507→            <div className="flex -space-x-2">
+   508→   508→              {['KB', 'SM', 'AT'].map((initials, idx) => (
+   509→   509→                <div
+   510→   510→                  key={idx}
+   511→   511→                  className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white/30"
+   512→   512→                  style={{ backgroundColor: idx === 0 ? '#2A5F8F' : idx === 1 ? '#3B8C6E' : '#C0564F', color: '#fff' }}
+   513→   513→                >
+   514→   514→                  {initials}
+   515→   515→                </div>
+   516→   516→              ))}
+   517→   517→            </div>
+   518→   518→            <motion.span
+   519→   519→              className="text-white/80 dark:text-white/90 text-sm font-medium inline-block"
+   520→   520→              whileHover={{ scale: 1.08, y: -2 }}
+   521→   521→              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+   522→   522→            >
+   523→   523→              {language === 'ar' ? '+500 عيادة تثق بنا' : '500+ cliniques nous font confiance'}
+   524→   524→            </motion.span>
+   525→   525→          </motion.div>
+   526→   526→        </div>
+   527→   527→
+   528→   528→        {/* Scroll down indicator */}
+   529→   529→        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+   530→   530→          <ChevronDown className="w-6 h-6 text-white/60 animate-scroll-hint" />
+   531→   531→        </div>
+   532→   532→
+   533→   533→        {/* Bottom wave */}
+   534→   534→        <div className="absolute bottom-0 left-0 right-0">
+   535→   535→          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+   536→   536→            <path
+   537→   537→              d="M0,60 C360,100 720,20 1440,60 L1440,100 L0,100 Z"
+   538→   538→              fill="#1E3A5F"
+   539→   539→            />
+   540→   540→          </svg>
+   541→   541→        </div>
+   542→   542→      </section>
+   543→   543→
+   544→   544→      {/* ==================== PROMOTIONAL BANNER ==================== */}
+   545→   545→      <AnimatePresence>
+   546→   546→        {!promoDismissed && (
+   547→   547→          <motion.div
+   548→   548→            initial={{ y: -60, opacity: 0 }}
+   549→   549→            animate={{ y: 0, opacity: 1 }}
+   550→   550→            exit={{ y: -60, opacity: 0 }}
+   551→   551→            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+   552→   552→            className="relative glass"
+   553→   553→          >
+   554→   554→            {/* Gold top accent line */}
+   555→   555→            <div className="h-[2px] w-full" style={{ backgroundColor: '#F0C05A' }} />
+   556→   556→            <div
+   557→   557→              className="py-3 px-4 sm:px-6 lg:px-8"
+   558→   558→              style={{ background: 'linear-gradient(90deg, #1E3A5F 0%, #2A5F8F 50%, #1E3A5F 100%)' }}
+   559→   559→            >
+   560→   560→              <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+   561→   561→                <div className="flex items-center gap-3 min-w-0 flex-1">
+   562→   562→                  <span className="text-xl shrink-0">🎁</span>
+   563→   563→                  <p className="text-white text-sm sm:text-base font-medium truncate">
+   564→   564→                    {t('promo.text')}
+   565→   565→                  </p>
+   566→   566→                </div>
+   567→   567→                <div className="flex items-center gap-2 shrink-0">
+   568→   568→                  <Button
+   569→   569→                    size="sm"
+   570→   570→                    className="h-8 px-4 text-xs font-semibold shadow-md hover:shadow-lg transition-all touch-target"
+   571→   571→                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   572→   572→                    onClick={() => navigate('/catalogue')}
+   573→   573→                  >
+   574→   574→                    {t('promo.cta')}
+   575→   575→                  </Button>
+   576→   576→                  <button
+   577→   577→                    onClick={dismissPromo}
+   578→   578→                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10 touch-target flex items-center justify-center"
+   579→   579→                    aria-label="Fermer"
+   580→   580→                  >
+   581→   581→                    <X className="w-4 h-4" />
+   582→   582→                  </button>
+   583→   583→                </div>
+   584→   584→              </div>
+   585→   585→            </div>
+   586→   586→            {/* Gold bottom accent line */}
+   587→   587→            <div className="h-[2px] w-full" style={{ backgroundColor: '#F0C05A' }} />
+   588→   588→          </motion.div>
+   589→   589→        )}
+   590→   590→      </AnimatePresence>
+   591→   591→
+   592→   592→      {/* ==================== STATS SECTION ==================== */}
+   593→   593→      <section className="py-12 sm:py-14 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+   594→   594→        {/* Animated gradient background */}
+   595→   595→        <motion.div
+   596→   596→          className="absolute inset-0 opacity-30"
+   597→   597→          animate={{
+   598→   598→            background: [
+   599→   599→              'radial-gradient(ellipse at 20% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+   600→   600→              'radial-gradient(ellipse at 80% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+   601→   601→              'radial-gradient(ellipse at 20% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+   602→   602→            ],
+   603→   603→          }}
+   604→   604→          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+   605→   605→        />
+   606→   606→        {/* Subtle background pattern */}
+   607→   607→        <div className="absolute inset-0 opacity-[0.03]"
+   608→   608→          style={{
+   609→   609→            backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+   610→   610→            backgroundSize: '28px 28px',
+   611→   611→          }}
+   612→   612→        />
+   613→   613→
+   614→   614→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   615→   615→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-y lg:divide-y-0 divide-white/[0.08]">
+   616→   616→            {stats.map((stat, i) => (
+   617→   617→              <motion.div
+   618→   618→                key={i}
+   619→   619→                initial={{ opacity: 0, y: 20 }}
+   620→   620→                whileInView={{ opacity: 1, y: 0 }}
+   621→   621→                viewport={{ once: true, margin: '-80px' }}
+   622→   622→                transition={{ delay: i * 0.1, duration: 0.4 }}
+   623→   623→                className="text-center group py-6 sm:py-8 px-4"
+   624→   624→              >
+   625→   625→                <div
+   626→   626→                  className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-110"
+   627→   627→                  style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#F0C05A' }}
+   628→   628→                >
+   629→   629→                  {stat.icon}
+   630→   630→                </div>
+   631→   631→                <AnimatedCounter end={stat.end} suffix={stat.suffix} />
+   632→   632→                <div className="text-blue-200/80 text-xs sm:text-sm font-medium">{stat.label}</div>
+   633→   633→              </motion.div>
+   634→   634→            ))}
+   635→   635→          </div>
+   636→   636→        </div>
+   637→   637→
+   638→   638→        {/* Bottom wave transition */}
+   639→   639→        <div className="absolute bottom-0 left-0 right-0 wave-divider">
+   640→   640→          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" preserveAspectRatio="none">
+   641→   641→            <path
+   642→   642→              d="M0,30 C240,70 480,10 720,50 C960,90 1200,20 1440,40 L1440,80 L0,80 Z"
+   643→   643→              className="fill-gray-50 dark:fill-[#0c1622]"
+   644→   644→            />
+   645→   645→            <path
+   646→   646→              d="M0,50 C360,20 720,70 1080,30 C1260,15 1380,45 1440,50 L1440,80 L0,80 Z"
+   647→   647→              className="fill-gray-50/50 dark:fill-[#0c1622]/50"
+   648→   648→            />
+   649→   649→          </svg>
+   650→   650→        </div>
+   651→   651→      </section>
+   652→   652→
+   653→   653→      {/* ==================== CATEGORIES SECTION ==================== */}
+   654→   654→      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-[#0c1622]">
+   655→   655→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   656→   656→          <motion.div
+   657→   657→            initial={{ opacity: 0, y: 20 }}
+   658→   658→            whileInView={{ opacity: 1, y: 0 }}
+   659→   659→            viewport={{ once: true, margin: '-80px' }}
+   660→   660→            transition={{ duration: 0.5 }}
+   661→   661→            className="text-center mb-10"
+   662→   662→          >
+   663→   663→            <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block gradient-border-animated px-6 py-2" style={{ color: '#1E3A5F' }}>
+   664→   664→              <span className="dark:text-[#7AB0E0]">
+   665→   665→              {t('categories.title')}
+   666→   666→              </span>
+   667→   667→              {/* Gold underline */}
+   668→   668→              <motion.span
+   669→   669→                className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 rounded-full"
+   670→   670→                style={{ backgroundColor: '#F0C05A' }}
+   671→   671→                initial={{ width: 0 }}
+   672→   672→                whileInView={{ width: '60%' }}
+   673→   673→                viewport={{ once: true }}
+   674→   674→                transition={{ duration: 0.6, delay: 0.3 }}
+   675→   675→              />
+   676→   676→            </h2>
+   677→   677→            <p className="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto mt-4">
+   678→   678→              {t('categories.subtitle')}
+   679→   679→            </p>
+   680→   680→          </motion.div>
+   681→   681→
+   682→   682→          <motion.div
+   683→   683→            variants={sectionVariants}
+   684→   684→            initial="hidden"
+   685→   685→            whileInView="visible"
+   686→   686→            viewport={{ once: true, margin: '-80px' }}
+   687→   687→            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+   688→   688→          >
+   689→   689→            {categories.map((cat, idx) => {
+   690→   690→              const imgSrc = categoryImages[cat.slug] || cat.image || '';
+   691→   691→              return (
+   692→   692→                <motion.div
+   693→   693→                  key={cat.id}
+   694→   694→                  variants={itemVariants}
+   695→   695→                  whileHover={{ y: -4 }}
+   696→   696→                  transition={{ duration: 0.2 }}
+   697→   697→                >
+   698→   698→                  <div
+   699→   699→                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-44 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift"
+   700→   700→                    onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
+   701→   701→                  >
+   702→   702→                    {/* Background image */}
+   703→   703→                    {imgSrc ? (
+   704→   704→                      <div
+   705→   705→                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+   706→   706→                        style={{ backgroundImage: `url('${imgSrc}')` }}
+   707→   707→                      />
+   708→   708→                    ) : (
+   709→   709→                      <div
+   710→   710→                        className="absolute inset-0 flex items-center justify-center"
+   711→   711→                        style={{ backgroundColor: '#1E3A5F' }}
+   712→   712→                      >
+   713→   713→                        {categoryIcons[cat.icon] || <Package className="w-12 h-12 text-white/30" />}
+   714→   714→                      </div>
+   715→   715→                    )}
+   716→   716→                    {/* Dark overlay with dramatic hover */}
+   717→   717→                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F]/95 via-[#1E3A5F]/40 to-transparent transition-all duration-500 group-hover:from-[#1E3A5F]/80 group-hover:via-[#1E3A5F]/20 group-hover:to-transparent" />
+   718→   718→                    {/* Subtle gold gradient overlay at bottom for text readability */}
+   719→   719→                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#F0C05A]/15 to-transparent pointer-events-none" />
+   720→   720→                    {/* Gold accent bottom border */}
+   721→   721→                    <div className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-500 group-hover:h-1" style={{ backgroundColor: '#F0C05A' }} />
+   722→   722→                    {/* Product count badge */}
+   723→   723→                    <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} z-10`}>
+   724→   724→                      <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-[10px] font-bold text-white shadow-md" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   725→   725→                        {products.filter((p) => p.category_id === cat.id).length}
+   726→   726→                      </span>
+   727→   727→                    </div>
+   728→   728→                    {/* Content */}
+   729→   729→                    <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
+   730→   730→                      <div className="flex items-center gap-2 mb-1">
+   731→   731→                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
+   732→   732→                          {categoryIcons[cat.icon] || <Package className="w-4 h-4" />}
+   733→   733→                        </div>
+   734→   734→                        <h3 className="font-bold text-sm sm:text-base text-white">
+   735→   735→                          {getCategoryName(cat, language)}
+   736→   736→                        </h3>
+   737→   737→                      </div>
+   738→   738→                      <p className="text-white/50 text-xs">
+   739→   739→                        {products.filter((p) => p.category_id === cat.id).length}{' '}
+   740→   740→                        {language === 'ar' ? 'منتجات' : 'produits'}
+   741→   741→                      </p>
+   742→   742→                      {/* Hover arrow */}
+   743→   743→                      <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} w-8 h-8 rounded-full flex items-center justify-center bg-[#F0C05A]/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? '-translate-x-1 group-hover:translate-x-0' : 'translate-x-1 group-hover:translate-x-0'}`}>
+   744→   744→                        <ArrowRight className={`w-4 h-4 text-[#F0C05A] ${isRTL ? 'rotate-180' : ''}`} />
+   745→   745→                      </div>
+   746→   746→                    </div>
+   747→   747→                  </div>
+   748→   748→                </motion.div>
+   749→   749→              );
+   750→   750→            })}
+   751→   751→          </motion.div>
+   752→   752→        </div>
+   753→   753→      </section>
+   754→   754→
+   755→   755→      {/* Section divider: wave between Categories and Featured Products */}
+   756→   756→      <div className="bg-gray-50 dark:bg-[#0c1622] wave-divider">
+   757→   757→        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+   758→   758→          <path d="M0,20 C360,50 720,0 1080,30 C1260,45 1380,10 1440,20 L1440,60 L0,60 Z" className="fill-white dark:fill-[#0f1d2e]" />
+   759→   759→          <path d="M0,35 C480,10 960,55 1440,25 L1440,60 L0,60 Z" className="fill-white/40 dark:fill-[#0f1d2e]/40" />
+   760→   760→        </svg>
+   761→   761→      </div>
+   762→   762→
+   763→   763→      {/* ==================== FEATURED PRODUCTS ==================== */}
+   764→   764→      <section className="py-12 sm:py-16 bg-white dark:bg-[#0f1d2e]">
+   765→   765→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   766→   766→          <motion.div
+   767→   767→            initial={{ opacity: 0, y: 20 }}
+   768→   768→            whileInView={{ opacity: 1, y: 0 }}
+   769→   769→            viewport={{ once: true, margin: '-80px' }}
+   770→   770→            transition={{ duration: 0.5 }}
+   771→   771→            className="flex items-center justify-between mb-8"
+   772→   772→          >
+   773→   773→            <div className="flex items-center gap-3">
+   774→   774→              <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   775→   775→              <div>
+   776→   776→                <h2 className="text-3xl sm:text-4xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   777→   777→                  {t('products.featured')}
+   778→   778→                </h2>
+   779→   779→                <div className="h-0.5 w-16 mt-1 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   780→   780→              </div>
+   781→   781→            </div>
+   782→   782→            <Button
+   783→   783→              variant="outline"
+   784→   784→              onClick={() => navigate('/catalogue')}
+   785→   785→              className="hidden sm:flex gap-2 group touch-target"
+   786→   786→              style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   787→   787→            >
+   788→   788→              {t('common.seeAll')}
+   789→   789→              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+   790→   790→            </Button>
+   791→   791→          </motion.div>
+   792→   792→
+   793→   793→          {/* Mobile: horizontal scroll, Desktop: grid */}
+   794→   794→          <div className="flex gap-4 overflow-x-auto pb-4 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-5 sm:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   795→   795→            {featuredProducts.map((product, idx) => (
+   796→   796→              <motion.div
+   797→   797→                key={product.id}
+   798→   798→                initial={{ opacity: 0, y: 25 }}
+   799→   799→                whileInView={{ opacity: 1, y: 0 }}
+   800→   800→                viewport={{ once: true, margin: '-80px' }}
+   801→   801→                transition={{ delay: idx * 0.08, duration: 0.4 }}
+   802→   802→                className="min-w-[260px] sm:min-w-0"
+   803→   803→              >
+   804→   804→                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col hover-lift" style={{ borderTop: '2px solid #F0C05A' }}>
+   805→   805→                  <div
+   806→   806→                    className="h-48 flex items-center justify-center relative overflow-hidden product-img-placeholder"
+   807→   807→                  >
+   808→   808→                    {product.images && product.images.length > 0 ? (
+   809→   809→                      <img
+   810→   810→                        src={product.images[0]}
+   811→   811→                        alt={getProductName(product, language)}
+   812→   812→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+   813→   813→                      />
+   814→   814→                    ) : (
+   815→   815→                      /* Dental-themed placeholder */
+   816→   816→                      <div className="flex flex-col items-center justify-center gap-2 text-gray-300">
+   817→   817→                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.06)' }}>
+   818→   818→                          <Stethoscope className="w-8 h-8" style={{ color: '#1E3A5F', opacity: 0.2 }} />
+   819→   819→                        </div>
+   820→   820→                        <span className="text-[10px] font-medium" style={{ color: '#1E3A5F', opacity: 0.2 }}>
+   821→   821→                          {product.brand || 'ODG'}
+   822→   822→                        </span>
+   823→   823→                      </div>
+   824→   824→                    )}
+   825→   825→                    {/* Badges */}
+   826→   826→                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+   827→   827→                      {product.is_new && (
+   828→   828→                        <Badge className="text-[10px] px-2 py-0.5 font-semibold border-0" style={{ backgroundColor: '#1E3A5F' }}>
+   829→   829→                          {t('products.new')}
+   830→   830→                        </Badge>
+   831→   831→                      )}
+   832→   832→                      {product.is_best_seller && (
+   833→   833→                        <Badge className="text-[10px] px-2 py-0.5 font-semibold border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   834→   834→                          {t('products.bestSeller')}
+   835→   835→                        </Badge>
+   836→   836→                      )}
+   837→   837→                    </div>
+   838→   838→                  </div>
+   839→   839→                  <CardContent className="p-4 flex flex-col flex-1">
+   840→   840→                    <p className="text-xs font-semibold mb-0.5 dark:text-[#F0C05A]" style={{ color: '#F0C05A' }}>{product.brand}</p>
+   841→   841→                    <h3
+   842→   842→                      className="font-bold text-sm mb-1 line-clamp-1 dark:text-white"
+   843→   843→                      style={{ color: '#1E3A5F' }}
+   844→   844→                    >
+   845→   845→                      {getProductName(product, language)}
+   846→   846→                    </h3>
+   847→   847→                    {/* Star rating */}
+   848→   848→                    {product.rating && (
+   849→   849→                      <div className="mb-1">
+   850→   850→                        <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+   851→   851→                      </div>
+   852→   852→                    )}
+   853→   853→                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
+   854→   854→                      {getProductShortDescription(product, language)}
+   855→   855→                    </p>
+   856→   856→                    <div className="flex items-center justify-between gap-2 mt-auto">
+   857→   857→                      {(product.price ?? 0) === 0 ? (
+   858→   858→                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide dark:text-[#F0C05A]" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+   859→   859→                          {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
+   860→   860→                        </span>
+   861→   861→                      ) : (
+   862→   862→                        <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   863→   863→                          {(product.price ?? 0).toLocaleString('fr-DZ')} DA
+   864→   864→                        </span>
+   865→   865→                      )}
+   866→   866→                      <div className="flex items-center gap-1.5">
+   867→   867→                        <Button
+   868→   868→                          size="sm"
+   869→   869→                          variant="outline"
+   870→   870→                          className="text-xs h-7 px-2"
+   871→   871→                          style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   872→   872→                          onClick={(e) => {
+   873→   873→                            e.stopPropagation();
+   874→   874→                            setQuickViewProduct(product);
+   875→   875→                            setQuickViewOpen(true);
+   876→   876→                            addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
+   877→   877→                          }}
+   878→   878→                          title={t('products.quickView')}
+   879→   879→                        >
+   880→   880→                          <Eye className="w-3.5 h-3.5" />
+   881→   881→                        </Button>
+   882→   882→                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+   883→   883→                          <Button
+   884→   884→                            size="sm"
+   885→   885→                            className="text-xs h-7 px-2.5 border-0"
+   886→   886→                            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   887→   887→                            onClick={(e) => {
+   888→   888→                              e.stopPropagation();
+   889→   889→                              addItem({
+   890→   890→                                id: product.id,
+   891→   891→                                slug: product.slug,
+   892→   892→                                name: getProductName(product, language),
+   893→   893→                                price: product.price,
+   894→   894→                                image: product.images?.[0] || '',
+   895→   895→                              });
+   896→   896→                            }}
+   897→   897→                          >
+   898→   898→                            {t('products.addQuote')}
+   899→   899→                          </Button>
+   900→   900→                        </motion.div>
+   901→   901→                      </div>
+   902→   902→                    </div>
+   903→   903→                  </CardContent>
+   904→   904→                </Card>
+   905→   905→              </motion.div>
+   906→   906→            ))}
+   907→   907→          </div>
+   908→   908→
+   909→   909→          <div className="mt-6 text-center sm:hidden">
+   910→   910→            <Button
+   911→   911→              variant="outline"
+   912→   912→              onClick={() => navigate('/catalogue')}
+   913→   913→              className="gap-2 group"
+   914→   914→              style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   915→   915→            >
+   916→   916→              {t('common.seeAll')}
+   917→   917→              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+   918→   918→            </Button>
+   919→   919→          </div>
+   920→   920→        </div>
+   921→   921→      </section>
+   922→   922→
+   923→   923→      {/* ==================== RECENTLY VIEWED ==================== */}
+   924→   924→      {recentlyViewedItems.length > 0 && (
+   925→   925→        <section className="py-10 sm:py-12 bg-gray-50 dark:bg-[#0c1622]">
+   926→   926→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   927→   927→            <motion.div
+   928→   928→              initial={{ opacity: 0, y: 20 }}
+   929→   929→              whileInView={{ opacity: 1, y: 0 }}
+   930→   930→              viewport={{ once: true }}
+   931→   931→              transition={{ duration: 0.5 }}
+   932→   932→              className="flex items-center justify-between mb-6"
+   933→   933→            >
+   934→   934→              <div className="flex items-center gap-3">
+   935→   935→                <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   936→   936→                <div>
+   937→   937→                  <div className="flex items-center gap-2">
+   938→   938→                    <Clock className="w-5 h-5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }} />
+   939→   939→                    <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   940→   940→                      {t('recentlyViewed.title')}
+   941→   941→                    </h2>
+   942→   942→                  </div>
+   943→   943→                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+   944→   944→                    {t('recentlyViewed.subtitle')}
+   945→   945→                  </p>
+   946→   946→                </div>
+   947→   947→              </div>
+   948→   948→            </motion.div>
+   949→   949→
+   950→   950→            {/* Horizontal scrollable row */}
+   951→   951→            <div className="flex gap-4 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   952→   952→              {recentlyViewedItems.map((item, idx) => (
+   953→   953→                <motion.div
+   954→   954→                  key={item.id}
+   955→   955→                  initial={{ opacity: 0, x: 20 }}
+   956→   956→                  whileInView={{ opacity: 1, x: 0 }}
+   957→   957→                  viewport={{ once: true }}
+   958→   958→                  transition={{ delay: idx * 0.05, duration: 0.35 }}
+   959→   959→                  className="min-w-[220px] sm:min-w-[240px] max-w-[260px]"
+   960→   960→                >
+   961→   961→                  <Card
+   962→   962→                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer hover-lift"
+   963→   963→                    style={{ borderTop: '2px solid #F0C05A' }}
+   964→   964→                    onClick={() => navigate(`/product/${item.slug}`)}
+   965→   965→                  >
+   966→   966→                    <div className="h-36 flex items-center justify-center relative overflow-hidden">
+   967→   967→                      {item.image ? (
+   968→   968→                        <img
+   969→   969→                          src={item.image}
+   970→   970→                          alt={item.name}
+   971→   971→                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+   972→   972→                        />
+   973→   973→                      ) : (
+   974→   974→                        <div className="flex flex-col items-center justify-center gap-2 text-gray-300">
+   975→   975→                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.06)' }}>
+   976→   976→                            <Stethoscope className="w-6 h-6" style={{ color: '#1E3A5F', opacity: 0.2 }} />
+   977→   977→                          </div>
+   978→   978→                        </div>
+   979→   979→                      )}
+   980→   980→                    </div>
+   981→   981→                    <CardContent className="p-3">
+   982→   982→                      <p className="font-bold text-sm mb-1 line-clamp-1 dark:text-white" style={{ color: '#1E3A5F' }}>
+   983→   983→                        {item.name}
+   984→   984→                      </p>
+   985→   985→                      <div className="flex items-center justify-between mt-2">
+   986→   986→                        {(item.price ?? 0) === 0 ? (
+   987→   987→                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide dark:text-[#F0C05A]" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+   988→   988→                            {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
+   989→   989→                          </span>
+   990→   990→                        ) : (
+   991→   991→                          <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   992→   992→                            {(item.price ?? 0).toLocaleString('fr-DZ')} DA
+   993→   993→                          </span>
+   994→   994→                        )}
+   995→   995→                        <Button
+   996→   996→                          size="sm"
+   997→   997→                          variant="outline"
+   998→   998→                          className="text-[10px] h-6 px-2"
+   999→   999→                          style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+  1000→  1000→                          onClick={(e) => {
+  1001→  1001→                            e.stopPropagation();
+  1002→  1002→                            navigate(`/product/${item.slug}`);
+  1003→  1003→                          }}
+  1004→  1004→                        >
+  1005→  1005→                          {language === 'ar' ? 'عرض التفاصيل' : 'Voir les détails'}
+  1006→  1006→                        </Button>
+  1007→  1007→                      </div>
+  1008→  1008→                    </CardContent>
+  1009→  1009→                  </Card>
+  1010→  1010→                </motion.div>
+  1011→  1011→              ))}
+  1012→  1012→            </div>
+  1013→  1013→          </div>
+  1014→  1014→        </section>
+  1015→  1015→      )}
+  1016→  1016→
+  1017→  1017→      {/* Section divider: wave between Featured Products and Why Choose Us */}
+  1018→  1018→      <div className="bg-white dark:bg-[#0f1d2e] wave-divider">
+  1019→  1019→        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+  1020→  1020→          <path d="M0,30 C240,50 480,10 720,30 C960,50 1200,10 1440,30 L1440,60 L0,60 Z" className="fill-gray-50 dark:fill-[#0c1622]" />
+  1021→  1021→          <path d="M0,40 C360,15 720,55 1080,25 C1260,10 1380,35 1440,40 L1440,60 L0,60 Z" className="fill-gray-50/50 dark:fill-[#0c1622]/50" />
+  1022→  1022→        </svg>
+  1023→  1023→      </div>
+  1024→  1024→
+  1025→  1025→      {/* ==================== WHY CHOOSE US ==================== */}
+  1026→  1026→      <section className="py-12 sm:py-16 relative overflow-hidden"
+  1027→  1027→        style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}
+  1028→  1028→      >
+  1029→  1029→        {/* Subtle decorative pattern - larger dots */}
+  1030→  1030→        <div className="absolute inset-0 opacity-[0.025]"
+  1031→  1031→          style={{
+  1032→  1032→            backgroundImage: 'radial-gradient(circle, #1E3A5F 1.5px, transparent 1.5px)',
+  1033→  1033→            backgroundSize: '32px 32px',
+  1034→  1034→          }}
+  1035→  1035→        />
+  1036→  1036→        {/* Subtle diagonal lines pattern */}
+  1037→  1037→        <div className="absolute inset-0 opacity-[0.015]"
+  1038→  1038→          style={{
+  1039→  1039→            backgroundImage: 'repeating-linear-gradient(45deg, #1E3A5F 0, #1E3A5F 1px, transparent 1px, transparent 20px)',
+  1040→  1040→          }}
+  1041→  1041→        />
+  1042→  1042→
+  1043→  1043→        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+  1044→  1044→          <motion.div
+  1045→  1045→            initial={{ opacity: 0, y: 20 }}
+  1046→  1046→            whileInView={{ opacity: 1, y: 0 }}
+  1047→  1047→            viewport={{ once: true, margin: '-80px' }}
+  1048→  1048→            transition={{ duration: 0.5 }}
+  1049→  1049→            className="text-center mb-10"
+  1050→  1050→          >
+  1051→  1051→            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0 dark:bg-[#7AB0E0]/10 dark:text-[#7AB0E0]" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
+  1052→  1052→              {language === 'ar' ? 'مميزاتنا' : 'Nos atouts'}
+  1053→  1053→            </Badge>
+  1054→  1054→            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1055→  1055→              {language === 'ar' ? 'لماذا تختارنا؟' : 'Pourquoi nous choisir ?'}
+  1056→  1056→            </h2>
+  1057→  1057→            <p className="text-gray-500 dark:text-gray-300 text-base max-w-lg mx-auto">
+  1058→  1058→              {language === 'ar'
+  1059→  1059→                ? 'التزامنا بالجودة والخدمة يجعلنا الخيار الأول'
+  1060→  1060→                : 'Notre engagement qualité et service fait de nous le choix n°1'
+  1061→  1061→              }
+  1062→  1062→            </p>
+  1063→  1063→          </motion.div>
+  1064→  1064→
+  1065→  1065→          <motion.div
+  1066→  1066→            variants={sectionVariants}
+  1067→  1067→            initial="hidden"
+  1068→  1068→            whileInView="visible"
+  1069→  1069→            viewport={{ once: true, margin: '-80px' }}
+  1070→  1070→            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
+  1071→  1071→          >
+  1072→  1072→            {whyChooseUs.map((item, i) => (
+  1073→  1073→              <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+  1074→  1074→                <div className="group glass rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 h-full relative overflow-hidden">
+  1075→  1075→                  {/* Accent bar at top */}
+  1076→  1076→                  <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300" style={{ backgroundColor: item.accent, opacity: 0.6 }} />
+  1077→  1077→                  {/* Subtle bg glow on hover */}
+  1078→  1078→                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: item.bgColor, filter: 'blur(30px)' }} />
+  1079→  1079→                  <div className="relative flex items-start gap-4">
+  1080→  1080→                    <div
+  1081→  1081→                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg relative"
+  1082→  1082→                      style={{ backgroundColor: item.bgColor, color: item.accent }}
+  1083→  1083→                    >
+  1084→  1084→                      {item.icon}
+  1085→  1085→                      {/* Pulse ring on hover */}
+  1086→  1086→                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:animate-ping group-hover:opacity-30" style={{ backgroundColor: item.accent }} />
+  1087→  1087→                    </div>
+  1088→  1088→                    <div>
+  1089→  1089→                      <h3 className="font-bold text-base mb-1.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+  1090→  1090→                        {item.title}
+  1091→  1091→                      </h3>
+  1092→  1092→                      <p className="text-gray-500 dark:text-gray-300 text-sm leading-relaxed">{item.desc}</p>
+  1093→  1093→                    </div>
+  1094→  1094→                  </div>
+  1095→  1095→                </div>
+  1096→  1096→              </motion.div>
+  1097→  1097→            ))}
+  1098→  1098→          </motion.div>
+  1099→  1099→        </div>
+  1100→  1100→      </section>
+  1101→  1101→
+  1102→  1102→      {/* Section divider: wave between Why Choose Us and Testimonials */}
+  1103→  1103→      <div style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }} className="wave-divider">
+  1104→  1104→        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+  1105→  1105→          <path d="M0,25 C360,5 720,45 1080,15 C1260,5 1380,30 1440,25 L1440,50 L0,50 Z" fill="#ffffff" className="dark:fill-[#0f1d2e]" />
+  1106→  1106→          <path d="M0,35 C480,50 960,10 1440,35 L1440,50 L0,50 Z" fill="#ffffff" className="dark:fill-[#0f1d2e]" opacity="0.5" />
+  1107→  1107→        </svg>
+  1108→  1108→      </div>
+  1109→  1109→
+  1110→  1110→      {/* ==================== TESTIMONIALS SECTION ==================== */}
+  1111→  1111→      <section className="py-12 sm:py-16 bg-white dark:bg-[#0f1d2e] relative">
+  1112→  1112→        {/* Subtle bg pattern */}
+  1113→  1113→        <div className="absolute inset-0 opacity-[0.015]"
+  1114→  1114→          style={{
+  1115→  1115→            backgroundImage: 'radial-gradient(circle, #1E3A5F 1px, transparent 1px)',
+  1116→  1116→            backgroundSize: '30px 30px',
+  1117→  1117→          }}
+  1118→  1118→        />
+  1119→  1119→        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1120→  1120→          <motion.div
+  1121→  1121→            initial={{ opacity: 0, y: 20 }}
+  1122→  1122→            whileInView={{ opacity: 1, y: 0 }}
+  1123→  1123→            viewport={{ once: true, margin: '-80px' }}
+  1124→  1124→            transition={{ duration: 0.5 }}
+  1125→  1125→            className="text-center mb-8"
+  1126→  1126→          >
+  1127→  1127→            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#1E3A5F' }}>
+  1128→  1128→              {t('testimonials.subtitle')}
+  1129→  1129→            </Badge>
+  1130→  1130→            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1131→  1131→              {t('testimonials.title')}
+  1132→  1132→            </h2>
+  1133→  1133→          </motion.div>
+  1134→  1134→
+  1135→  1135→          <motion.div
+  1136→  1136→            variants={sectionVariants}
+  1137→  1137→            initial="hidden"
+  1138→  1138→            whileInView="visible"
+  1139→  1139→            viewport={{ once: true, margin: '-80px' }}
+  1140→  1140→            className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5"
+  1141→  1141→          >
+  1142→  1142→            {testimonials.map((testimonial, i) => {
+  1143→  1143→              // Extract initials from author name
+  1144→  1144→              const nameParts = testimonial.author.replace('Dr. ', '').split(' ');
+  1145→  1145→              const initials = nameParts.map(n => n[0]).join('');
+  1146→  1146→              const avatarColors = ['#2A5F8F', '#3B8C6E', '#C0564F'];
+  1147→  1147→              return (
+  1148→  1148→                <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} style={{ transform: `translateY(${i * 8}px)` }}>
+  1149→  1149→                  <Card className="h-full glass shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 relative overflow-hidden">
+  1150→  1150→                    {/* Colored top accent */}
+  1151→  1151→                    <div className="h-1 w-full" style={{ backgroundColor: avatarColors[i % 3] }} />
+  1152→  1152→                    {/* Decorative large quote mark */}
+  1153→  1153→                    <div className="absolute -top-2 -left-1 opacity-[0.06] pointer-events-none">
+  1154→  1154→                      <Quote className="w-24 h-24" style={{ color: '#F0C05A' }} />
+  1155→  1155→                    </div>
+  1156→  1156→                    <CardContent className="p-5 sm:p-6 flex flex-col h-full relative">
+  1157→  1157→                      {/* Star rating - prominent */}
+  1158→  1158→                      <div className="flex items-center gap-0.5 mb-4">
+  1159→  1159→                        {Array.from({ length: testimonial.stars }).map((_, idx) => (
+  1160→  1160→                          <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
+  1161→  1161→                        ))}
+  1162→  1162→                      </div>
+  1163→  1163→                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed flex-grow mb-4 relative z-10 italic">
+  1164→  1164→                        &ldquo;{testimonial.text}&rdquo;
+  1165→  1165→                      </p>
+  1166→  1166→                      <div className="mt-auto pt-4 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
+  1167→  1167→                        {/* Avatar with initials */}
+  1168→  1168→                        <div
+  1169→  1169→                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+  1170→  1170→                          style={{ backgroundColor: avatarColors[i % 3] }}
+  1171→  1171→                        >
+  1172→  1172→                          {initials}
+  1173→  1173→                        </div>
+  1174→  1174→                        <div>
+  1175→  1175→                          <p className="font-bold text-sm dark:text-white" style={{ color: '#1E3A5F' }}>
+  1176→  1176→                            {testimonial.author}
+  1177→  1177→                          </p>
+  1178→  1178→                          <p className="text-gray-400 text-xs mt-0.5">
+  1179→  1179→                            {testimonial.clinic}
+  1180→  1180→                          </p>
+  1181→  1181→                        </div>
+  1182→  1182→                      </div>
+  1183→  1183→                    </CardContent>
+  1184→  1184→                  </Card>
+  1185→  1185→                </motion.div>
+  1186→  1186→              );
+  1187→  1187→            })}
+  1188→  1188→          </motion.div>
+  1189→  1189→        </div>
+  1190→  1190→      </section>
+  1191→  1191→
+  1192→  1192→      {/* Section divider: decorative line between Testimonials and Partners */}
+  1193→  1193→      <div className="bg-white dark:bg-[#0f1d2e]">
+  1194→  1194→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1195→  1195→          <div className="flex items-center gap-4">
+  1196→  1196→            <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+  1197→  1197→            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+  1198→  1198→            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#1E3A5F', opacity: 0.3 }} />
+  1199→  1199→            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+  1200→  1200→            <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+  1201→  1201→          </div>
+  1202→  1202→        </div>
+  1203→  1203→      </div>
+  1204→  1204→
+  1205→  1205→      {/* ==================== PARTNERS / BRANDS SECTION ==================== */}
+  1206→  1206→      <section className="py-10 sm:py-12 bg-gray-50 dark:bg-[#0c1622] border-y border-gray-100 dark:border-white/5 overflow-hidden">
+  1207→  1207→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1208→  1208→          <motion.div
+  1209→  1209→            initial={{ opacity: 0, y: 15 }}
+  1210→  1210→            whileInView={{ opacity: 1, y: 0 }}
+  1211→  1211→            viewport={{ once: true, margin: '-80px' }}
+  1212→  1212→            transition={{ duration: 0.4 }}
+  1213→  1213→            className="text-center mb-8"
+  1214→  1214→          >
+  1215→  1215→            <h2 className="text-2xl sm:text-3xl font-bold mb-1.5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1216→  1216→              {language === 'ar' ? 'علاماتنا الشريكة' : 'Nos Marques Partenaires'}
+  1217→  1217→            </h2>
+  1218→  1218→            <p className="text-gray-400 text-sm">
+  1219→  1219→              {language === 'ar'
+  1220→  1220→                ? 'موزع حصري لأكبر العلامات العالمية'
+  1221→  1221→                : 'Distributeur exclusif des plus grandes marques mondiales'
+  1222→  1222→              }
+  1223→  1223→            </p>
+  1224→  1224→          </motion.div>
+  1225→  1225→        </div>
+  1226→  1226→
+  1227→  1227→        {/* Scrolling marquee - duplicates brands for seamless loop */}
+  1228→  1228→        <div className="relative">
+  1229→  1229→          {/* Fade edges */}
+  1230→  1230→          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #f9fafb, transparent)' }} />
+  1231→  1231→          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #f9fafb, transparent)' }} />
+  1232→  1232→
+  1233→  1233→          <div className="flex overflow-hidden">
+  1234→  1234→            <motion.div
+  1235→  1235→              className="flex shrink-0 items-center gap-6 sm:gap-8 pr-6 sm:pr-8"
+  1236→  1236→              animate={{ x: [0, -50 * partnerBrands.length] }}
+  1237→  1237→              transition={{
+  1238→  1238→                x: {
+  1239→  1239→                  repeat: Infinity,
+  1240→  1240→                  repeatType: 'loop',
+  1241→  1241→                  duration: partnerBrands.length * 3,
+  1242→  1242→                  ease: 'linear',
+  1243→  1243→                },
+  1244→  1244→              }}
+  1245→  1245→            >
+  1246→  1246→              {[...partnerBrands, ...partnerBrands].map((brand, i) => (
+  1247→  1247→                <div
+  1248→  1248→                  key={`${brand.name}-${i}`}
+  1249→  1249→                  className="group flex flex-col items-center justify-center shrink-0"
+  1250→  1250→                >
+  1251→  1251→                  <div className="w-28 sm:w-32 h-16 sm:h-18 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-0.5 transition-all duration-300 group-hover:border-[#F0C05A]/30 group-hover:shadow-md grayscale hover:grayscale-0 group-hover:bg-white px-3">
+  1252→  1252→                    <span className="text-xs sm:text-sm font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
+  1253→  1253→                      {brand.name}
+  1254→  1254→                    </span>
+  1255→  1255→                    <span className="text-[9px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
+  1256→  1256→                      {brand.subtext}
+  1257→  1257→                    </span>
+  1258→  1258→                  </div>
+  1259→  1259→                </div>
+  1260→  1260→              ))}
+  1261→  1261→            </motion.div>
+  1262→  1262→          </div>
+  1263→  1263→        </div>
+  1264→  1264→      </section>
+  1265→  1265→
+  1266→  1266→      {/* Section divider: wave between brands and newsletter */}
+  1267→  1267→      <div className="bg-gray-50 dark:bg-[#0c1622] wave-divider">
+  1268→  1268→        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+  1269→  1269→          <path d="M0,20 C360,40 720,0 1080,25 C1260,35 1380,10 1440,20 L1440,50 L0,50 Z" fill="#1E3A5F" />
+  1270→  1270→          <path d="M0,30 C480,10 960,45 1440,20 L1440,50 L0,50 Z" fill="#1E3A5F" opacity="0.5" />
+  1271→  1271→        </svg>
+  1272→  1272→      </div>
+  1273→  1273→
+  1274→  1274→      {/* ==================== NEWSLETTER SECTION ==================== */}
+  1275→  1275→      <section
+  1276→  1276→        className="py-12 sm:py-16 relative overflow-hidden"
+  1277→  1277→        style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #0f2b47 40%, #1a3352 70%, #0d2238 100%)' }}
+  1278→  1278→      >
+  1279→  1279→        {/* Decorative elements */}
+  1280→  1280→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+  1281→  1281→          {/* Mail icon pattern */}
+  1282→  1282→          <div className="absolute top-6 right-[10%] opacity-[0.04]">
+  1283→  1283→            <Mail className="w-32 h-32" style={{ color: '#F0C05A' }} />
+  1284→  1284→          </div>
+  1285→  1285→          <div className="absolute bottom-4 left-[8%] opacity-[0.03]">
+  1286→  1286→            <Mail className="w-20 h-20" style={{ color: '#F0C05A' }} />
+  1287→  1287→          </div>
+  1288→  1288→          {/* Dot pattern */}
+  1289→  1289→          <div className="absolute inset-0 opacity-[0.02]"
+  1290→  1290→            style={{
+  1291→  1291→              backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+  1292→  1292→              backgroundSize: '24px 24px',
+  1293→  1293→            }}
+  1294→  1294→          />
+  1295→  1295→          {/* Gradient orbs */}
+  1296→  1296→          <motion.div
+  1297→  1297→            className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10"
+  1298→  1298→            style={{ backgroundColor: '#F0C05A' }}
+  1299→  1299→            animate={{ scale: [1, 1.1, 1], opacity: [0.08, 0.12, 0.08] }}
+  1300→  1300→            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+  1301→  1301→          />
+  1302→  1302→          <motion.div
+  1303→  1303→            className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-5"
+  1304→  1304→            style={{ backgroundColor: '#F0C05A' }}
+  1305→  1305→            animate={{ scale: [1, 1.15, 1], opacity: [0.04, 0.08, 0.04] }}
+  1306→  1306→            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+  1307→  1307→          />
+  1308→  1308→        </div>
+  1309→  1309→
+  1310→  1310→        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+  1311→  1311→          <motion.div
+  1312→  1312→            initial={{ opacity: 0, y: 25 }}
+  1313→  1313→            whileInView={{ opacity: 1, y: 0 }}
+  1314→  1314→            viewport={{ once: true, margin: '-80px' }}
+  1315→  1315→            transition={{ duration: 0.5 }}
+  1316→  1316→          >
+  1317→  1317→            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
+  1318→  1318→              <Mail className="w-7 h-7" style={{ color: '#F0C05A' }} />
+  1319→  1319→            </div>
+  1320→  1320→
+  1321→  1321→            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+  1322→  1322→              {t('newsletter.title')}
+  1323→  1323→            </h2>
+  1324→  1324→            <p className="text-blue-200/60 text-base mb-6 max-w-md mx-auto leading-relaxed">
+  1325→  1325→              {t('newsletter.subtitle')}
+  1326→  1326→            </p>
+  1327→  1327→
+  1328→  1328→            {newsletterSubmitted ? (
+  1329→  1329→              <motion.div
+  1330→  1330→                initial={{ opacity: 0, scale: 0.9 }}
+  1331→  1331→                animate={{ opacity: 1, scale: 1 }}
+  1332→  1332→                className="flex items-center justify-center gap-2 py-4 px-6 rounded-xl"
+  1333→  1333→                style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}
+  1334→  1334→              >
+  1335→  1335→                <CheckCircle className="w-5 h-5" style={{ color: '#F0C05A' }} />
+  1336→  1336→                <span className="text-white font-medium text-sm">{t('newsletter.success')}</span>
+  1337→  1337→              </motion.div>
+  1338→  1338→            ) : (
+  1339→  1339→              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto">
+  1340→  1340→                <Input
+  1341→  1341→                  type="email"
+  1342→  1342→                  required
+  1343→  1343→                  placeholder={t('newsletter.placeholder')}
+  1344→  1344→                  value={newsletterEmail}
+  1345→  1345→                  onChange={(e) => setNewsletterEmail(e.target.value)}
+  1346→  1346→                  className="flex-1 h-12 bg-white/10 border-white/20 text-white placeholder:text-blue-200/40 focus:border-[#F0C05A] focus:ring-[#F0C05A]/20 text-base rounded-xl"
+  1347→  1347→                  dir={isRTL ? 'rtl' : 'ltr'}
+  1348→  1348→                />
+  1349→  1349→                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+  1350→  1350→                  <Button
+  1351→  1351→                    type="submit"
+  1352→  1352→                    disabled={newsletterLoading}
+  1353→  1353→                    className="h-12 px-6 font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl gap-2"
+  1354→  1354→                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+  1355→  1355→                  >
+  1356→  1356→                    {newsletterLoading ? '...' : t('newsletter.subscribe')}
+  1357→  1357→                    {!newsletterLoading && <ArrowRight className="w-4 h-4" />}
+  1358→  1358→                  </Button>
+  1359→  1359→                </motion.div>
+  1360→  1360→              </form>
+  1361→  1361→            )}
+  1362→  1362→
+  1363→  1363→            <p className="text-blue-200/30 text-xs mt-4 max-w-sm mx-auto">
+  1364→  1364→              {t('newsletter.privacy')}
+  1365→  1365→            </p>
+  1366→  1366→          </motion.div>
+  1367→  1367→        </div>
+  1368→  1368→      </section>
+  1369→  1369→
+  1370→  1370→      {/* ==================== CTA SECTION ==================== */}
+  1371→  1371→      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+  1372→  1372→        {/* Animated gradient background */}
+  1373→  1373→        <motion.div
+  1374→  1374→          className="absolute inset-0"
+  1375→  1375→          animate={{
+  1376→  1376→            background: [
+  1377→  1377→              'radial-gradient(ellipse at 30% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+  1378→  1378→              'radial-gradient(ellipse at 70% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+  1379→  1379→              'radial-gradient(ellipse at 30% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+  1380→  1380→            ],
+  1381→  1381→          }}
+  1382→  1382→          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+  1383→  1383→        />
+  1384→  1384→        {/* Decorative elements */}
+  1385→  1385→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+  1386→  1386→          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-8" style={{ backgroundColor: '#F0C05A' }} />
+  1387→  1387→          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-[0.04]" style={{ backgroundColor: '#F0C05A' }} />
+  1388→  1388→          {/* Dot pattern */}
+  1389→  1389→          <div className="absolute inset-0 opacity-[0.02]"
+  1390→  1390→            style={{
+  1391→  1391→              backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+  1392→  1392→              backgroundSize: '40px 40px',
+  1393→  1393→            }}
+  1394→  1394→          />
+  1395→  1395→          {/* Top accent line */}
+  1396→  1396→          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: '#F0C05A', opacity: 0.5 }} />
+  1397→  1397→        </div>
+  1398→  1398→
+  1399→  1399→        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+  1400→  1400→          <motion.div
+  1401→  1401→            initial={{ opacity: 0, y: 25 }}
+  1402→  1402→            whileInView={{ opacity: 1, y: 0 }}
+  1403→  1403→            viewport={{ once: true, margin: '-80px' }}
+  1404→  1404→            transition={{ duration: 0.5 }}
+  1405→  1405→          >
+  1406→  1406→            {/* Decorative icon */}
+  1407→  1407→            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.12)' }}>
+  1408→  1408→              <Stethoscope className="w-7 h-7" style={{ color: '#F0C05A' }} />
+  1409→  1409→            </div>
+  1410→  1410→
+  1411→  1411→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
+  1412→  1412→              {language === 'ar'
+  1413→  1413→                ? 'هل أنت مستعد لتجهيز عيادتك؟'
+  1414→  1414→                : 'Prêt à équiper votre cabinet ?'
+  1415→  1415→              }
+  1416→  1416→            </h2>
+  1417→  1417→            <p className="text-blue-200/60 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+  1418→  1418→              {language === 'ar'
+  1419→  1419→                ? 'احصل على عرض سعر مخصص في أقل من 24 ساعة. فريقنا متاح لمساعدتك.'
+  1420→  1420→                : 'Obtenez un devis personnalisé en moins de 24h. Notre équipe est à votre disposition.'
+  1421→  1421→              }
+  1422→  1422→            </p>
+  1423→  1423→            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+  1424→  1424→              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+  1425→  1425→                <Button
+  1426→  1426→                  onClick={() => navigate('/devis')}
+  1427→  1427→                  size="lg"
+  1428→  1428→                  className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+  1429→  1429→                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+  1430→  1430→                >
+  1431→  1431→                  {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
+  1432→  1432→                  <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+  1433→  1433→                </Button>
+  1434→  1434→              </motion.div>
+  1435→  1435→              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+  1436→  1436→                <Button
+  1437→  1437→                  onClick={() => navigate('/contact')}
+  1438→  1438→                  size="lg"
+  1439→  1439→                  variant="outline"
+  1440→  1440→                  className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10 transition-all duration-300 gap-2"
+  1441→  1441→                >
+  1442→  1442→                  {language === 'ar' ? 'اتصل بنا' : 'Nous contacter'}
+  1443→  1443→                  <ChevronRight className="w-5 h-5" />
+  1444→  1444→                </Button>
+  1445→  1445→              </motion.div>
+  1446→  1446→            </div>
+  1447→  1447→          </motion.div>
+  1448→  1448→        </div>
+  1449→  1449→      </section>
+  1450→  1450→
+  1451→  1451→      {/* Quick View Modal */}
+  1452→  1452→      <QuickViewModal
+  1453→  1453→        product={quickViewProduct}
+  1454→  1454→        open={quickViewOpen}
+  1455→  1455→        onClose={() => setQuickViewOpen(false)}
+  1456→  1456→      />
+  1457→  1457→    </div>
+  1458→  1458→  );
+  1459→  1459→}
+  1460→  1460→

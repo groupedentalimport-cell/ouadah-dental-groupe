@@ -344,6 +344,7 @@ export default function PromotionsPage() {
                       <img
                         src={promo.image}
                         alt={language === 'ar' ? promo.name_ar : promo.name_fr}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -381,7 +382,7 @@ export default function PromotionsPage() {
                           <span className="text-lg font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                             {promo.promoPrice.toLocaleString('fr-DZ')} DA
                           </span>
-                          <span className="text-sm line-through text-gray-400 dark:text-gray-500">
+                          <span className="text-sm line-through text-gray-400 dark:text-gray-400">
                             {promo.originalPrice.toLocaleString('fr-DZ')} DA
                           </span>
                         </div>
@@ -401,8 +402,8 @@ export default function PromotionsPage() {
                     {/* Countdown + CTA */}
                     <div className="mt-auto flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1 text-xs" style={{ color: '#1E3A5F' }}>
-                        <Clock className="w-3 h-3 text-gray-400 dark:text-gray-500" />
-                        <span className="text-gray-500 dark:text-gray-400 text-[10px]">{t('promotions.expiresIn')}</span>
+                        <Clock className="w-3 h-3 text-gray-400 dark:text-gray-400" />
+                        <span className="text-gray-500 dark:text-gray-300 text-[10px]">{t('promotions.expiresIn')}</span>
                       </div>
                       <CountdownTimer targetDate={promo.expiresAt} />
                     </div>
@@ -472,6 +473,7 @@ export default function PromotionsPage() {
                       <img
                         src={item.image}
                         alt={language === 'ar' ? item.name_ar : item.name_fr}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
                       />
                     ) : (
@@ -498,7 +500,7 @@ export default function PromotionsPage() {
                     <h3 className="font-bold text-sm mb-1 dark:text-white" style={{ color: '#1E3A5F' }}>
                       {language === 'ar' ? item.name_ar : item.name_fr}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-2">
                       {language === 'ar' ? item.teaser_ar : item.teaser_fr}
                     </p>
                   </CardContent>

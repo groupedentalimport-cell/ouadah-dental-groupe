@@ -115,10 +115,29 @@ const fr: Translations = {
   'products.priceOnQuote': 'Sur devis',
   'products.requestQuote': 'Demander un devis',
   'products.clearFilters': 'Réinitialiser les filtres',
+  'products.activeFilters': 'Filtres actifs',
+  'products.gridView': 'Grille',
+  'products.listView': 'Liste',
+  'products.filters': 'Filtres',
   'products.noResultsTip': 'Essayez de modifier vos critères de recherche ou de réinitialiser les filtres',
   'products.relatedProducts': 'Produits similaires',
   'products.description': 'Description',
   'products.availability': 'Disponibilité',
+
+  // --- PRODUCT DETAIL ---
+  'product.specifications': 'Spécifications techniques',
+  'product.keyFeatures': 'Caractéristiques clés',
+  'product.videos': 'Vidéos du produit',
+  'product.warranty': 'Garantie',
+  'product.delivery': 'Délai de livraison',
+  'product.installation': 'Installation incluse',
+  'product.training': 'Formation incluse',
+  'product.origin': 'Origine',
+  'product.reference': 'Référence',
+  'product.spec': 'Spécification',
+  'product.value': 'Valeur',
+  'product.watchVideo': 'Regarder la vidéo',
+  'product.noVideos': 'Aucune vidéo disponible',
 
   // --- COMPARE ---
   'compare.title': 'Comparaison de produits',
@@ -511,6 +530,15 @@ const fr: Translations = {
   'promotions.claimOffer': "Profiter de l'offre",
   'promotions.originalPrice': 'Prix original',
   'promotions.promoPrice': 'Prix promotionnel',
+
+  // --- ACCESSIBILITY ---
+  'accessibility.skipToContent': 'Aller au contenu principal',
+  'accessibility.menu': 'Menu principal',
+  'accessibility.search': 'Rechercher des produits',
+  'accessibility.cart': 'Panier devis',
+
+  // --- PRODUCTS ADDITIONAL ---
+  'products.comingSoon': 'Bientôt disponible',
 };
 
 // ============================================================
@@ -604,10 +632,29 @@ const ar: Translations = {
   'products.priceOnQuote': 'على أساس التسعير',
   'products.requestQuote': 'طلب عرض سعر',
   'products.clearFilters': 'إعادة تعيين الفلاتر',
+  'products.activeFilters': 'فلاتر نشطة',
+  'products.gridView': 'شبكة',
+  'products.listView': 'قائمة',
+  'products.filters': 'فلاتر',
   'products.noResultsTip': 'حاول تعديل معايير البحث أو إعادة تعيين الفلاتر',
   'products.relatedProducts': 'منتجات مشابهة',
   'products.description': 'الوصف',
   'products.availability': 'التوفر',
+
+  // --- PRODUCT DETAIL ---
+  'product.specifications': 'المواصفات الفنية',
+  'product.keyFeatures': 'الميزات الرئيسية',
+  'product.videos': 'فيديوهات المنتج',
+  'product.warranty': 'الضمان',
+  'product.delivery': 'مدة التوصيل',
+  'product.installation': 'تركيب مجاني',
+  'product.training': 'تدريب مجاني',
+  'product.origin': 'بلد المنشأ',
+  'product.reference': 'الرقم المرجعي',
+  'product.spec': 'المواصفة',
+  'product.value': 'القيمة',
+  'product.watchVideo': 'مشاهدة الفيديو',
+  'product.noVideos': 'لا توجد فيديوهات متاحة',
 
   // --- COMPARE ---
   'compare.title': 'مقارنة المنتجات',
@@ -1000,6 +1047,15 @@ const ar: Translations = {
   'promotions.claimOffer': 'استفد من العرض',
   'promotions.originalPrice': 'السعر الأصلي',
   'promotions.promoPrice': 'السعر الترويجي',
+
+  // --- ACCESSIBILITY ---
+  'accessibility.skipToContent': 'انتقل إلى المحتوى الرئيسي',
+  'accessibility.menu': 'القائمة الرئيسية',
+  'accessibility.search': 'البحث عن المنتجات',
+  'accessibility.cart': 'سلة عروض الأسعار',
+
+  // --- PRODUCTS ADDITIONAL ---
+  'products.comingSoon': 'قريباً',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

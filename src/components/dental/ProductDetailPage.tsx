@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   CheckCircle2,
   Shield,
+  ShieldCheck,
   Wrench,
   GraduationCap,
   Truck,
@@ -33,6 +34,10 @@ import {
   MessageCircle,
   Facebook,
   Linkedin,
+  ClipboardList,
+  Sparkles,
+  Play,
+  Globe,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -69,6 +74,33 @@ function decodeHtmlEntities(text: string): string {
     if (decoded === prev) break;
   }
   return decoded;
+}
+
+// Parse YouTube URL to get embed URL
+function getYouTubeEmbedUrl(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    // Standard youtube.com/watch?v=...
+    if (urlObj.hostname.includes('youtube.com') && urlObj.searchParams.get('v')) {
+      return `https://www.youtube.com/embed/${urlObj.searchParams.get('v')}`;
+    }
+    // youtu.be/...
+    if (urlObj.hostname === 'youtu.be') {
+      return `https://www.youtube.com/embed/${urlObj.pathname.slice(1)}`;
+    }
+    // youtube.com/embed/...
+    if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/embed/')) {
+      return url;
+    }
+    // Vimeo
+    if (urlObj.hostname.includes('vimeo.com')) {
+      const videoId = urlObj.pathname.split('/').filter(Boolean).pop();
+      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function sanitizeHtml(html: string): string {
@@ -114,7 +146,7 @@ function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: nu
         ))}
       </div>
       {count !== undefined && (
-        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
       )}
     </div>
   );
@@ -256,7 +288,7 @@ export default function ProductDetailPage() {
           >
             <Package className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
           </div>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">{t('common.noResults')}</p>
+          <p className="text-gray-500 dark:text-gray-300 mb-4">{t('common.noResults')}</p>
           <Button onClick={() => navigate('/catalogue')} style={{ backgroundColor: '#1E3A5F' }}>
             {t('common.back')}
           </Button>
@@ -421,8 +453,9 @@ export default function ProductDetailPage() {
                         ? 'border-[#F0C05A] shadow-lg shadow-[#F0C05A]/30'
                         : 'border-white/20 opacity-50 hover:opacity-100'
                     }`}
+                    aria-label={`${t('products.gallery')} ${i + 1}`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt={`${getProductName(product, language)} - ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -436,26 +469,26 @@ export default function ProductDetailPage() {
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 mb-6 flex-wrap"
+          className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-300 mb-6 flex-wrap"
         >
           <button onClick={() => navigate('/')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1">
             <Home className="w-3.5 h-3.5" />
             {t('products.breadcrumb.home')}
           </button>
-          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
           <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
             {t('products.title')}
           </button>
-          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
           {category && (
             <>
               <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
                 {getCategoryName(category, language)}
               </button>
-              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
             </>
           )}
-          <span className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[200px]">
+          <span className="text-gray-500 dark:text-gray-200 font-medium truncate max-w-[200px]">
             {getProductName(product, language)}
           </span>
         </motion.div>
@@ -468,7 +501,7 @@ export default function ProductDetailPage() {
           <Button
             variant="outline"
             onClick={goBack}
-            className="mb-6 gap-2 shadow-sm dark:border-white/10 dark:text-[#7AB0E0]"
+            className="mb-6 gap-2 shadow-sm dark:border-gray-600 dark:text-gray-200"
             style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -494,6 +527,7 @@ export default function ProductDetailPage() {
                 <img
                   src={images[currentImage]}
                   alt={getProductName(product, language)}
+                  loading="eager"
                   className="w-full h-full object-cover transition-transform duration-200"
                   style={{
                     transform: isZooming ? 'scale(1.5)' : 'scale(1)',
@@ -537,13 +571,14 @@ export default function ProductDetailPage() {
                   <button
                     key={i}
                     onClick={() => handleImageChange(i)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 ${
+                    className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                       i === currentImage
                         ? 'border-[#1E3A5F] dark:border-[#7AB0E0] shadow-md'
                         : 'border-transparent opacity-60 hover:opacity-100 dark:opacity-40 dark:hover:opacity-80'
                     }`}
+                    aria-label={`${t('products.gallery')} ${i + 1}`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt={`${getProductName(product, language)} - ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -616,11 +651,11 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg dark:bg-[#F0C05A10]"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg dark:bg-blue-900/50"
                   style={{ backgroundColor: '#F0C05A20' }}
                 >
-                  <FileText className="w-5 h-5" style={{ color: '#F0C05A' }} />
-                  <span className="text-lg font-semibold dark:text-[#F0C05A]" style={{ color: '#1E3A5F' }}>
+                  <FileText className="w-5 h-5 dark:text-blue-200" style={{ color: '#F0C05A' }} />
+                  <span className="text-lg font-semibold dark:text-blue-200" style={{ color: '#1E3A5F' }}>
                     {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
                   </span>
                 </div>
@@ -631,13 +666,13 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-2 gap-3 mb-6">
               {product.origin && (
                 <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{t('products.origin')}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mb-0.5">{t('products.origin')}</p>
                   <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.origin}</p>
                 </div>
               )}
               {hasWarranty && (
                 <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{t('products.warranty')}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mb-0.5">{t('products.warranty')}</p>
                   <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
                 </div>
               )}
@@ -675,11 +710,33 @@ export default function ProductDetailPage() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
+              {/* Primary CTA: Demander un devis */}
+              <Button
+                size="lg"
+                className="w-full h-12 text-base font-bold shadow-lg gap-2"
+                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                onClick={() => {
+                  addItem({
+                    id: product.id,
+                    slug: product.slug,
+                    name: getProductName(product, language),
+                    price: product.price,
+                    image: product.images?.[0] || '',
+                  });
+                  navigate('/devis');
+                }}
+              >
+                <FileText className="w-5 h-5" />
+                {t('products.requestQuote')}
+              </Button>
+
+              {/* Secondary: Ajouter au devis + Wishlist + Compare */}
               <div className="flex gap-2">
                 <Button
                   size="lg"
-                  className="flex-1 h-12 text-base font-semibold shadow-lg"
-                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                  variant="outline"
+                  className="flex-1 h-12 text-sm font-semibold gap-2 dark:border-gray-600 dark:text-gray-300 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                   onClick={() => {
                     addItem({
                       id: product.id,
@@ -690,18 +747,19 @@ export default function ProductDetailPage() {
                     });
                   }}
                 >
-                  <ShoppingCart className="w-5 h-5" />
+                  <ShoppingCart className="w-4 h-4" />
                   {t('products.addQuote')}
                 </Button>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     size="lg"
                     variant="outline"
-                    className={`h-12 px-4 font-semibold ${
+                    className={`h-12 px-4 font-semibold focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                       isInWishlist(product.slug)
                         ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30'
-                        : 'border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-rose-400 dark:hover:border-rose-600 hover:text-rose-500 dark:hover:text-rose-400'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:border-rose-400 dark:hover:border-rose-600 hover:text-rose-500 dark:hover:text-rose-400'
                     }`}
+                    aria-label={isInWishlist(product.slug) ? t('products.removeFromWishlist') : t('products.addToWishlist')}
                     onClick={() => {
                       toggleWishlistItem(product.slug);
                       toast.success(
@@ -720,12 +778,13 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className={`h-12 px-4 font-semibold ${
+                  className={`h-12 px-4 font-semibold focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
                     isInCompare(product.id)
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                      : 'border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-amber-400 dark:hover:border-amber-600 hover:text-amber-600 dark:hover:text-amber-400'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:border-amber-400 dark:hover:border-amber-600 hover:text-amber-600 dark:hover:text-amber-400'
                   }`}
                   disabled={!isInCompare(product.id) && productIds.length >= 4}
+                  aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
                   title={
                     isInCompare(product.id)
                       ? t('compare.remove')
@@ -755,7 +814,8 @@ export default function ProductDetailPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
+                    className="w-full gap-2 text-gray-600 dark:text-gray-300 dark:border-gray-600 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                    aria-label={t('products.share')}
                     onClick={() => setShareMenuOpen(!shareMenuOpen)}
                   >
                     <Share2 className="w-4 h-4" />
@@ -839,7 +899,8 @@ export default function ProductDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
+                  className="flex-1 gap-2 text-gray-600 dark:text-gray-300 dark:border-gray-600 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                  aria-label={t('products.print')}
                   onClick={handlePrint}
                 >
                   <Printer className="w-4 h-4" />
@@ -851,7 +912,7 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full h-12 text-base font-semibold dark:border-white/10 dark:text-[#7AB0E0]"
+                  className="w-full h-12 text-base font-semibold gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
                   style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                   onClick={() => navigate('/devis')}
                 >
@@ -863,63 +924,113 @@ export default function ProductDetailPage() {
           </motion.div>
         </div>
 
-        {/* Features */}
-        {features && features.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-12"
-          >
-            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
-              <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                  {t('products.features')}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {features.map((feat, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#1E3A5F' }} />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{feat}</span>
-                    </div>
-                  ))}
+        {/* Product Info Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-10"
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {hasWarranty && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-2">
+                  <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Specs */}
-        {specs.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-8"
-          >
-            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
-              <div className="h-1" style={{ backgroundColor: '#2A5F8F' }} />
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                  {t('products.specs')}
-                </h2>
-                <div className="divide-y dark:divide-white/10">
-                  {specs.map((spec, i) => (
-                    <div key={i} className="flex justify-between py-3">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {language === 'ar' ? spec.label_ar : spec.label_fr}
-                      </span>
-                      <span className="text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                        {spec.value}
-                      </span>
-                    </div>
-                  ))}
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.warranty')}</p>
+                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
+              </motion.div>
+            )}
+            {hasDelivery && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.05, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mx-auto mb-2">
+                  <Truck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.delivery')}</p>
+                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                  {language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr}
+                </p>
+              </motion.div>
+            )}
+            {hasInstallation && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mx-auto mb-2">
+                  <Wrench className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.installation')}</p>
+                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {language === 'ar' ? 'نعم' : 'Oui'}
+                </p>
+              </motion.div>
+            )}
+            {hasTraining && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mx-auto mb-2">
+                  <GraduationCap className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.training')}</p>
+                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {language === 'ar' ? 'نعم' : 'Oui'}
+                </p>
+              </motion.div>
+            )}
+            {product.origin && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center mx-auto mb-2">
+                  <Globe className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.origin')}</p>
+                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.origin}</p>
+              </motion.div>
+            )}
+            {product.ref && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-2">
+                  <Hash className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                </div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.reference')}</p>
+                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.ref}</p>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
 
         {/* Description */}
         {descriptionHtml && (
@@ -927,10 +1038,11 @@ export default function ProductDetailPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-8"
+            transition={{ duration: 0.5 }}
+            className="mt-12 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
           >
             <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
-              <div className="h-1" style={{ backgroundColor: '#3A7CB8' }} />
+              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #1E3A5F, #F0C05A, #3A7CB8)' }} />
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('products.description')}
@@ -947,6 +1059,203 @@ export default function ProductDetailPage() {
                     prose-td:p-2 prose-td:border prose-td:border-gray-200 dark:prose-td:border-white/10"
                   dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                 />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Specifications Table Section */}
+        {specs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+          >
+            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #2A5F8F, #F0C05A, #1E3A5F)' }} />
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(30,58,95,0.1)' }}>
+                    <ClipboardList className="w-5 h-5" style={{ color: '#1E3A5F' }} />
+                  </div>
+                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    {t('product.specifications')}
+                  </h2>
+                </div>
+                {/* Desktop: Table view */}
+                <div className="hidden sm:block overflow-hidden rounded-lg border border-gray-200 dark:border-white/10">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-white/5">
+                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300" style={{ color: '#1E3A5F' }}>
+                          {t('product.spec')}
+                        </th>
+                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300" style={{ color: '#1E3A5F' }}>
+                          {t('product.value')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {specs.map((spec, i) => (
+                        <tr
+                          key={i}
+                          className={`${
+                            i % 2 === 0
+                              ? 'bg-white dark:bg-[#162236]'
+                              : 'bg-gray-50 dark:bg-white/[0.03]'
+                          } transition-colors hover:bg-[#1E3A5F]/[0.03] dark:hover:bg-white/[0.06]`}
+                        >
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                            {language === 'ar' ? spec.label_ar : spec.label_fr}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                            {spec.value}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Mobile: Key-value pairs */}
+                <div className="sm:hidden space-y-3">
+                  {specs.map((spec, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.05 }}
+                      className="bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3"
+                    >
+                      <p className="text-xs text-gray-500 dark:text-gray-300 mb-1">
+                        {language === 'ar' ? spec.label_ar : spec.label_fr}
+                      </p>
+                      <p className="text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                        {spec.value}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Key Features Section */}
+        {features && features.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+          >
+            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #10B981, #F0C05A, #10B981)' }} />
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                    <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    {t('product.keyFeatures')}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {features.map((feat, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.07, duration: 0.3 }}
+                      className="flex items-start gap-3 bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3 hover:shadow-sm dark:hover:shadow-none transition-shadow"
+                    >
+                      <div className="mt-0.5 shrink-0 p-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{feat}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Product Videos Section */}
+        {product.videos && product.videos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+          >
+            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #EF4444, #F0C05A, #EF4444)' }} />
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <Play className="w-5 h-5 text-red-500 dark:text-red-400" />
+                  </div>
+                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    {t('product.videos')}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {product.videos.map((video, i) => {
+                    const embedUrl = getYouTubeEmbedUrl(video.url);
+                    const videoTitle = language === 'ar' ? video.title_ar : video.title_fr;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1, duration: 0.4 }}
+                        className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10"
+                      >
+                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                          {embedUrl ? (
+                            <iframe
+                              src={embedUrl}
+                              title={videoTitle}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              className="absolute inset-0 w-full h-full"
+                            />
+                          ) : (
+                            <a
+                              href={video.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100 dark:bg-[#0f1d2e] hover:bg-gray-200 dark:hover:bg-[#162236] transition-colors"
+                            >
+                              <div className="text-center">
+                                <div className="w-14 h-14 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-2">
+                                  <Play className="w-7 h-7 text-red-500 dark:text-red-400" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                  {t('product.watchVideo')}
+                                </p>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+                        {videoTitle && (
+                          <div className="px-4 py-3 bg-gray-50 dark:bg-white/[0.03]">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                              {videoTitle}
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -981,6 +1290,7 @@ export default function ProductDetailPage() {
                       <img
                         src={rp.images[0]}
                         alt={getProductName(rp, language)}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -1029,7 +1339,7 @@ export default function ProductDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+              className="text-xs text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400"
               onClick={clearRecentlyViewed}
             >
               {t('products.recentlyViewed.clear')}
@@ -1055,6 +1365,7 @@ export default function ProductDetailPage() {
                           <img
                             src={rv.image}
                             alt={rv.name}
+                            loading="lazy"
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
@@ -1156,6 +1467,7 @@ export default function ProductDetailPage() {
                       <img
                         src={rp.images[0]}
                         alt={getProductName(rp, language)}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -1206,7 +1518,7 @@ export default function ProductDetailPage() {
             {priceDisplay ? (
               <p className="text-xs font-semibold dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
             ) : (
-              <p className="text-xs font-medium" style={{ color: '#F0C05A' }}>
+              <p className="text-xs font-medium dark:text-blue-200" style={{ color: '#F0C05A' }}>
                 {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
               </p>
             )}

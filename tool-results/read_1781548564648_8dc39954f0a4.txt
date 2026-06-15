@@ -1,0 +1,1316 @@
+     1→'use client';
+     2→
+     3→import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+     4→import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+     5→import { useTranslation } from '@/lib/i18n';
+     6→import type { Language } from '@/lib/i18n';
+     7→
+     8→// ============================================================
+     9→// Types
+    10→// ============================================================
+    11→export interface Category {
+    12→  id: string;
+    13→  slug: string;
+    14→  name_fr: string;
+    15→  name_ar: string;
+    16→  description_fr: string;
+    17→  description_ar: string;
+    18→  icon: string;
+    19→  image: string;
+    20→  sort_order: number;
+    21→}
+    22→
+    23→export interface Product {
+    24→  id: string;
+    25→  slug: string;
+    26→  name_fr: string;
+    27→  name_ar: string;
+    28→  description_fr: string;
+    29→  description_ar: string;
+    30→  short_description_fr: string;
+    31→  short_description_ar: string;
+    32→  category_id: string;
+    33→  price: number;
+    34→  images: string[];
+    35→  specs: Record<string, string>[];
+    36→  features_fr: string[];
+    37→  features_ar: string[];
+    38→  in_stock: boolean;
+    39→  is_featured: boolean;
+    40→  is_new: boolean;
+    41→  is_best_seller: boolean;
+    42→  brand: string;
+    43→  origin: string;
+    44→  warranty: string;
+    45→  delivery_time_fr: string;
+    46→  delivery_time_ar: string;
+    47→  installation_included: boolean;
+    48→  training_included: boolean;
+    49→  ref: string;
+    50→  target: string[];
+    51→  pdf_url: string;
+    52→  brochure_pdf: string;
+    53→  videos: { title_fr: string; title_ar: string; url: string; type: string }[];
+    54→  rating?: number;
+    55→  reviewCount?: number;
+    56→  created_at: string;
+    57→}
+    58→
+    59→export interface BlogPost {
+    60→  id: string;
+    61→  slug: string;
+    62→  title_fr: string;
+    63→  title_ar: string;
+    64→  excerpt_fr: string;
+    65→  excerpt_ar: string;
+    66→  content_fr: string;
+    67→  content_ar: string;
+    68→  image: string;
+    69→  author: string;
+    70→  date: string;
+    71→  read_time: number;
+    72→  tags: string[];
+    73→  category: string;
+    74→  created_at: string;
+    75→}
+    76→
+    77→export interface ContactInfo {
+    78→  address: { fr: string; ar: string };
+    79→  phone: string;
+    80→  whatsapp: string;
+    81→  email: string;
+    82→  fax: string;
+    83→  hours: { fr: string; ar: string };
+    84→  social: {
+    85→    facebook: string;
+    86→    instagram: string;
+    87→    linkedin: string;
+    88→    youtube: string;
+    89→  };
+    90→}
+    91→
+    92→export interface QuoteSubmission {
+    93→  nom: string;
+    94→  email: string;
+    95→  telephone: string;
+    96→  wilaya: string;
+    97→  type_client: string;
+    98→  produits_selectionnes: { id: string; slug: string; name: string; quantity: number }[];
+    99→  message: string;
+   100→}
+   101→
+   102→// ============================================================
+   103→// Default / Fallback Data
+   104→// ============================================================
+   105→const defaultContactInfo: ContactInfo = {
+   106→  address: {
+   107→    fr: 'Coopérative Azzouz Abdelkader, N°45, Commune d\'Es-Senia, Oran, Algérie',
+   108→    ar: 'تعاونية عزوز عبد القادر، رقم 45، بلدية السانية، وهران، الجزائر',
+   109→  },
+   110→  phone: '+213 771 88 89 48',
+   111→  whatsapp: '+213771888948',
+   112→  email: 'groupedentalimport@gmail.com',
+   113→  fax: '041 28 28 55',
+   114→  hours: {
+   115→    fr: 'Dimanche - Jeudi : 8h00 - 17h00',
+   116→    ar: 'الأحد - الخميس: 8:00 - 17:00',
+   117→  },
+   118→  social: {
+   119→    facebook: 'https://facebook.com/odg.algeria',
+   120→    instagram: 'https://instagram.com/odg.algeria',
+   121→    linkedin: 'https://linkedin.com/company/odg-algeria',
+   122→    youtube: '',
+   123→  },
+   124→};
+   125→
+   126→// Default categories when Supabase is not available
+   127→const defaultCategories: Category[] = [
+   128→  {
+   129→    id: '1',
+   130→    slug: 'fauteuils',
+   131→    name_fr: 'Fauteuils Dentaires',
+   132→    name_ar: 'كراسي طب الأسنان',
+   133→    description_fr: 'Fauteuils dentaires de dernière génération avec ergonomie avancée',
+   134→    description_ar: 'كراسي أسنان من الجيل الأخير مع تصميم مريح متقدم',
+   135→    icon: 'Armchair',
+   136→    image: '/categories/fauteuils.jpg',
+   137→    sort_order: 1,
+   138→  },
+   139→  {
+   140→    id: '2',
+   141→    slug: 'unites',
+   142→    name_fr: 'Unités Dentaires',
+   143→    name_ar: 'وحدات طب الأسنان',
+   144→    description_fr: 'Unités dentaires complètes pour cabinet dentaire moderne',
+   145→    description_ar: 'وحدات أسنان كاملة لعيادة أسنان حديثة',
+   146→    icon: 'Monitor',
+   147→    image: '/categories/unites.jpg',
+   148→    sort_order: 2,
+   149→  },
+   150→  {
+   151→    id: '3',
+   152→    slug: 'radiologie',
+   153→    name_fr: 'Radiologie',
+   154→    name_ar: 'الأشعة',
+   155→    description_fr: 'Équipements de radiologie dentaire numérique et conventionnelle',
+   156→    description_ar: 'معدات أشعة الأسنان الرقمية والتقليدية',
+   157→    icon: 'Scan',
+   158→    image: '/categories/radiologie.jpg',
+   159→    sort_order: 3,
+   160→  },
+   161→  {
+   162→    id: '4',
+   163→    slug: 'sterilisation',
+   164→    name_fr: 'Stérilisation',
+   165→    name_ar: 'التعقيم',
+   166→    description_fr: 'Autoclaves et équipements de stérilisation professionnels',
+   167→    description_ar: 'أوتوكلاف ومعدات تعقيم احترافية',
+   168→    icon: 'Shield',
+   169→    image: '/categories/sterilisation.jpg',
+   170→    sort_order: 4,
+   171→  },
+   172→  {
+   173→    id: '5',
+   174→    slug: 'pneumatiques',
+   175→    name_fr: 'Pneumatiques',
+   176→    name_ar: 'الهوائية',
+   177→    description_fr: 'Compresseurs et équipements pneumatiques dentaires',
+   178→    description_ar: 'ضواغط ومعدات هوائية لطب الأسنان',
+   179→    icon: 'Wind',
+   180→    image: '/categories/pneumatiques.jpg',
+   181→    sort_order: 5,
+   182→  },
+   183→  {
+   184→    id: '6',
+   185→    slug: 'consommables',
+   186→    name_fr: 'Consommables',
+   187→    name_ar: 'المستهلكات',
+   188→    description_fr: 'Consommables et matériaux dentaires de qualité',
+   189→    description_ar: 'مواد ومستهلكات طب الأسنان عالية الجودة',
+   190→    icon: 'Package',
+   191→    image: '/categories/consommables.jpg',
+   192→    sort_order: 6,
+   193→  },
+   194→  {
+   195→    id: '7',
+   196→    slug: 'instruments',
+   197→    name_fr: 'Instruments',
+   198→    name_ar: 'الأدوات',
+   199→    description_fr: 'Instruments dentaires de précision',
+   200→    description_ar: 'أدوات أسنان دقيقة',
+   201→    icon: 'Wrench',
+   202→    image: '/categories/instruments.jpg',
+   203→    sort_order: 7,
+   204→  },
+   205→  {
+   206→    id: '8',
+   207→    slug: 'mobilier',
+   208→    name_fr: 'Mobilier',
+   209→    name_ar: 'الأثاث',
+   210→    description_fr: 'Mobilier de cabinet dentaire ergonomique',
+   211→    description_ar: 'أثاث عيادة أسنان مريح',
+   212→    icon: 'Lamp',
+   213→    image: '/categories/mobilier.jpg',
+   214→    sort_order: 8,
+   215→  },
+   216→];
+   217→
+   218→// Default featured products for when Supabase is not available
+   219→const defaultProducts: Product[] = [
+   220→  {
+   221→    id: '1',
+   222→    slug: 'fauteuil-dental-elite-pro',
+   223→    name_fr: 'Fauteuil Dentaire Elite Pro',
+   224→    name_ar: 'كرسي أسنان إيليت برو',
+   225→    description_fr: '<p>Le fauteuil dentaire Elite Pro offre un confort exceptionnel pour le praticien et le patient. Doté de la dernière technologie en matière d\'ergonomie et de contrôle, il représente le choix idéal pour les cabinets dentaires modernes.</p><h3>Caractéristiques principales</h3><ul><li>Positionnement automatique du patient</li><li>Écran tactile intégré</li><li>Éclairage LED haute performance</li><li>Système d\'aspiration silencieux</li></ul>',
+   226→    description_ar: '<p>كرسي أسنان إيليت برو يوفر راحة استثنائية للطبيب والمريض. مجهز بأحدث التكنولوجيا في مجال الراحة والتحكم، يمثل الخيار المثالي لعيادات الأسنان الحديثة.</p>',
+   227→    short_description_fr: 'Fauteuil dentaire haut de gamme avec écran tactile et positionnement automatique',
+   228→    short_description_ar: 'كرسي أسنان فاخر بشاشة لمس ووضعية تلقائية',
+   229→    category_id: '1',
+   230→    price: 3500000,
+   231→    images: [],
+   232→    specs: [
+   233→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   234→      { label_fr: 'Poids', label_ar: 'الوزن', value: '180 kg' },
+   235→      { label_fr: 'Dimensions', label_ar: 'الأبعاد', value: '200 x 80 x 140 cm' },
+   236→      { label_fr: 'Angle d\'inclinaison', label_ar: 'زاوية الميل', value: '-10° à 80°' },
+   237→    ],
+   238→    features_fr: ['Écran tactile 7 pouces', 'Positionnement automatique', 'Éclairage LED', 'Aspiration silencieuse', 'Garantie 5 ans'],
+   239→    features_ar: ['شاشة لمس 7 بوصة', 'وضعية تلقائية', 'إضاءة LED', 'شفط صامت', 'ضمان 5 سنوات'],
+   240→    in_stock: true,
+   241→    is_featured: true,
+   242→    is_new: true,
+   243→    is_best_seller: true,
+   244→    brand: 'ODG Elite',
+   245→    origin: 'Corée du Sud',
+   246→    warranty: '5 ans',
+   247→    delivery_time_fr: '2-4 semaines',
+   248→    delivery_time_ar: '2-4 أسابيع',
+   249→    installation_included: true,
+   250→    training_included: true,
+   251→    ref: 'FDE-001',
+   252→    target: ['Clinique', 'Revendeur'],
+   253→    pdf_url: '',
+   254→    brochure_pdf: '',
+   255→    videos: [],
+   256→    rating: 4.8,
+   257→    reviewCount: 124,
+   258→    created_at: new Date().toISOString(),
+   259→  },
+   260→  {
+   261→    id: '2',
+   262→    slug: 'unite-dentaire-smart-touch',
+   263→    name_fr: 'Unité Dentaire Smart Touch',
+   264→    name_ar: 'وحدة أسنان سمارت تاتش',
+   265→    description_fr: '<p>L\'unité dentaire Smart Touch combine technologie de pointe et design élégant. Son interface intuitive permet un contrôle précis de tous les paramètres de traitement.</p>',
+   266→    description_ar: '<p>وحدة أسنان سمارت تاتش تجمع بين أحدث التكنولوجيا والتصميم الأنيق. واجهتها البديهية تسمح بالتحكم الدقيق في جميع معلمات العلاج.</p>',
+   267→    short_description_fr: 'Unité dentaire nouvelle génération avec interface tactile intuitive',
+   268→    short_description_ar: 'وحدة أسنان من الجيل الجديد بواجهة لمس بديهية',
+   269→    category_id: '2',
+   270→    price: 4200000,
+   271→    images: [],
+   272→    specs: [
+   273→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   274→      { label_fr: 'Syringe', label_ar: 'حقنة', value: '3 voies' },
+   275→      { label_fr: 'Turbine', label_ar: 'توربين', value: '2 connecteurs' },
+   276→    ],
+   277→    features_fr: ['Interface tactile', '4 connectiques', 'Spittoon céramique', 'Éclairage LED', 'Garantie 3 ans'],
+   278→    features_ar: ['واجهة لمس', '4 وصلات', 'بصاق خزفي', 'إضاءة LED', 'ضمان 3 سنوات'],
+   279→    in_stock: true,
+   280→    is_featured: true,
+   281→    is_new: false,
+   282→    is_best_seller: true,
+   283→    brand: 'SmartDent',
+   284→    origin: 'Chine',
+   285→    warranty: '3 ans',
+   286→    delivery_time_fr: '3-5 semaines',
+   287→    delivery_time_ar: '3-5 أسابيع',
+   288→    installation_included: true,
+   289→    training_included: true,
+   290→    ref: 'UDS-002',
+   291→    target: ['Clinique'],
+   292→    pdf_url: '',
+   293→    brochure_pdf: '',
+   294→    videos: [],
+   295→    rating: 4.5,
+   296→    reviewCount: 89,
+   297→    created_at: new Date().toISOString(),
+   298→  },
+   299→  {
+   300→    id: '3',
+   301→    slug: 'radio-panoramique-digital-x',
+   302→    name_fr: 'Radio Panoramique Digital X',
+   303→    name_ar: 'أشعة بانورامية ديجيتال إكس',
+   304→    description_fr: '<p>Le radio panoramique Digital X offre une imagerie de haute qualité avec une exposition minimale aux rayons. Idéal pour les diagnostics précis et rapides.</p>',
+   305→    description_ar: '<p>الأشعة البانورامية ديجيتال إكس توفر تصويراً عالي الجودة بأقل تعرض للإشعاع. مثالية للتشخيص الدقيق والسريع.</p>',
+   306→    short_description_fr: 'Radio panoramique numérique haute résolution avec faible exposition',
+   307→    short_description_ar: 'أشعة بانورامية رقمية عالية الدقة مع تعرض منخفض',
+   308→    category_id: '3',
+   309→    price: 5800000,
+   310→    images: [],
+   311→    specs: [
+   312→      { label_fr: 'Résolution', label_ar: 'الدقة', value: '16 bit' },
+   313→      { label_fr: 'Tension', label_ar: 'الجهد', value: '60-90 kV' },
+   314→      { label_fr: 'Focale', label_ar: 'البؤرة', value: '0.5 mm' },
+   315→    ],
+   316→    features_fr: ['Haute résolution', 'Faible exposition', 'Logiciel 3D intégré', 'Capteur CCD', 'Garantie 2 ans'],
+   317→    features_ar: ['دقة عالية', 'تعرض منخفض', 'برنامج 3D مدمج', 'مستشعر CCD', 'ضمان سنتين'],
+   318→    in_stock: true,
+   319→    is_featured: true,
+   320→    is_new: true,
+   321→    is_best_seller: false,
+   322→    brand: 'DigiRay',
+   323→    origin: 'Italie',
+   324→    warranty: '2 ans',
+   325→    delivery_time_fr: '4-6 semaines',
+   326→    delivery_time_ar: '4-6 أسابيع',
+   327→    installation_included: true,
+   328→    training_included: true,
+   329→    ref: 'RPD-003',
+   330→    target: ['Clinique', 'Revendeur'],
+   331→    pdf_url: '',
+   332→    brochure_pdf: '',
+   333→    videos: [],
+   334→    rating: 4.7,
+   335→    reviewCount: 56,
+   336→    created_at: new Date().toISOString(),
+   337→  },
+   338→  {
+   339→    id: '4',
+   340→    slug: 'autoclave-class-b-pro',
+   341→    name_fr: 'Autoclave Classe B Pro',
+   342→    name_ar: 'أوتوكلاف كلاس برو',
+   343→    description_fr: '<p>L\'autoclave Classe B Pro garantit une stérilisation parfaite conforme aux normes internationales les plus strictes. Cycle rapide et traçabilité complète.</p>',
+   344→    description_ar: '<p>الأوتوكلاف كلاس برو يضمن تعقيماً مثالياً يتوافق مع أصرم المعايير الدولية. دورة سريعة وتتبع كامل.</p>',
+   345→    short_description_fr: 'Autoclave Classe B avec cycle rapide et traçabilité complète',
+   346→    short_description_ar: 'أوتوكلاف فئة ب مع دورة سريعة وتتبع كامل',
+   347→    category_id: '4',
+   348→    price: 1800000,
+   349→    images: [],
+   350→    specs: [
+   351→      { label_fr: 'Capacité', label_ar: 'السعة', value: '23 litres' },
+   352→      { label_fr: 'Température', label_ar: 'الحرارة', value: '121-134°C' },
+   353→      { label_fr: 'Cycle', label_ar: 'الدورة', value: '20-45 min' },
+   354→    ],
+   355→    features_fr: ['Classe B', 'Cycle rapide 20 min', 'Impression intégrée', 'Écran LCD', 'Garantie 2 ans'],
+   356→    features_ar: ['فئة ب', 'دورة سريعة 20 دقيقة', 'طباعة مدمجة', 'شاشة LCD', 'ضمان سنتين'],
+   357→    in_stock: true,
+   358→    is_featured: true,
+   359→    is_new: false,
+   360→    is_best_seller: true,
+   361→    brand: 'SterilPro',
+   362→    origin: 'Allemagne',
+   363→    warranty: '2 ans',
+   364→    delivery_time_fr: '2-3 semaines',
+   365→    delivery_time_ar: '2-3 أسابيع',
+   366→    installation_included: true,
+   367→    training_included: false,
+   368→    ref: 'ACB-004',
+   369→    target: ['Clinique', 'Revendeur', 'Comptoir'],
+   370→    pdf_url: '',
+   371→    brochure_pdf: '',
+   372→    videos: [],
+   373→    rating: 4.6,
+   374→    reviewCount: 73,
+   375→    created_at: new Date().toISOString(),
+   376→  },
+   377→  {
+   378→    id: '5',
+   379→    slug: 'compresseur-silent-air',
+   380→    name_fr: 'Compresseur Silent Air',
+   381→    name_ar: 'ضاغط سايلنت إير',
+   382→    description_fr: '<p>Le compresseur Silent Air offre un débit d\'air exceptionnel avec un niveau sonore minimal. Parfait pour les cabinets requiring un environnement de travail silencieux.</p>',
+   383→    description_ar: '<p>ضاغط سايلنت إير يوفر تدفق هواء استثنائي مع مستوى ضوضاء أدنى. مثالي لعيادات الأسنان التي تتطلب بيئة عمل هادئة.</p>',
+   384→    short_description_fr: 'Compresseur dentaire silencieux avec débit d\'air haute performance',
+   385→    short_description_ar: 'ضاغط أسنان صامت مع تدفق هواء عالي الأداء',
+   386→    category_id: '5',
+   387→    price: 950000,
+   388→    images: [],
+   389→    specs: [
+   390→      { label_fr: 'Débit', label_ar: 'التدفق', value: '80 L/min' },
+   391→      { label_fr: 'Pression', label_ar: 'الضغط', value: '8 bar' },
+   392→      { label_fr: 'Niveau sonore', label_ar: 'مستوى الضوضاء', value: '< 45 dB' },
+   393→    ],
+   394→    features_fr: ['Ultra silencieux', 'Sans huile', 'Réservoir 50L', 'Double moteur', 'Garantie 2 ans'],
+   395→    features_ar: ['فائق الصمت', 'بدون زيت', 'خزان 50 لتر', 'محرك مزدوج', 'ضمان سنتين'],
+   396→    in_stock: true,
+   397→    is_featured: false,
+   398→    is_new: true,
+   399→    is_best_seller: false,
+   400→    brand: 'AirTech',
+   401→    origin: 'France',
+   402→    warranty: '2 ans',
+   403→    delivery_time_fr: '1-2 semaines',
+   404→    delivery_time_ar: '1-2 أسبوع',
+   405→    installation_included: false,
+   406→    training_included: false,
+   407→    ref: 'CSA-005',
+   408→    target: ['Clinique', 'Comptoir'],
+   409→    pdf_url: '',
+   410→    brochure_pdf: '',
+   411→    videos: [],
+   412→    rating: 4.3,
+   413→    reviewCount: 41,
+   414→    created_at: new Date().toISOString(),
+   415→  },
+   416→  {
+   417→    id: '6',
+   418→    slug: 'lampe-led-cure-pro',
+   419→    name_fr: 'Lampe LED Cure Pro',
+   420→    name_ar: 'مصباح LED كيور برو',
+   421→    description_fr: '<p>La lampe LED Cure Pro offre une polymérisation rapide et efficace pour tous les matériaux composites. Design ergonomique et légère.</p>',
+   422→    description_ar: '<p>مصباح LED كيور برو يوفر بلمرة سريعة وفعالة لجميع المواد المركبة. تصميم مريح وخفيف.</p>',
+   423→    short_description_fr: 'Lampe de polymérisation LED haute performance',
+   424→    short_description_ar: 'مصباح بلمرة LED عالي الأداء',
+   425→    category_id: '6',
+   426→    price: 45000,
+   427→    images: [],
+   428→    specs: [
+   429→      { label_fr: 'Longueur d\'onde', label_ar: 'طول الموجة', value: '420-480 nm' },
+   430→      { label_fr: 'Puissance', label_ar: 'القوة', value: '1200 mW/cm²' },
+   431→    ],
+   432→    features_fr: ['Polymerisation rapide', 'Sans fil', '3 modes', 'Écran LCD', 'Garantie 1 an'],
+   433→    features_ar: ['بلمرة سريعة', 'بدون سلك', '3 أوضاع', 'شاشة LCD', 'ضمان سنة'],
+   434→    in_stock: true,
+   435→    is_featured: false,
+   436→    is_new: true,
+   437→    is_best_seller: true,
+   438→    brand: 'CureMax',
+   439→    origin: 'Brésil',
+   440→    warranty: '1 an',
+   441→    delivery_time_fr: '1 semaine',
+   442→    delivery_time_ar: 'أسبوع',
+   443→    installation_included: false,
+   444→    training_included: false,
+   445→    ref: 'LLC-006',
+   446→    target: ['Clinique', 'Revendeur', 'Comptoir'],
+   447→    pdf_url: '',
+   448→    brochure_pdf: '',
+   449→    videos: [],
+   450→    rating: 4.2,
+   451→    reviewCount: 67,
+   452→    created_at: new Date().toISOString(),
+   453→  },
+   454→  // ---- Additional Products for Richer Demo ----
+   455→  {
+   456→    id: '7',
+   457→    slug: 'fauteuil-dentaire-economique',
+   458→    name_fr: 'Fauteuil Dentaire Économique',
+   459→    name_ar: 'كرسي أسنان اقتصادي',
+   460→    description_fr: '<p>Le fauteuil dentaire Économique offre un excellent rapport qualité-prix pour les cabinets débutants ou les petites structures. Confortable et fiable, il répond à tous les besoins de base.</p>',
+   461→    description_ar: '<p>كرسي الأسنان الاقتصادي يوفر قيمة ممتازة مقابل السعر للعيادات الناشئة أو الهياكل الصغيرة. مريح وموثوق، يلبي جميع الاحتياجات الأساسية.</p>',
+   462→    short_description_fr: 'Fauteuil dentaire entry-level, abordable et fiable pour petits cabinets',
+   463→    short_description_ar: 'كرسي أسنان دخلي، اقتصادي وموثوق للعيادات الصغيرة',
+   464→    category_id: '1',
+   465→    price: 1800000,
+   466→    images: [],
+   467→    specs: [
+   468→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   469→      { label_fr: 'Poids', label_ar: 'الوزن', value: '140 kg' },
+   470→      { label_fr: 'Angle d\'inclinaison', label_ar: 'زاوية الميل', value: '-5° à 75°' },
+   471→    ],
+   472→    features_fr: ['Prix abordable', 'Confort de base', 'Commandes manuelles', 'Entretien facile', 'Garantie 2 ans'],
+   473→    features_ar: ['سعر اقتصادي', 'راحة أساسية', 'تحكم يدوي', 'صيانة سهلة', 'ضمان سنتين'],
+   474→    in_stock: true,
+   475→    is_featured: false,
+   476→    is_new: false,
+   477→    is_best_seller: true,
+   478→    brand: 'DentaBase',
+   479→    origin: 'Chine',
+   480→    warranty: '2 ans',
+   481→    delivery_time_fr: '2-3 semaines',
+   482→    delivery_time_ar: '2-3 أسابيع',
+   483→    installation_included: true,
+   484→    training_included: false,
+   485→    ref: 'FDE-007',
+   486→    target: ['Clinique', 'Comptoir'],
+   487→    pdf_url: '',
+   488→    brochure_pdf: '',
+   489→    videos: [],
+   490→    rating: 3.9,
+   491→    reviewCount: 38,
+   492→    created_at: new Date().toISOString(),
+   493→  },
+   494→  {
+   495→    id: '8',
+   496→    slug: 'unite-dentaire-compacte',
+   497→    name_fr: 'Unité Dentaire Compacte',
+   498→    name_ar: 'وحدة أسنان مدمجة',
+   499→    description_fr: '<p>L\'unité dentaire Compacte est conçue pour les petits cabinets avec un espace limité. Son design compact n\'en fait pas compromettre sur la fonctionnalité et le confort.</p>',
+   500→    description_ar: '<p>وحدة الأسنان المدمجة مصممة للعيادات الصغيرة ذات المساحة المحدودة. تصميمها المدمج لا يتنازل عن الوظائف والراحة.</p>',
+   501→    short_description_fr: 'Unité dentaire compacte idéale pour les petits espaces',
+   502→    short_description_ar: 'وحدة أسنان مدمجة مثالية للمساحات الصغيرة',
+   503→    category_id: '2',
+   504→    price: 2800000,
+   505→    images: [],
+   506→    specs: [
+   507→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   508→      { label_fr: 'Syringe', label_ar: 'حقنة', value: '3 voies' },
+   509→      { label_fr: 'Dimensions', label_ar: 'الأبعاد', value: '120 x 60 x 180 cm' },
+   510→    ],
+   511→    features_fr: ['Design compact', 'Turbine + micromoteur', 'Crachoir céramique', 'Éclairage LED', 'Garantie 2 ans'],
+   512→    features_ar: ['تصميم مدمج', 'توربين + ميكروموتور', 'بصاق خزفي', 'إضاءة LED', 'ضمان سنتين'],
+   513→    in_stock: true,
+   514→    is_featured: false,
+   515→    is_new: true,
+   516→    is_best_seller: false,
+   517→    brand: 'CompactDent',
+   518→    origin: 'Corée du Sud',
+   519→    warranty: '2 ans',
+   520→    delivery_time_fr: '3-4 semaines',
+   521→    delivery_time_ar: '3-4 أسابيع',
+   522→    installation_included: true,
+   523→    training_included: true,
+   524→    ref: 'UDC-008',
+   525→    target: ['Clinique'],
+   526→    pdf_url: '',
+   527→    brochure_pdf: '',
+   528→    videos: [],
+   529→    rating: 4.4,
+   530→    reviewCount: 52,
+   531→    created_at: new Date().toISOString(),
+   532→  },
+   533→  {
+   534→    id: '9',
+   535→    slug: 'unite-dentaire-premium',
+   536→    name_fr: 'Unité Dentaire Premium',
+   537→    name_ar: 'وحدة أسنان بريميوم',
+   538→    description_fr: '<p>L\'unité dentaire Premium représente le summum de la technologie dentaire. Équipée de capteurs intelligents et d\'un bras articulé 6 axes, elle est conçue pour les praticiens exigeants.</p>',
+   539→    description_ar: '<p>وحدة الأسنان بريميوم تمثل قمة تكنولوجيا طب الأسنان. مجهزة بمستشعرات ذكية وذراع مفصلي 6 محاور، مصممة للأطباء المتميزين.</p>',
+   540→    short_description_fr: 'Unité dentaire haut de gamme avec capteurs intelligents et bras 6 axes',
+   541→    short_description_ar: 'وحدة أسنان فاخرة بمستشعرات ذكية وذراع 6 محاور',
+   542→    category_id: '2',
+   543→    price: 5500000,
+   544→    images: [],
+   545→    specs: [
+   546→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   547→      { label_fr: 'Turbine', label_ar: 'توربين', value: '3 connecteurs' },
+   548→      { label_fr: 'Écran', label_ar: 'الشاشة', value: '10 pouces tactile' },
+   549→    ],
+   550→    features_fr: ['Capteurs intelligents', 'Bras 6 axes', 'Écran 10 pouces', 'Hygiène automatisée', 'Garantie 5 ans'],
+   551→    features_ar: ['مستشعرات ذكية', 'ذراع 6 محاور', 'شاشة 10 بوصة', 'نظافة آلية', 'ضمان 5 سنوات'],
+   552→    in_stock: true,
+   553→    is_featured: true,
+   554→    is_new: true,
+   555→    is_best_seller: false,
+   556→    brand: 'PremiumDent',
+   557→    origin: 'Allemagne',
+   558→    warranty: '5 ans',
+   559→    delivery_time_fr: '4-6 semaines',
+   560→    delivery_time_ar: '4-6 أسابيع',
+   561→    installation_included: true,
+   562→    training_included: true,
+   563→    ref: 'UDP-009',
+   564→    target: ['Clinique', 'Revendeur'],
+   565→    pdf_url: '',
+   566→    brochure_pdf: '',
+   567→    videos: [],
+   568→    rating: 4.9,
+   569→    reviewCount: 31,
+   570→    created_at: new Date().toISOString(),
+   571→  },
+   572→  {
+   573→    id: '10',
+   574→    slug: 'capteur-rvg-numerique',
+   575→    name_fr: 'Capteur RVG Numérique',
+   576→    name_ar: 'مستشعر RVG رقمي',
+   577→    description_fr: '<p>Le capteur RVG Numérique offre une imagerie rétroalvéolaire de haute qualité avec une résolution exceptionnelle. Compatible avec tous les logiciels de radiologie dentaire.</p>',
+   578→    description_ar: '<p>مستشعر RVG الرقمي يوفر تصويراً رجعياً سنخياً عالي الجودة بدقة استثنائية. متوافق مع جميع برامج أشعة الأسنان.</p>',
+   579→    short_description_fr: 'Capteur RVG haute résolution compatible tous logiciels',
+   580→    short_description_ar: 'مستشعر RVG عالي الدقة متوافق مع جميع البرامج',
+   581→    category_id: '3',
+   582→    price: 850000,
+   583→    images: [],
+   584→    specs: [
+   585→      { label_fr: 'Résolution', label_ar: 'الدقة', value: '26 lp/mm' },
+   586→      { label_fr: 'Taille active', label_ar: 'الحجم النشط', value: '30 x 40 mm' },
+   587→      { label_fr: 'Connectivité', label_ar: 'الاتصال', value: 'USB 2.0' },
+   588→    ],
+   589→    features_fr: ['Haute résolution 26 lp/mm', 'Compatible tous logiciels', 'Filaire USB', 'Stérilisable', 'Garantie 2 ans'],
+   590→    features_ar: ['دقة عالية 26 lp/mm', 'متوافق مع جميع البرامج', 'سلكي USB', 'قابل للتعقيم', 'ضمان سنتين'],
+   591→    in_stock: true,
+   592→    is_featured: false,
+   593→    is_new: true,
+   594→    is_best_seller: true,
+   595→    brand: 'DigiRay',
+   596→    origin: 'France',
+   597→    warranty: '2 ans',
+   598→    delivery_time_fr: '1-2 semaines',
+   599→    delivery_time_ar: '1-2 أسبوع',
+   600→    installation_included: false,
+   601→    training_included: false,
+   602→    ref: 'CRV-010',
+   603→    target: ['Clinique', 'Revendeur'],
+   604→    pdf_url: '',
+   605→    brochure_pdf: '',
+   606→    videos: [],
+   607→    rating: 4.1,
+   608→    reviewCount: 44,
+   609→    created_at: new Date().toISOString(),
+   610→  },
+   611→  {
+   612→    id: '11',
+   613→    slug: 'radio-cephalometre',
+   614→    name_fr: 'Radio Céphalomètre',
+   615→    name_ar: 'جهاز أشعة سيفالوميتر',
+   616→    description_fr: '<p>Le radio céphalomètre permet des clichés céphalométriques de haute précision. Indispensable pour les orthodontistes et les chirurgiens maxillo-faciaux.</p>',
+   617→    description_ar: '<p>جهاز الأشعة السيفالوميتر يسمح بأشعة سيفالومترية عالية الدقة. ضرائي لمتقويمي الأسنان وجراحي الوجه والفكين.</p>',
+   618→    short_description_fr: 'Céphalomètre haute précision pour orthodontie et chirurgie',
+   619→    short_description_ar: 'سيفالوميتر عالي الدقة لتقويم الأسنان والجراحة',
+   620→    category_id: '3',
+   621→    price: 0,
+   622→    images: [],
+   623→    specs: [
+   624→      { label_fr: 'Tension', label_ar: 'الجهد', value: '60-90 kV' },
+   625→      { label_fr: 'Focale', label_ar: 'البؤرة', value: '0.5 mm' },
+   626→      { label_fr: 'Type', label_ar: 'النوع', value: 'Céphalomètre + panoramique' },
+   627→    ],
+   628→    features_fr: ['Haute précision', 'Mode panoramique intégré', 'Faible dose', 'Logiciel 3D', 'Garantie 2 ans'],
+   629→    features_ar: ['دقة عالية', 'وضع بانورامي مدمج', 'جرعة منخفضة', 'برنامج 3D', 'ضمان سنتين'],
+   630→    in_stock: true,
+   631→    is_featured: false,
+   632→    is_new: false,
+   633→    is_best_seller: false,
+   634→    brand: 'Owandy',
+   635→    origin: 'France',
+   636→    warranty: '2 ans',
+   637→    delivery_time_fr: '4-6 semaines',
+   638→    delivery_time_ar: '4-6 أسابيع',
+   639→    installation_included: true,
+   640→    training_included: true,
+   641→    ref: 'RCP-011',
+   642→    target: ['Clinique', 'Revendeur'],
+   643→    pdf_url: '',
+   644→    brochure_pdf: '',
+   645→    videos: [],
+   646→    rating: 3.5,
+   647→    reviewCount: 18,
+   648→    created_at: new Date().toISOString(),
+   649→  },
+   650→  {
+   651→    id: '12',
+   652→    slug: 'thermodesinfecteur-dental',
+   653→    name_fr: 'Thermodésinfecteur',
+   654→    name_ar: 'جهاز تطهير حراري',
+   655→    description_fr: '<p>Le thermodésinfecteur assure une désinfection thermique complète des instruments dentaires. Programmable et conforme aux normes EN ISO 15883.</p>',
+   656→    description_ar: '<p>جهاز التطهير الحراري يضمن تطهيراً حرارياً كاملاً لأدوات الأسنان. قابل للبرمجة ومتوافق مع معايير EN ISO 15883.</p>',
+   657→    short_description_fr: 'Thermodésinfecteur conforme EN ISO 15883 pour instruments dentaires',
+   658→    short_description_ar: 'جهاز تطهير حراري متوافق مع EN ISO 15883 لأدوات الأسنان',
+   659→    category_id: '4',
+   660→    price: 1200000,
+   661→    images: [],
+   662→    specs: [
+   663→      { label_fr: 'Capacité', label_ar: 'السعة', value: '16 litres' },
+   664→      { label_fr: 'Température', label_ar: 'الحرارة', value: '45-95°C' },
+   665→      { label_fr: 'Cycle', label_ar: 'الدورة', value: '30-60 min' },
+   666→    ],
+   667→    features_fr: ['Conforme EN ISO 15883', '5 programmes', 'Écran LCD', 'Séchage intégré', 'Garantie 2 ans'],
+   668→    features_ar: ['متوافق EN ISO 15883', '5 برامج', 'شاشة LCD', 'تجفيف مدمج', 'ضمان سنتين'],
+   669→    in_stock: true,
+   670→    is_featured: false,
+   671→    is_new: true,
+   672→    is_best_seller: false,
+   673→    brand: 'SterilPro',
+   674→    origin: 'Italie',
+   675→    warranty: '2 ans',
+   676→    delivery_time_fr: '2-3 semaines',
+   677→    delivery_time_ar: '2-3 أسابيع',
+   678→    installation_included: true,
+   679→    training_included: false,
+   680→    ref: 'TDS-012',
+   681→    target: ['Clinique', 'Comptoir'],
+   682→    pdf_url: '',
+   683→    brochure_pdf: '',
+   684→    videos: [],
+   685→    rating: 4.0,
+   686→    reviewCount: 29,
+   687→    created_at: new Date().toISOString(),
+   688→  },
+   689→  {
+   690→    id: '13',
+   691→    slug: 'sachet-sterilisation',
+   692→    name_fr: 'Sachet de Stérilisation',
+   693→    name_ar: 'أكياس تعقيم',
+   694→    description_fr: '<p>Sachets de stérilisation auto-adhésifs de haute qualité. Indicateur de stérilisation intégré. Disponible en plusieurs tailles.</p>',
+   695→    description_ar: '<p>أكياس تعقيم ذاتية اللصق عالية الجودة. مؤشر تعقيم مدمج. متوفرة بأحجام متعددة.</p>',
+   696→    short_description_fr: 'Sachets stérilisation auto-adhésifs avec indicateur intégré',
+   697→    short_description_ar: 'أكياس تعقيم ذاتية اللصق مع مؤشر مدمج',
+   698→    category_id: '4',
+   699→    price: 8500,
+   700→    images: [],
+   701→    specs: [
+   702→      { label_fr: 'Taille', label_ar: 'الحجم', value: '75 x 200 mm' },
+   703→      { label_fr: 'Quantité', label_ar: 'الكمية', value: '200 pièces/boîte' },
+   704→      { label_fr: 'Indicateur', label_ar: 'المؤشر', value: 'Classe 1' },
+   705→    ],
+   706→    features_fr: ['Auto-adhésif', 'Indicateur intégré', 'Papier médical 60g', 'Multiple tailles', 'Usage unique'],
+   707→    features_ar: ['ذاتي اللصق', 'مؤشر مدمج', 'ورق طبي 60g', 'أحجام متعددة', 'استخدام واحد'],
+   708→    in_stock: true,
+   709→    is_featured: false,
+   710→    is_new: false,
+   711→    is_best_seller: true,
+   712→    brand: 'MedPak',
+   713→    origin: 'Chine',
+   714→    warranty: '-',
+   715→    delivery_time_fr: '1 semaine',
+   716→    delivery_time_ar: 'أسبوع',
+   717→    installation_included: false,
+   718→    training_included: false,
+   719→    ref: 'SST-013',
+   720→    target: ['Clinique', 'Comptoir', 'Revendeur'],
+   721→    pdf_url: '',
+   722→    brochure_pdf: '',
+   723→    videos: [],
+   724→    rating: 4.5,
+   725→    reviewCount: 156,
+   726→    created_at: new Date().toISOString(),
+   727→  },
+   728→  {
+   729→    id: '14',
+   730→    slug: 'compresseur-dentaire-50l',
+   731→    name_fr: 'Compresseur Dentaire 50L',
+   732→    name_ar: 'ضاغط أسنان 50 لتر',
+   733→    description_fr: '<p>Le compresseur dentaire 50L offre un débit d\'air suffisant pour alimenter 2 fauteuils simultanément. Sans huile et ultra silencieux, il est idéal pour les cabinets de taille moyenne.</p>',
+   734→    description_ar: '<p>ضاغط الأسنان 50 لتر يوفر تدفق هواء كافي لتغذية كرسيين في نفس الوقت. بدون زيت وفائق الصمت، مثالي للعيادات المتوسطة.</p>',
+   735→    short_description_fr: 'Compresseur sans huile 50L pour 2 fauteuils, ultra silencieux',
+   736→    short_description_ar: 'ضاغط بدون زيت 50 لتر لكرسيين، فائق الصمت',
+   737→    category_id: '5',
+   738→    price: 750000,
+   739→    images: [],
+   740→    specs: [
+   741→      { label_fr: 'Réservoir', label_ar: 'الخزان', value: '50 litres' },
+   742→      { label_fr: 'Débit', label_ar: 'التدفق', value: '100 L/min' },
+   743→      { label_fr: 'Niveau sonore', label_ar: 'مستوى الضوضاء', value: '< 48 dB' },
+   744→    ],
+   745→    features_fr: ['Sans huile', 'Réservoir 50L', '2 fauteuils', 'Ultra silencieux', 'Garantie 2 ans'],
+   746→    features_ar: ['بدون زيت', 'خزان 50 لتر', 'كرسيين', 'فائق الصمت', 'ضمان سنتين'],
+   747→    in_stock: true,
+   748→    is_featured: false,
+   749→    is_new: false,
+   750→    is_best_seller: true,
+   751→    brand: 'AirTech',
+   752→    origin: 'Italie',
+   753→    warranty: '2 ans',
+   754→    delivery_time_fr: '1-2 semaines',
+   755→    delivery_time_ar: '1-2 أسبوع',
+   756→    installation_included: false,
+   757→    training_included: false,
+   758→    ref: 'CD5-014',
+   759→    target: ['Clinique', 'Comptoir'],
+   760→    pdf_url: '',
+   761→    brochure_pdf: '',
+   762→    videos: [],
+   763→    rating: 4.3,
+   764→    reviewCount: 22,
+   765→    created_at: new Date().toISOString(),
+   766→  },
+   767→  {
+   768→    id: '15',
+   769→    slug: 'suceur-chirurgical',
+   770→    name_fr: 'Suceur Chirurgical',
+   771→    name_ar: 'شافط جراحي',
+   772→    description_fr: '<p>Le suceur chirurgical haute puissance est conçu pour les interventions chirurgicales lourdes. Aspiration puissante et silencieuse avec système de filtration avancé.</p>',
+   773→    description_ar: '<p>الشافط الجراحي عالي القوة مصمم للعمليات الجراحية الكبيرة. شفط قوي وصامت مع نظام ترشيح متقدم.</p>',
+   774→    short_description_fr: 'Suceur chirurgical haute puissance avec filtration avancée',
+   775→    short_description_ar: 'شافط جراحي عالي القوة مع ترشيح متقدم',
+   776→    category_id: '5',
+   777→    price: 650000,
+   778→    images: [],
+   779→    specs: [
+   780→      { label_fr: 'Puissance', label_ar: 'القوة', value: '1500 W' },
+   781→      { label_fr: 'Débit', label_ar: 'التدفق', value: '300 L/min' },
+   782→      { label_fr: 'Niveau sonore', label_ar: 'مستوى الضوضاء', value: '< 52 dB' },
+   783→    ],
+   784→    features_fr: ['Haute puissance', 'Filtration HEPA', 'Silencieux', '2 pots de récupération', 'Garantie 2 ans'],
+   785→    features_ar: ['قوة عالية', 'ترشيح HEPA', 'صامت', '2 وعاء تجميع', 'ضمان سنتين'],
+   786→    in_stock: true,
+   787→    is_featured: false,
+   788→    is_new: true,
+   789→    is_best_seller: false,
+   790→    brand: 'SurgiVac',
+   791→    origin: 'Allemagne',
+   792→    warranty: '2 ans',
+   793→    delivery_time_fr: '2-3 semaines',
+   794→    delivery_time_ar: '2-3 أسابيع',
+   795→    installation_included: true,
+   796→    training_included: false,
+   797→    ref: 'SCH-015',
+   798→    target: ['Clinique'],
+   799→    pdf_url: '',
+   800→    brochure_pdf: '',
+   801→    videos: [],
+   802→    rating: 3.8,
+   803→    reviewCount: 14,
+   804→    created_at: new Date().toISOString(),
+   805→  },
+   806→  {
+   807→    id: '16',
+   808→    slug: 'kit-composite-universel',
+   809→    name_fr: 'Kit Composite Universel',
+   810→    name_ar: 'طقم حشوة مركبة عالمي',
+   811→    description_fr: '<p>Le kit composite universel contient tout le nécessaire pour les restaurations esthétiques directes. Composites nano-hybrides de dernière génération avec teintes Vita.</p>',
+   812→    description_ar: '<p>طقم الحشوة المركبة العالمي يحتوي على كل ما يلزم للحشوات التجميلية المباشرة. حشوات نانو هجينة من الجيل الأخير بألوان فيتا.</p>',
+   813→    short_description_fr: 'Kit complet de composites nano-hybrides avec teintes Vita',
+   814→    short_description_ar: 'طقم كامل من الحشوات النانو هجينة بألوان فيتا',
+   815→    category_id: '6',
+   816→    price: 35000,
+   817→    images: [],
+   818→    specs: [
+   819→      { label_fr: 'Teintes', label_ar: 'الألوان', value: 'A1, A2, A3, A3.5, B1, B2, C2' },
+   820→      { label_fr: 'Conditionnement', label_ar: 'التعبئة', value: '4g par seringue' },
+   821→      { label_fr: 'Type', label_ar: 'النوع', value: 'Nano-hybride' },
+   822→    ],
+   823→    features_fr: ['7 teintes Vita', 'Nano-hybride', 'Polymérisation LED', 'Haute résistance', 'Esthétique supérieure'],
+   824→    features_ar: ['7 ألوان فيتا', 'نانو هجين', 'بلمرة LED', 'مقاومة عالية', 'جمالية فائقة'],
+   825→    in_stock: true,
+   826→    is_featured: false,
+   827→    is_new: true,
+   828→    is_best_seller: true,
+   829→    brand: 'FillDent',
+   830→    origin: 'Brésil',
+   831→    warranty: '-',
+   832→    delivery_time_fr: '1 semaine',
+   833→    delivery_time_ar: 'أسبوع',
+   834→    installation_included: false,
+   835→    training_included: false,
+   836→    ref: 'KCU-016',
+   837→    target: ['Clinique', 'Comptoir', 'Revendeur'],
+   838→    pdf_url: '',
+   839→    brochure_pdf: '',
+   840→    videos: [],
+   841→    rating: 4.4,
+   842→    reviewCount: 83,
+   843→    created_at: new Date().toISOString(),
+   844→  },
+   845→  {
+   846→    id: '17',
+   847→    slug: 'matrice-interdentaire',
+   848→    name_fr: 'Matrice Interdentaire',
+   849→    name_ar: 'شريط بين سنوي',
+   850→    description_fr: '<p>Les matrices interdentaires sont essentielles pour les restaurations de classe II. Design anatomique pour une adaptation parfaite aux surfaces proximales.</p>',
+   851→    description_ar: '<p>الشرائط البين سنوية أساسية لحشوات الدرجة الثانية. تصميم تشريحي للتكييف المثالي مع الأسطح القريبة.</p>',
+   852→    short_description_fr: 'Matrices interdentaires anatomiques pour restaurations classe II',
+   853→    short_description_ar: 'شرائط بين سنوية تشريحية لحشوات الدرجة الثانية',
+   854→    category_id: '6',
+   855→    price: 12000,
+   856→    images: [],
+   857→    specs: [
+   858→      { label_fr: 'Matériau', label_ar: 'المادة', value: 'Acier inoxydable' },
+   859→      { label_fr: 'Quantité', label_ar: 'الكمية', value: '50 pièces/boîte' },
+   860→      { label_fr: 'Tailles', label_ar: 'الأحجام', value: 'S, M, L' },
+   861→    ],
+   862→    features_fr: ['Acier inoxydable', '3 tailles', 'Réutilisable', 'Design anatomique', 'Compatibilité universelle'],
+   863→    features_ar: ['ستانلس ستيل', '3 أحجام', 'قابل لإعادة الاستخدام', 'تصميم تشريحي', 'توافق عالمي'],
+   864→    in_stock: true,
+   865→    is_featured: false,
+   866→    is_new: false,
+   867→    is_best_seller: false,
+   868→    brand: 'MatriPro',
+   869→    origin: 'Chine',
+   870→    warranty: '-',
+   871→    delivery_time_fr: '1 semaine',
+   872→    delivery_time_ar: 'أسبوع',
+   873→    installation_included: false,
+   874→    training_included: false,
+   875→    ref: 'MID-017',
+   876→    target: ['Clinique', 'Comptoir'],
+   877→    pdf_url: '',
+   878→    brochure_pdf: '',
+   879→    videos: [],
+   880→    rating: 3.7,
+   881→    reviewCount: 25,
+   882→    created_at: new Date().toISOString(),
+   883→  },
+   884→  {
+   885→    id: '18',
+   886→    slug: 'kit-instruments-chirurgicaux',
+   887→    name_fr: 'Kit Instruments Chirurgicaux',
+   888→    name_ar: 'طقم أدوات جراحية',
+   889→    description_fr: '<p>Le kit instruments chirurgicaux complet comprend tous les instruments nécessaires pour les extractions et interventions chirurgicales dentaires. Acier inoxydable de qualité chirurgicale.</p>',
+   890→    description_ar: '<p>طقم الأدوات الجراحية الكامل يشمل جميع الأدوات اللازمة للخلع والعمليات الجراحية للأسنان. ستانلس ستيل بجودة جراحية.</p>',
+   891→    short_description_fr: 'Kit complet d\'instruments chirurgicaux en acier inox de qualité',
+   892→    short_description_ar: 'طقم كامل من الأدوات الجراحية من الستانلس ستيل',
+   893→    category_id: '7',
+   894→    price: 85000,
+   895→    images: [],
+   896→    specs: [
+   897→      { label_fr: 'Matériau', label_ar: 'المادة', value: 'Acier inox chirurgical' },
+   898→      { label_fr: 'Nombre de pièces', label_ar: 'عدد القطع', value: '15 instruments' },
+   899→      { label_fr: 'Étui', label_ar: 'الحقيبة', value: 'Valise aluminium' },
+   900→    ],
+   901→    features_fr: ['15 instruments', 'Acier inox chirurgical', 'Valise aluminium', 'Stérilisable', 'Garantie 5 ans'],
+   902→    features_ar: ['15 أداة', 'ستانلس ستيل جراحي', 'حقيبة ألمنيوم', 'قابل للتعقيم', 'ضمان 5 سنوات'],
+   903→    in_stock: true,
+   904→    is_featured: true,
+   905→    is_new: false,
+   906→    is_best_seller: true,
+   907→    brand: 'SurgiDent',
+   908→    origin: 'Pakistan',
+   909→    warranty: '5 ans',
+   910→    delivery_time_fr: '1-2 semaines',
+   911→    delivery_time_ar: '1-2 أسبوع',
+   912→    installation_included: false,
+   913→    training_included: false,
+   914→    ref: 'KIC-018',
+   915→    target: ['Clinique', 'Comptoir', 'Revendeur'],
+   916→    pdf_url: '',
+   917→    brochure_pdf: '',
+   918→    videos: [],
+   919→    rating: 4.6,
+   920→    reviewCount: 62,
+   921→    created_at: new Date().toISOString(),
+   922→  },
+   923→  {
+   924→    id: '19',
+   925→    slug: 'miroir-dentaire-n5',
+   926→    name_fr: 'Miroir Dentaire N°5',
+   927→    name_ar: 'مرآة أسنان رقم 5',
+   928→    description_fr: '<p>Le miroir dentaire N°5 est un instrument de diagnostic essentiel. Surface réfléchissante haute définition avec manche ergonomique anti-glisse.</p>',
+   929→    description_ar: '<p>مرآة الأسنان رقم 5 أداة تشخيص أساسية. سطح عاكس عالي الدقة مع مقبض مريح مانع للانزلاق.</p>',
+   930→    short_description_fr: 'Miroir dentaire N°5 haute définition avec manche ergonomique',
+   931→    short_description_ar: 'مرآة أسنان رقم 5 عالية الدقة مع مقبض مريح',
+   932→    category_id: '7',
+   933→    price: 2500,
+   934→    images: [],
+   935→    specs: [
+   936→      { label_fr: 'Diamètre', label_ar: 'القطر', value: '22 mm' },
+   937→      { label_fr: 'Matériau', label_ar: 'المادة', value: 'Acier inox' },
+   938→      { label_fr: 'Surface', label_ar: 'السطح', value: 'Miroir rhodium' },
+   939→    ],
+   940→    features_fr: ['Miroir rhodium', 'Manche anti-glisse', 'Stérilisable', 'Haute définition', 'Usage durable'],
+   941→    features_ar: ['مرآة روديوم', 'مقبض مانع للانزلاق', 'قابل للتعقيم', 'دقة عالية', 'استخدام دائم'],
+   942→    in_stock: true,
+   943→    is_featured: false,
+   944→    is_new: false,
+   945→    is_best_seller: true,
+   946→    brand: 'InstruMed',
+   947→    origin: 'Pakistan',
+   948→    warranty: '-',
+   949→    delivery_time_fr: '1 semaine',
+   950→    delivery_time_ar: 'أسبوع',
+   951→    installation_included: false,
+   952→    training_included: false,
+   953→    ref: 'MD5-019',
+   954→    target: ['Clinique', 'Comptoir', 'Revendeur'],
+   955→    pdf_url: '',
+   956→    brochure_pdf: '',
+   957→    videos: [],
+   958→    rating: 4.0,
+   959→    reviewCount: 97,
+   960→    created_at: new Date().toISOString(),
+   961→  },
+   962→  {
+   963→    id: '20',
+   964→    slug: 'meuble-rangement-dentaire',
+   965→    name_fr: 'Meuble Rangement Dentaire',
+   966→    name_ar: 'خزانة أسنان',
+   967→    description_fr: '<p>Le meuble de rangement dentaire offre un espace de stockage optimisé pour les instruments et consommables. Design moderne et fonctionnel avec tiroirs silencieux.</p>',
+   968→    description_ar: '<p>خزانة الأسنان توفر مساحة تخزين محسنة للأدوات والمستهلكات. تصميم عصري وعملي مع أدراج صامتة.</p>',
+   969→    short_description_fr: 'Meuble de rangement moderne avec tiroirs silencieux pour cabinet',
+   970→    short_description_ar: 'خزانة عصرية مع أدراج صامتة للعيادة',
+   971→    category_id: '8',
+   972→    price: 280000,
+   973→    images: [],
+   974→    specs: [
+   975→      { label_fr: 'Dimensions', label_ar: 'الأبعاد', value: '80 x 45 x 85 cm' },
+   976→      { label_fr: 'Tiroirs', label_ar: 'الأدراج', value: '5 tiroirs' },
+   977→      { label_fr: 'Matériau', label_ar: 'المادة', value: 'MDF haute densité' },
+   978→    ],
+   979→    features_fr: ['5 tiroirs silencieux', 'Surface anti-rayures', 'Roulettes freinées', 'Serrure intégrée', 'Montage facile'],
+   980→    features_ar: ['5 أدراج صامتة', 'سطح مقاوم للخدش', 'عجلات فرامل', 'قفل مدمج', 'تركيب سهل'],
+   981→    in_stock: true,
+   982→    is_featured: false,
+   983→    is_new: true,
+   984→    is_best_seller: false,
+   985→    brand: 'CabDent',
+   986→    origin: 'Turquie',
+   987→    warranty: '1 an',
+   988→    delivery_time_fr: '2-3 semaines',
+   989→    delivery_time_ar: '2-3 أسابيع',
+   990→    installation_included: false,
+   991→    training_included: false,
+   992→    ref: 'MRD-020',
+   993→    target: ['Clinique'],
+   994→    pdf_url: '',
+   995→    brochure_pdf: '',
+   996→    videos: [],
+   997→    rating: 3.6,
+   998→    reviewCount: 11,
+   999→    created_at: new Date().toISOString(),
+  1000→  },
+  1001→  {
+  1002→    id: '21',
+  1003→    slug: 'lampe-scialytique-led',
+  1004→    name_fr: 'Lampe Scialytique LED',
+  1005→    name_ar: 'مصباح إضاءة LED',
+  1006→    description_fr: '<p>La lampe scialytique LED offre un éclairage homogène et puissant sans ombrage. Indice de rendu de couleur élevé pour un diagnostic précis des teintes dentaires.</p>',
+  1007→    description_ar: '<p>مصباح الإضاءة LED يوفر إضاءة متجانسة وقوية بدون ظلال. مؤشر تجسيد الألوان عالي لتشخيص دقيق لألوان الأسنان.</p>',
+  1008→    short_description_fr: 'Lampe scialytique LED haute performance sans ombrage',
+  1009→    short_description_ar: 'مصباح إضاءة LED عالي الأداء بدون ظلال',
+  1010→    category_id: '8',
+  1011→    price: 420000,
+  1012→    images: [],
+  1013→    specs: [
+  1014→      { label_fr: 'Intensité', label_ar: 'الشدة', value: '30 000 lux' },
+  1015→      { label_fr: 'Température', label_ar: 'الحرارة', value: '5000 K' },
+  1016→      { label_fr: 'IRC', label_ar: 'IRC', value: '> 95' },
+  1017→    ],
+  1018→    features_fr: ['30 000 lux', 'Sans ombrage', 'IRC > 95', 'Réglable 3 niveaux', 'Garantie 3 ans'],
+  1019→    features_ar: ['30 000 لوكس', 'بدون ظلال', 'IRC > 95', '3 مستويات تعديل', 'ضمان 3 سنوات'],
+  1020→    in_stock: true,
+  1021→    is_featured: true,
+  1022→    is_new: true,
+  1023→    is_best_seller: false,
+  1024→    brand: 'LightMed',
+  1025→    origin: 'Chine',
+  1026→    warranty: '3 ans',
+  1027→    delivery_time_fr: '2-3 semaines',
+  1028→    delivery_time_ar: '2-3 أسابيع',
+  1029→    installation_included: true,
+  1030→    training_included: false,
+  1031→    ref: 'LSL-021',
+  1032→    target: ['Clinique', 'Revendeur'],
+  1033→    pdf_url: '',
+  1034→    brochure_pdf: '',
+  1035→    videos: [],
+  1036→    rating: 4.8,
+  1037→    reviewCount: 36,
+  1038→    created_at: new Date().toISOString(),
+  1039→  },
+  1040→];
+  1041→
+  1042→const defaultBlogPosts: BlogPost[] = [
+  1043→  {
+  1044→    id: '1',
+  1045→    slug: 'tendances-equipements-dentaires-2024',
+  1046→    title_fr: 'Tendances Équipements Dentaires 2024',
+  1047→    title_ar: 'اتجاهات معدات طب الأسنان 2024',
+  1048→    excerpt_fr: 'Découvrez les dernières innovations en matière d\'équipements dentaires qui transforment la pratique dentaire moderne.',
+  1049→    excerpt_ar: 'اكتشف أحدث الابتكارات في معدات طب الأسنان التي تحول ممارسة طب الأسنان الحديثة.',
+  1050→    content_fr: '<p>L\'année 2024 marque un tournant dans l\'évolution des équipements dentaires. Les technologies numériques, l\'intelligence artificielle et l\'ergonomie avancée redéfinissent les standards de la pratique dentaire.</p><h3>1. L\'imagerie 3D</h3><p>Les systèmes d\'imagerie 3D deviennent de plus en plus accessibles, permettant des diagnostics plus précis et des plans de traitement personnalisés.</p><h3>2. Le fauteuil connecté</h3><p>Les fauteuils dentaires de nouvelle génération intègrent des capteurs IoT pour un suivi en temps réel et une maintenance prédictive.</p>',
+  1051→    content_ar: '<p>عام 2024 يمثل نقطة تحول في تطور معدات طب الأسنان. التكنولوجيا الرقمية والذكاء الاصطناعي والراحة المتقدمة تعيد تعريف معايير ممارسة طب الأسنان.</p>',
+  1052→    image: '',
+  1053→    author: 'ODG Team',
+  1054→    date: '2024-03-15',
+  1055→    read_time: 5,
+  1056→    tags: ['innovation', 'technologie', '2024'],
+  1057→    category: 'innovation',
+  1058→    created_at: '2024-03-15T10:00:00Z',
+  1059→  },
+  1060→  {
+  1061→    id: '2',
+  1062→    slug: 'guide-choix-fauteuil-dentaire',
+  1063→    title_fr: 'Guide de choix : Comment choisir son fauteuil dentaire',
+  1064→    title_ar: 'دليل الاختيار: كيف تختار كرسي الأسنان',
+  1065→    excerpt_fr: 'Tous les critères à considérer pour choisir le fauteuil dentaire adapté à votre cabinet et votre pratique.',
+  1066→    excerpt_ar: 'جميع المعايير التي يجب مراعاتها لاختيار كرسي الأسنان المناسب لعيادتك وممارستك.',
+  1067→    content_fr: '<p>Le choix d\'un fauteuil dentaire est une décision importante qui impacte directement la qualité de vos soins et le confort de vos patients. Voici les critères essentiels à considérer.</p>',
+  1068→    content_ar: '<p>اختيار كرسي أسنان قرار مهم يؤثر مباشرة على جودة الرعاية وراحة المرضى. إليك المعايير الأساسية للنظر فيها.</p>',
+  1069→    image: '',
+  1070→    author: 'ODG Team',
+  1071→    date: '2024-02-20',
+  1072→    read_time: 8,
+  1073→    tags: ['guide', 'fauteuil', 'choix'],
+  1074→    category: 'guide',
+  1075→    created_at: '2024-02-20T10:00:00Z',
+  1076→  },
+  1077→  {
+  1078→    id: '3',
+  1079→    slug: 'importance-sterilisation-cabinet',
+  1080→    title_fr: 'L\'importance de la stérilisation en cabinet dentaire',
+  1081→    title_ar: 'أهمية التعقيم في عيادة الأسنان',
+  1082→    excerpt_fr: 'Pourquoi la stérilisation est essentielle et comment choisir les bons équipements pour garantir la sécurité de vos patients.',
+  1083→    excerpt_ar: 'لماذا التعقيم ضروري وكيفية اختيار المعدات المناسبة لضمان سلامة المرضى.',
+  1084→    content_fr: '<p>La stérilisation est un pilier fondamental de la pratique dentaire. Un cabinet dentaire bien équipé en matière de stérilisation garantit non seulement la sécurité des patients mais aussi celle du personnel.</p>',
+  1085→    content_ar: '<p>التعقيم هو ركيزة أساسية في ممارسة طب الأسنان. عيادة أسنان مجهزة جيداً في مجال التعقيم تضمن سلامة المرضى والموظفين.</p>',
+  1086→    image: '',
+  1087→    author: 'ODG Team',
+  1088→    date: '2024-01-10',
+  1089→    read_time: 6,
+  1090→    tags: ['sterilisation', 'securite', 'hygiene'],
+  1091→    category: 'securite',
+  1092→    created_at: '2024-01-10T10:00:00Z',
+  1093→  },
+  1094→];
+  1095→
+  1096→// ============================================================
+  1097→// Data Context
+  1098→// ============================================================
+  1099→interface DataContextType {
+  1100→  categories: Category[];
+  1101→  products: Product[];
+  1102→  blogPosts: BlogPost[];
+  1103→  contactInfo: ContactInfo;
+  1104→  loading: boolean;
+  1105→  error: string | null;
+  1106→  refresh: () => void;
+  1107→  getCategoryName: (cat: Category, lang: Language) => string;
+  1108→  getProductName: (product: Product, lang: Language) => string;
+  1109→  getProductDescription: (product: Product, lang: Language) => string;
+  1110→  getProductShortDescription: (product: Product, lang: Language) => string;
+  1111→}
+  1112→
+  1113→const DataContext = createContext<DataContextType>({
+  1114→  categories: defaultCategories,
+  1115→  products: defaultProducts,
+  1116→  blogPosts: defaultBlogPosts,
+  1117→  contactInfo: defaultContactInfo,
+  1118→  loading: false,
+  1119→  error: null,
+  1120→  refresh: () => {},
+  1121→  getCategoryName: () => '',
+  1122→  getProductName: () => '',
+  1123→  getProductDescription: () => '',
+  1124→  getProductShortDescription: () => '',
+  1125→});
+  1126→
+  1127→export function DataProvider({ children }: { children: React.ReactNode }) {
+  1128→  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  1129→  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  1130→  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(defaultBlogPosts);
+  1131→  const [contactInfo] = useState<ContactInfo>(defaultContactInfo);
+  1132→  const [loading, setLoading] = useState(true);
+  1133→  const [error, setError] = useState<string | null>(null);
+  1134→
+  1135→  const fetchData = useCallback(async () => {
+  1136→    if (!isSupabaseConfigured || !supabase) {
+  1137→      // Use default data when Supabase is not configured
+  1138→      setLoading(false);
+  1139→      return;
+  1140→    }
+  1141→
+  1142→    setLoading(true);
+  1143→    setError(null);
+  1144→
+  1145→    try {
+  1146→      // Fetch categories - map Supabase column names to our interface
+  1147→      const { data: catsData, error: catsError } = await supabase
+  1148→        .from('categories')
+  1149→        .select('*')
+  1150→        .order('ordre', { ascending: true });
+  1151→
+  1152→      if (!catsError && catsData && catsData.length > 0) {
+  1153→        const mapped = catsData.map((c: Record<string, unknown>) => ({
+  1154→          id: c.id as string,
+  1155→          slug: c.slug as string,
+  1156→          name_fr: (c.nom_fr || c.name_fr || '') as string,
+  1157→          name_ar: (c.nom_ar || c.name_ar || '') as string,
+  1158→          description_fr: (c.description_fr || '') as string,
+  1159→          description_ar: (c.description_ar || '') as string,
+  1160→          icon: (c.icone || c.icon || 'Package') as string,
+  1161→          image: (c.image || `/categories/${c.slug}.jpg`) as string,
+  1162→          sort_order: (c.ordre || c.sort_order || 0) as number,
+  1163→        }));
+  1164→        setCategories(mapped);
+  1165→      }
+  1166→
+  1167→      // Fetch products - map Supabase column names to our interface
+  1168→      const { data: prodsData, error: prodsError } = await supabase
+  1169→        .from('products')
+  1170→        .select('*')
+  1171→        .order('created_at', { ascending: false });
+  1172→
+  1173→      if (!prodsError && prodsData && prodsData.length > 0) {
+  1174→        const mapped = prodsData.map((p: Record<string, unknown>) => ({
+  1175→          id: p.id as string,
+  1176→          slug: p.slug as string,
+  1177→          name_fr: (p.nom_fr || p.name_fr || '') as string,
+  1178→          name_ar: (p.nom_ar || p.name_ar || '') as string,
+  1179→          description_fr: (p.description_fr || '') as string,
+  1180→          description_ar: (p.description_ar || '') as string,
+  1181→          short_description_fr: (p.short_description_fr || (p.description_fr as string || '').substring(0, 120)) as string,
+  1182→          short_description_ar: (p.short_description_ar || (p.description_ar as string || '').substring(0, 120)) as string,
+  1183→          category_id: p.category_id as string,
+  1184→          price: 0 as number, // Price not stored in Supabase - set on admin
+  1185→          images: ((p.images || []) as string[]).map((img: string) => {
+  1186→            // If already a full URL, return as-is
+  1187→            if (img.startsWith('http')) return img;
+  1188→            // Otherwise prefix with Supabase storage URL
+  1189→            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  1190→            return `${supabaseUrl}/storage/v1/object/public/product-images/${img}`;
+  1191→          }),
+  1192→          specs: (p.specs || []) as Record<string, string>[],
+  1193→          features_fr: (p.features_fr || []) as string[],
+  1194→          features_ar: (p.features_ar || []) as string[],
+  1195→          in_stock: (p.disponible ?? p.in_stock ?? true) as boolean,
+  1196→          is_featured: (p.en_vedette ?? p.is_featured ?? false) as boolean,
+  1197→          is_new: (p.is_new ?? false) as boolean,
+  1198→          is_best_seller: (p.is_best_seller ?? false) as boolean,
+  1199→          brand: (p.marque || p.brand || '') as string,
+  1200→          origin: (p.origin || '') as string,
+  1201→          warranty: (p.warranty || '') as string,
+  1202→          delivery_time_fr: (p.delivery_time_fr || '') as string,
+  1203→          delivery_time_ar: (p.delivery_time_ar || '') as string,
+  1204→          installation_included: (p.installation_included ?? false) as boolean,
+  1205→          training_included: (p.training_included ?? false) as boolean,
+  1206→          ref: (p.ref || p.modele || '') as string,
+  1207→          target: (p.cible || p.target || []) as string[],
+  1208→          pdf_url: (p.pdf_url || '') as string,
+  1209→          brochure_pdf: (p.brochure_pdf || '') as string,
+  1210→          videos: (p.videos || []) as { title_fr: string; title_ar: string; url: string; type: string }[],
+  1211→          rating: (p.rating ?? undefined) as number | undefined,
+  1212→          reviewCount: (p.review_count ?? p.reviewCount ?? undefined) as number | undefined,
+  1213→          created_at: p.created_at as string,
+  1214→        }));
+  1215→        setProducts(mapped);
+  1216→      }
+  1217→
+  1218→      // Fetch blog posts - map Supabase column names
+  1219→      const { data: blogData, error: blogError } = await supabase
+  1220→        .from('blog_posts')
+  1221→        .select('*')
+  1222→        .order('created_at', { ascending: false });
+  1223→
+  1224→      if (!blogError && blogData && blogData.length > 0) {
+  1225→        const mapped = blogData.map((b: Record<string, unknown>) => ({
+  1226→          id: b.id as string,
+  1227→          slug: b.slug as string,
+  1228→          title_fr: (b.titre_fr || b.title_fr || '') as string,
+  1229→          title_ar: (b.titre_ar || b.title_ar || '') as string,
+  1230→          excerpt_fr: (b.excerpt_fr || '') as string,
+  1231→          excerpt_ar: (b.excerpt_ar || '') as string,
+  1232→          content_fr: (b.content_fr || '') as string,
+  1233→          content_ar: (b.content_ar || '') as string,
+  1234→          image: (() => {
+  1235→            const img = (b.image || '') as string;
+  1236→            if (!img || img.startsWith('http')) return img;
+  1237→            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  1238→            return `${supabaseUrl}/storage/v1/object/public/blog-images/${img}`;
+  1239→          })(),
+  1240→          author: (b.author || 'ODG Team') as string,
+  1241→          date: (b.date || b.created_at || '') as string,
+  1242→          read_time: (b.read_time || 5) as number,
+  1243→          tags: (b.tags || []) as string[],
+  1244→          category: (b.category || '') as string,
+  1245→          created_at: b.created_at as string,
+  1246→        }));
+  1247→        setBlogPosts(mapped);
+  1248→      }
+  1249→    } catch (err) {
+  1250→      console.error('Error fetching data:', err);
+  1251→      setError('Failed to load data');
+  1252→    } finally {
+  1253→      setLoading(false);
+  1254→    }
+  1255→  }, []);
+  1256→
+  1257→  useEffect(() => {
+  1258→    fetchData();
+  1259→  }, [fetchData]);
+  1260→
+  1261→  const getCategoryName = useCallback((cat: Category, lang: Language): string => {
+  1262→    return lang === 'ar' ? cat.name_ar : cat.name_fr;
+  1263→  }, []);
+  1264→
+  1265→  const getProductName = useCallback((product: Product, lang: Language): string => {
+  1266→    return lang === 'ar' ? product.name_ar : product.name_fr;
+  1267→  }, []);
+  1268→
+  1269→  const getProductDescription = useCallback((product: Product, lang: Language): string => {
+  1270→    return lang === 'ar' ? product.description_ar : product.description_fr;
+  1271→  }, []);
+  1272→
+  1273→  // Strip HTML tags for clean plain-text display
+  1274→  const stripHtml = useCallback((html: string): string => {
+  1275→    if (!html) return '';
+  1276→    return html
+  1277→      .replace(/<[^>]*>/g, '') // Remove HTML tags
+  1278→      .replace(/&amp;/g, '&')
+  1279→      .replace(/&lt;/g, '<')
+  1280→      .replace(/&gt;/g, '>')
+  1281→      .replace(/&quot;/g, '"')
+  1282→      .replace(/&#39;/g, "'")
+  1283→      .replace(/&nbsp;/g, ' ')
+  1284→      .trim();
+  1285→  }, []);
+  1286→
+  1287→  const getProductShortDescription = useCallback((product: Product, lang: Language): string => {
+  1288→    const raw = lang === 'ar' ? product.short_description_ar : product.short_description_fr;
+  1289→    return stripHtml(raw);
+  1290→  }, [stripHtml]);
+  1291→
+  1292→  return (
+  1293→    <DataContext.Provider
+  1294→      value={{
+  1295→        categories,
+  1296→        products,
+  1297→        blogPosts,
+  1298→        contactInfo,
+  1299→        loading,
+  1300→        error,
+  1301→        refresh: fetchData,
+  1302→        getCategoryName,
+  1303→        getProductName,
+  1304→        getProductDescription,
+  1305→        getProductShortDescription,
+  1306→      }}
+  1307→    >
+  1308→      {children}
+  1309→    </DataContext.Provider>
+  1310→  );
+  1311→}
+  1312→
+  1313→export function useData() {
+  1314→  return useContext(DataContext);
+  1315→}
+  1316→
