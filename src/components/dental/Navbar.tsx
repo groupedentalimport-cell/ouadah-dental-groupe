@@ -137,6 +137,7 @@ export default function Navbar() {
     { label: t('nav.blog'), path: '/blog', routeName: 'blog' },
     { label: t('nav.promotions'), path: '/promotions', routeName: 'promotions', isPromo: true },
     { label: t('nav.about'), path: '/about', routeName: 'about' },
+    { label: t('nav.services'), path: '/services', routeName: 'services' },
     { label: t('nav.contact'), path: '/contact', routeName: 'contact' },
   ];
 

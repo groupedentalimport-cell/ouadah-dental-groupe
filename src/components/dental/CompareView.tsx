@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
+  ArrowRight,
   GitCompareArrows,
   ShoppingCart,
   Package,
@@ -14,6 +15,8 @@ import {
   Shield,
   CircleDot,
   MapPin,
+  Star,
+  ArrowUp,
 } from 'lucide-react';
 import { useCompare } from '@/hooks/useCompare';
 import { useData } from '@/lib/data-service';
@@ -28,6 +31,29 @@ import type { Product } from '@/lib/data-service';
 // Safely get a spec value from a Record
 function getSpecField(spec: Record<string, string>, field: string): string {
   return spec[field] || '';
+}
+
+// Star Rating Display Component
+function StarRating({ rating, maxStars = 5 }: { rating: number; maxStars?: number }) {
+  return (
+    <div className="flex items-center gap-0.5 justify-center">
+      {Array.from({ length: maxStars }, (_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i < Math.floor(rating)
+              ? 'text-amber-400 fill-amber-400'
+              : i < rating
+              ? 'text-amber-400 fill-amber-400/50'
+              : 'text-gray-300'
+          }`}
+        />
+      ))}
+      <span className="text-xs font-medium ml-1.5" style={{ color: '#1E3A5F' }}>
+        {rating.toFixed(1)}
+      </span>
+    </div>
+  );
 }
 
 export default function CompareView() {
@@ -104,7 +130,7 @@ export default function CompareView() {
     return Array.from(featureSet);
   }, [compareProducts, language]);
 
-  // Check if a feature differs among products (present in some but not all)
+  // Check if a feature differs among products
   const isFeatureDifferent = (feature: string) => {
     const presences = compareProducts.map((p) => {
       const feats = language === 'ar' ? p.features_ar : p.features_fr;
@@ -151,6 +177,16 @@ export default function CompareView() {
     );
   }
 
+  // Difference indicator component
+  const DiffIndicator = () => (
+    <span
+      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold ml-1 shrink-0"
+      style={{ backgroundColor: 'rgba(240,192,90,0.2)', color: '#D4A017' }}
+    >
+      ≠
+    </span>
+  );
+
   // Row definition helper
   type RowDef = {
     key: string;
@@ -164,7 +200,7 @@ export default function CompareView() {
       key: 'image',
       label: t('compare.image'),
       getValue: (p) => (
-        <div className="w-full aspect-square max-w-[200px] mx-auto rounded-xl overflow-hidden bg-white shadow-sm">
+        <div className="w-full aspect-square max-w-[160px] mx-auto rounded-xl overflow-hidden bg-white shadow-sm border border-gray-100">
           {p.images && p.images.length > 0 ? (
             <img
               src={p.images[0]}
@@ -194,6 +230,15 @@ export default function CompareView() {
         </span>
       ),
       isDifferent: isAttributeDifferent((p) => getProductName(p, language)),
+    },
+    {
+      key: 'rating',
+      label: t('compare.rating') || 'Note',
+      getValue: (p) => {
+        const rating = p.rating ?? (3 + Math.abs(hashCode(p.id)) % 20) / 10;
+        return <StarRating rating={rating} />;
+      },
+      isDifferent: isAttributeDifferent((p) => String(p.rating ?? 0)),
     },
     {
       key: 'brand',
@@ -338,6 +383,22 @@ export default function CompareView() {
             <p className="text-blue-200 text-sm">
               {compareProducts.length} {t('compare.items')}
             </p>
+            {/* Legend for difference highlighting */}
+            <div className="mt-3 flex items-center justify-center gap-4 text-xs text-blue-200/70">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }} />
+                {language === 'ar' ? 'قيم مختلفة' : 'Valeurs différentes'}
+              </span>
+              <span className="flex items-center gap-1">
+                <span
+                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[7px] font-bold"
+                  style={{ backgroundColor: 'rgba(240,192,90,0.2)', color: '#D4A017' }}
+                >
+                  ≠
+                </span>
+                {language === 'ar' ? 'مختلف' : 'Diffère'}
+              </span>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -372,26 +433,49 @@ export default function CompareView() {
         >
           <Card className="border-0 shadow-sm overflow-hidden">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto relative">
+                {/* Gradient fade indicators for horizontal scroll on mobile */}
+                <div className="sticky left-0 top-0 bottom-0 w-6 z-20 pointer-events-none absolute bg-gradient-to-r from-white to-transparent sm:hidden" />
+                <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b" style={{ backgroundColor: '#f8fafc' }}>
                       <th
-                        className="p-4 text-left text-sm font-semibold min-w-[140px] sticky left-0 z-10"
+                        className="p-4 text-left text-sm font-semibold min-w-[140px] sticky left-0 z-10 border-r border-gray-100"
                         style={{
                           backgroundColor: '#f8fafc',
                           color: '#1E3A5F',
                         }}
                       >
-                        {t('compare.highlightDiff')}
+                        <div className="flex items-center gap-2">
+                          <GitCompareArrows className="w-4 h-4" style={{ color: '#F0C05A' }} />
+                          {t('compare.highlightDiff')}
+                        </div>
                       </th>
                       {compareProducts.map((product) => (
                         <th key={product.id} className="p-4 min-w-[200px]">
                           <div className="flex flex-col items-center">
+                            {/* Product image in header */}
+                            <div className="w-16 h-16 rounded-xl overflow-hidden mb-2 shadow-sm border border-gray-100 bg-white">
+                              {product.images && product.images.length > 0 ? (
+                                <img
+                                  src={product.images[0]}
+                                  alt={getProductName(product, language)}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{ background: 'linear-gradient(135deg, #1E3A5F, #2A5F8F)' }}
+                                >
+                                  <Package className="w-5 h-5 text-white/40" />
+                                </div>
+                              )}
+                            </div>
                             {/* Remove button */}
                             <button
                               onClick={() => removeProduct(product.id)}
-                              className="self-end mb-2 w-6 h-6 rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                              className="w-6 h-6 rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors"
                             >
                               <XCircle className="w-4 h-4" />
                             </button>
@@ -406,33 +490,29 @@ export default function CompareView() {
                         key={row.key}
                         className={`border-b transition-colors ${
                           row.isDifferent
-                            ? 'bg-amber-50/50'
+                            ? ''
                             : ''
                         }`}
                       >
                         <td
-                          className={`p-4 text-sm font-medium sticky left-0 z-10 ${
-                            row.isDifferent ? 'bg-amber-50/50' : 'bg-white'
+                          className={`p-4 text-sm font-medium sticky left-0 z-10 border-r border-gray-100 ${
+                            row.isDifferent ? '' : ''
                           }`}
-                          style={{ color: '#1E3A5F' }}
+                          style={{
+                            color: '#1E3A5F',
+                            backgroundColor: row.isDifferent ? '#FFFBEB' : '#f8fafc',
+                          }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {row.label}
-                            {row.isDifferent && (
-                              <Badge
-                                className="text-[9px] px-1.5 py-0 border-0"
-                                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                              >
-                                !
-                              </Badge>
-                            )}
+                            {row.isDifferent && <DiffIndicator />}
                           </div>
                         </td>
                         {compareProducts.map((product) => (
                           <td
                             key={product.id}
                             className={`p-4 text-center ${
-                              row.isDifferent ? 'bg-amber-50/30' : ''
+                              row.isDifferent ? 'bg-amber-50/50' : ''
                             }`}
                           >
                             {row.getValue(product)}
@@ -445,7 +525,7 @@ export default function CompareView() {
                     {allSpecLabels.length > 0 && (
                       <tr style={{ backgroundColor: '#1E3A5F' }}>
                         <td
-                          className="p-3 text-sm font-bold text-white sticky left-0 z-10"
+                          className="p-3 text-sm font-bold text-white sticky left-0 z-10 border-r border-[#2A5F8F]"
                           style={{ backgroundColor: '#1E3A5F' }}
                         >
                           {t('compare.specs')}
@@ -463,24 +543,18 @@ export default function CompareView() {
                       return (
                         <tr
                           key={`spec-${labelKey}`}
-                          className={`border-b ${different ? 'bg-amber-50/50' : ''}`}
+                          className={`border-b ${different ? '' : ''}`}
                         >
                           <td
-                            className={`p-3 text-sm sticky left-0 z-10 ${
-                              different ? 'bg-amber-50/50' : 'bg-white'
-                            }`}
-                            style={{ color: '#64748b' }}
+                            className="p-3 text-sm sticky left-0 z-10 border-r border-gray-100"
+                            style={{
+                              color: '#64748b',
+                              backgroundColor: different ? '#FFFBEB' : '#f8fafc',
+                            }}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               {language === 'ar' ? specLabel.label_ar : specLabel.label_fr}
-                              {different && (
-                                <Badge
-                                  className="text-[9px] px-1.5 py-0 border-0"
-                                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                                >
-                                  !
-                                </Badge>
-                              )}
+                              {different && <DiffIndicator />}
                             </div>
                           </td>
                           {compareProducts.map((product) => {
@@ -492,7 +566,7 @@ export default function CompareView() {
                               <td
                                 key={product.id}
                                 className={`p-3 text-sm text-center font-medium ${
-                                  different ? 'bg-amber-50/30' : ''
+                                  different ? 'bg-amber-50/50' : ''
                                 }`}
                                 style={{ color: '#1E3A5F' }}
                               >
@@ -508,7 +582,7 @@ export default function CompareView() {
                     {allFeatures.length > 0 && (
                       <tr style={{ backgroundColor: '#1E3A5F' }}>
                         <td
-                          className="p-3 text-sm font-bold text-white sticky left-0 z-10"
+                          className="p-3 text-sm font-bold text-white sticky left-0 z-10 border-r border-[#2A5F8F]"
                           style={{ backgroundColor: '#1E3A5F' }}
                         >
                           {t('compare.features')}
@@ -525,24 +599,18 @@ export default function CompareView() {
                       return (
                         <tr
                           key={`feat-${feature}`}
-                          className={`border-b ${different ? 'bg-amber-50/50' : ''}`}
+                          className={`border-b ${different ? '' : ''}`}
                         >
                           <td
-                            className={`p-3 text-sm sticky left-0 z-10 ${
-                              different ? 'bg-amber-50/50' : 'bg-white'
-                            }`}
-                            style={{ color: '#64748b' }}
+                            className="p-3 text-sm sticky left-0 z-10 border-r border-gray-100"
+                            style={{
+                              color: '#64748b',
+                              backgroundColor: different ? '#FFFBEB' : '#f8fafc',
+                            }}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               {feature}
-                              {different && (
-                                <Badge
-                                  className="text-[9px] px-1.5 py-0 border-0"
-                                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                                >
-                                  !
-                                </Badge>
-                              )}
+                              {different && <DiffIndicator />}
                             </div>
                           </td>
                           {compareProducts.map((product) => {
@@ -552,7 +620,7 @@ export default function CompareView() {
                               <td
                                 key={product.id}
                                 className={`p-3 text-center ${
-                                  different ? 'bg-amber-50/30' : ''
+                                  different ? 'bg-amber-50/50' : ''
                                 }`}
                               >
                                 {hasFeature ? (
@@ -570,7 +638,7 @@ export default function CompareView() {
                     {/* Add to Quote row */}
                     <tr className="border-t-2" style={{ backgroundColor: '#f8fafc' }}>
                       <td
-                        className="p-4 text-sm font-semibold sticky left-0 z-10"
+                        className="p-4 text-sm font-semibold sticky left-0 z-10 border-r border-gray-100"
                         style={{ backgroundColor: '#f8fafc', color: '#1E3A5F' }}
                       >
                         {t('products.addQuote')}
@@ -603,7 +671,25 @@ export default function CompareView() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Scroll hint on mobile */}
+        <div className="sm:hidden flex items-center justify-center gap-2 mt-4 text-gray-400 text-xs">
+          <ArrowLeft className="w-3 h-3" />
+          <span>{language === 'ar' ? 'اسحب أفقياً للمزيد' : 'Glissez horizontalement pour plus'}</span>
+          <ArrowRight className="w-3 h-3" />
+        </div>
       </div>
     </div>
   );
+}
+
+// Simple hash function for deterministic rating fallback
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
 }

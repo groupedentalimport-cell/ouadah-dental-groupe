@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
 interface Message {
@@ -41,24 +41,49 @@ function formatTime(date: Date): string {
 export default function ChatBubble() {
   const { t, isRTL } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Bonjour ! Je suis l\'assistant ODG. Comment puis-je vous aider ?',
-      timestamp: new Date(),
-    },
-  ]);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize session and welcome message on first open
+  useEffect(() => {
+    if (isOpen && !sessionId) {
+      const newSessionId = crypto.randomUUID();
+      setSessionId(newSessionId);
+      setMessages([
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content: t('chat.welcomeMessage'),
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, [isOpen, sessionId, t]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  const handleNewConversation = useCallback(() => {
+    const newSessionId = crypto.randomUUID();
+    setSessionId(newSessionId);
+    setMessages([
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: t('chat.welcomeMessage'),
+        timestamp: new Date(),
+      },
+    ]);
+    setInput('');
+    setIsTyping(false);
+  }, [t]);
+
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -72,31 +97,37 @@ export default function ChatBubble() {
     setIsTyping(true);
 
     try {
+      // Build the messages array to send to the API
+      const apiMessages = messages
+        .filter((m) => m.id !== 'welcome') // exclude initial welcome
+        .concat(userMessage)
+        .map((m) => ({ role: m.role, content: m.content }));
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ messages: apiMessages, sessionId }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.message || data.response || 'Je suis désolé, je n\'ai pas pu traiter votre demande.',
+          content: data.response,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        throw new Error('Failed to get response');
+        throw new Error(data.error || 'Failed to get response');
       }
-    } catch (error) {
-      // Fallback response
+    } catch {
+      // Fallback response using i18n key
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          'Merci pour votre message ! Pour une assistance personnalisée, n\'hésitez pas à nous contacter directement par téléphone au +213 771 88 89 48 ou par email à groupedentalimport@gmail.com.',
+        content: t('chat.errorFallback'),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, fallbackMessage]);
@@ -138,13 +169,23 @@ export default function ChatBubble() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
-                aria-label={isRTL ? 'إغلاق' : 'Fermer'}
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleNewConversation}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                  aria-label={t('chat.newConversation')}
+                  title={t('chat.newConversation')}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+                  aria-label={isRTL ? 'إغلاق' : 'Fermer'}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -164,7 +205,7 @@ export default function ChatBubble() {
                   )}
                   <div className="max-w-[80%] flex flex-col">
                     <div
-                      className={`px-3.5 py-2.5 text-sm leading-relaxed ${
+                      className={`px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                         msg.role === 'user'
                           ? 'text-white rounded-2xl rounded-br-md'
                           : 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-[#1a2d45] rounded-2xl rounded-bl-md'
@@ -222,7 +263,7 @@ export default function ChatBubble() {
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || isTyping}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-all duration-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                   style={{ backgroundColor: '#1E3A5F' }}
                   aria-label={isRTL ? 'إرسال' : 'Envoyer'}

@@ -24,6 +24,8 @@ import AboutPage from '@/components/dental/AboutPage';
 import ContactPage from '@/components/dental/ContactPage';
 import QuoteWizardPage from '@/components/dental/QuoteWizardPage';
 import PromotionsPage from '@/components/dental/PromotionsPage';
+import ServicesPage from '@/components/dental/ServicesPage';
+import ClinicWizardPage from '@/components/dental/ClinicWizardPage';
 import {
   MentionsLegales,
   PolitiqueConfidentialite,
@@ -46,6 +48,8 @@ const routeTitles: Record<string, string> = {
   'politique-confidentialite': 'Politique de confidentialité | ODG',
   'conditions-vente': 'Conditions générales de vente | ODG',
   promotions: 'Offres & Promotions | ODG',
+  services: 'Nos Services | ODG',
+  'clinic-wizard': 'Configurateur de Cabinet | ODG',
   wishlist: 'Mes favoris | ODG',
 };
 
@@ -131,6 +135,10 @@ function AppContent() {
         return <WishlistPage />;
       case 'promotions':
         return <PromotionsPage />;
+      case 'services':
+        return <ServicesPage />;
+      case 'clinic-wizard':
+        return <ClinicWizardPage />;
       case 'mentions-legales':
         return <MentionsLegales />;
       case 'politique-confidentialite':

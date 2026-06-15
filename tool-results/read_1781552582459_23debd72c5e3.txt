@@ -1,0 +1,977 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo, useRef } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle, Sun, Moon, Clock, Tag, FileText, Package, ArrowRight, Armchair, Monitor, Scan, ShieldCheck, Wind, WrenchIcon, Lamp } from 'lucide-react';
+     6→import { useTranslation } from '@/lib/i18n';
+     7→import { useRouter } from '@/lib/router';
+     8→import { useSiteSettings } from '@/lib/site-settings';
+     9→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    10→import { useData } from '@/lib/data-service';
+    11→import { Button } from '@/components/ui/button';
+    12→import {
+    13→  Sheet,
+    14→  SheetContent,
+    15→  SheetHeader,
+    16→  SheetTitle,
+    17→  SheetTrigger,
+    18→} from '@/components/ui/sheet';
+    19→import { Badge } from '@/components/ui/badge';
+    20→import { Input } from '@/components/ui/input';
+    21→import { useTheme } from 'next-themes';
+    22→
+    23→// Category icon mapping for catalogue dropdown
+    24→const navCategoryIcons: Record<string, React.ReactNode> = {
+    25→  Armchair: <Armchair className="w-4 h-4" />,
+    26→  Monitor: <Monitor className="w-4 h-4" />,
+    27→  Scan: <Scan className="w-4 h-4" />,
+    28→  Shield: <ShieldCheck className="w-4 h-4" />,
+    29→  Wind: <Wind className="w-4 h-4" />,
+    30→  Package: <Package className="w-4 h-4" />,
+    31→  Wrench: <WrenchIcon className="w-4 h-4" />,
+    32→  Lamp: <Lamp className="w-4 h-4" />,
+    33→};
+    34→
+    35→// Recent searches localStorage helpers
+    36→const RECENT_SEARCHES_KEY = 'odg-recent-searches';
+    37→const MAX_RECENT = 5;
+    38→
+    39→function getRecentSearches(): string[] {
+    40→  if (typeof window === 'undefined') return [];
+    41→  try {
+    42→    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    43→    return stored ? JSON.parse(stored) : [];
+    44→  } catch {
+    45→    return [];
+    46→  }
+    47→}
+    48→
+    49→function addRecentSearch(query: string) {
+    50→  if (!query.trim()) return;
+    51→  try {
+    52→    const existing = getRecentSearches();
+    53→    const filtered = existing.filter((s) => s.toLowerCase() !== query.toLowerCase());
+    54→    const updated = [query, ...filtered].slice(0, MAX_RECENT);
+    55→    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    56→  } catch {
+    57→    // ignore
+    58→  }
+    59→}
+    60→
+    61→function removeRecentSearch(query: string) {
+    62→  try {
+    63→    const existing = getRecentSearches();
+    64→    const updated = existing.filter((s) => s !== query);
+    65→    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    66→  } catch {
+    67→    // ignore
+    68→  }
+    69→}
+    70→
+    71→export default function Navbar() {
+    72→  const { t, language, setLanguage, isRTL } = useTranslation();
+    73→  const { navigate } = useRouter();
+    74→  const { route } = useRouter();
+    75→  const { getText } = useSiteSettings();
+    76→  const { products, categories, blogPosts, getProductName, getCategoryName } = useData();
+    77→  const totalItems = useQuoteCart((s) => s.totalItems());
+    78→  const { theme, setTheme } = useTheme();
+    79→  const [scrolled, setScrolled] = useState(false);
+    80→  const [mobileOpen, setMobileOpen] = useState(false);
+    81→  const [searchOpen, setSearchOpen] = useState(false);
+    82→  const [searchQuery, setSearchQuery] = useState('');
+    83→  const [mounted, setMounted] = useState(false);
+    84→  const [recentSearches, setRecentSearches] = useState<string[]>(() => getRecentSearches());
+    85→  const [selectedIdx, setSelectedIdx] = useState(-1);
+    86→  const [catalogueDropdownOpen, setCatalogueDropdownOpen] = useState(false);
+    87→  const catalogueTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    88→  const searchInputRef = useRef<HTMLInputElement>(null);
+    89→  const dropdownRef = useRef<HTMLDivElement>(null);
+    90→
+    91→  // Use useRef + requestAnimationFrame to avoid synchronous setState in effect
+    92→  const mountedRef = useRef(false);
+    93→  useEffect(() => {
+    94→    if (!mountedRef.current) {
+    95→      mountedRef.current = true;
+    96→      requestAnimationFrame(() => {
+    97→        setMounted(true);
+    98→      });
+    99→    }
+   100→  }, []);
+   101→
+   102→  // Refresh recent searches when search opens
+   103→  const openSearch = () => {
+   104→    setRecentSearches(getRecentSearches());
+   105→    setSearchOpen(true);
+   106→  };
+   107→
+   108→  useEffect(() => {
+   109→    const handleScroll = () => setScrolled(window.scrollY > 10);
+   110→    window.addEventListener('scroll', handleScroll);
+   111→    return () => window.removeEventListener('scroll', handleScroll);
+   112→  }, []);
+   113→
+   114→  const brandName = getText('brand_name') || 'ODG';
+   115→  const logoUrl = getText('logo_url');
+   116→
+   117→  // Catalogue dropdown hover helpers
+   118→  const openCatalogueDropdown = () => {
+   119→    if (catalogueTimeoutRef.current) clearTimeout(catalogueTimeoutRef.current);
+   120→    setCatalogueDropdownOpen(true);
+   121→  };
+   122→  const closeCatalogueDropdown = () => {
+   123→    catalogueTimeoutRef.current = setTimeout(() => setCatalogueDropdownOpen(false), 200);
+   124→  };
+   125→
+   126→  // Count products per category
+   127→  const categoryProductCounts = useMemo(() => {
+   128→    const counts: Record<string, number> = {};
+   129→    categories.forEach((cat) => {
+   130→      counts[cat.id] = products.filter((p) => p.category_id === cat.id).length;
+   131→    });
+   132→    return counts;
+   133→  }, [categories, products]);
+   134→
+   135→  const navLinks = [
+   136→    { label: t('nav.catalogue'), path: '/catalogue', routeName: 'catalogue' },
+   137→    { label: t('nav.blog'), path: '/blog', routeName: 'blog' },
+   138→    { label: t('nav.promotions'), path: '/promotions', routeName: 'promotions', isPromo: true },
+   139→    { label: t('nav.about'), path: '/about', routeName: 'about' },
+   140→    { label: t('nav.contact'), path: '/contact', routeName: 'contact' },
+   141→  ];
+   142→
+   143→  // Search results - categorized
+   144→  const hasQuery = searchQuery.trim().length >= 2;
+   145→  const q = searchQuery.trim().toLowerCase();
+   146→
+   147→  const matchedProducts = useMemo(() => {
+   148→    if (!hasQuery) return [];
+   149→    return products
+   150→      .filter((p) => {
+   151→        const name = getProductName(p, language).toLowerCase();
+   152→        const brand = (p.brand || '').toLowerCase();
+   153→        return name.includes(q) || brand.includes(q);
+   154→      })
+   155→      .slice(0, 5);
+   156→  }, [searchQuery, products, language, getProductName, hasQuery, q]);
+   157→
+   158→  const matchedCategories = useMemo(() => {
+   159→    if (!hasQuery) return [];
+   160→    return categories
+   161→      .filter((c) => {
+   162→        const name = getCategoryName(c, language).toLowerCase();
+   163→        return name.includes(q);
+   164→      })
+   165→      .slice(0, 3);
+   166→  }, [searchQuery, categories, language, getCategoryName, hasQuery, q]);
+   167→
+   168→  const matchedArticles = useMemo(() => {
+   169→    if (!hasQuery) return [];
+   170→    return blogPosts
+   171→      .filter((a) => {
+   172→        const title = language === 'ar' ? a.title_ar : a.title_fr;
+   173→        return title.toLowerCase().includes(q);
+   174→      })
+   175→      .slice(0, 3);
+   176→  }, [searchQuery, blogPosts, language, hasQuery, q]);
+   177→
+   178→  // Flatten all searchable items into a single list for keyboard navigation
+   179→  type SearchItem =
+   180→    | { type: 'recent'; query: string }
+   181→    | { type: 'product'; slug: string }
+   182→    | { type: 'category'; slug: string }
+   183→    | { type: 'article'; slug: string }
+   184→    | { type: 'viewAll' }
+   185→    | { type: 'browseCatalogue' };
+   186→
+   187→  const searchItems: SearchItem[] = useMemo(() => {
+   188→    const items: SearchItem[] = [];
+   189→    if (!hasQuery) {
+   190→      // Show recent searches only
+   191→      recentSearches.forEach((s) => items.push({ type: 'recent', query: s }));
+   192→    } else {
+   193→      matchedProducts.forEach((p) => items.push({ type: 'product', slug: p.slug }));
+   194→      matchedCategories.forEach((c) => items.push({ type: 'category', slug: c.slug }));
+   195→      matchedArticles.forEach((a) => items.push({ type: 'article', slug: a.slug }));
+   196→      if (matchedProducts.length > 0 || matchedCategories.length > 0 || matchedArticles.length > 0) {
+   197→        items.push({ type: 'viewAll' });
+   198→      } else {
+   199→        items.push({ type: 'browseCatalogue' });
+   200→      }
+   201→    }
+   202→    return items;
+   203→  }, [hasQuery, recentSearches, matchedProducts, matchedCategories, matchedArticles]);
+   204→
+   205→  // Track query changes for selectedIdx reset - derived value for keyboard nav
+   206→
+   207→  const showDropdown = searchOpen && (searchItems.length > 0 || (hasQuery && matchedProducts.length === 0 && matchedCategories.length === 0 && matchedArticles.length === 0));
+   208→
+   209→  const handleNav = (path: string) => {
+   210→    navigate(path);
+   211→    setMobileOpen(false);
+   212→    setSearchOpen(false);
+   213→    setSearchQuery('');
+   214→  };
+   215→
+   216→  const handleSearchSelect = (slug: string) => {
+   217→    if (hasQuery) addRecentSearch(searchQuery);
+   218→    navigate(`/product/${slug}`);
+   219→    setSearchOpen(false);
+   220→    setSearchQuery('');
+   221→  };
+   222→
+   223→  const handleCategorySelect = (slug: string) => {
+   224→    if (hasQuery) addRecentSearch(searchQuery);
+   225→    navigate(`/catalogue?category=${slug}`);
+   226→    setSearchOpen(false);
+   227→    setSearchQuery('');
+   228→  };
+   229→
+   230→  const handleArticleSelect = (slug: string) => {
+   231→    if (hasQuery) addRecentSearch(searchQuery);
+   232→    navigate(`/article/${slug}`);
+   233→    setSearchOpen(false);
+   234→    setSearchQuery('');
+   235→  };
+   236→
+   237→  const handleRecentClick = (query: string) => {
+   238→    setSearchQuery(query);
+   239→    searchInputRef.current?.focus();
+   240→  };
+   241→
+   242→  const handleRecentRemove = (query: string) => {
+   243→    removeRecentSearch(query);
+   244→    setRecentSearches(getRecentSearches());
+   245→  };
+   246→
+   247→  const handleViewAll = () => {
+   248→    if (hasQuery) addRecentSearch(searchQuery);
+   249→    navigate(`/catalogue?search=${encodeURIComponent(searchQuery)}`);
+   250→    setSearchOpen(false);
+   251→    setSearchQuery('');
+   252→  };
+   253→
+   254→  const handleBrowseCatalogue = () => {
+   255→    navigate('/catalogue');
+   256→    setSearchOpen(false);
+   257→    setSearchQuery('');
+   258→  };
+   259→
+   260→  const handleSelectItem = (item: SearchItem) => {
+   261→    switch (item.type) {
+   262→      case 'recent':
+   263→        handleRecentClick(item.query);
+   264→        break;
+   265→      case 'product':
+   266→        handleSearchSelect(item.slug);
+   267→        break;
+   268→      case 'category':
+   269→        handleCategorySelect(item.slug);
+   270→        break;
+   271→      case 'article':
+   272→        handleArticleSelect(item.slug);
+   273→        break;
+   274→      case 'viewAll':
+   275→        handleViewAll();
+   276→        break;
+   277→      case 'browseCatalogue':
+   278→        handleBrowseCatalogue();
+   279→        break;
+   280→    }
+   281→  };
+   282→
+   283→  const handleKeyDown = (e: React.KeyboardEvent) => {
+   284→    if (!showDropdown || searchItems.length === 0) return;
+   285→
+   286→    if (e.key === 'ArrowDown') {
+   287→      e.preventDefault();
+   288→      setSelectedIdx((prev) => (prev < searchItems.length - 1 ? prev + 1 : 0));
+   289→    } else if (e.key === 'ArrowUp') {
+   290→      e.preventDefault();
+   291→      setSelectedIdx((prev) => (prev > 0 ? prev - 1 : searchItems.length - 1));
+   292→    } else if (e.key === 'Enter' && selectedIdx >= 0) {
+   293→      e.preventDefault();
+   294→      handleSelectItem(searchItems[selectedIdx]);
+   295→    } else if (e.key === 'Escape') {
+   296→      setSearchOpen(false);
+   297→      setSearchQuery('');
+   298→    }
+   299→  };
+   300→
+   301→  // Close search on click outside
+   302→  useEffect(() => {
+   303→    if (!searchOpen) return;
+   304→    const handleClickOutside = (e: MouseEvent) => {
+   305→      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+   306→        // Don't close if clicking inside the search bar area
+   307→        const target = e.target as HTMLElement;
+   308→        if (target.closest('[data-search-area]')) return;
+   309→      }
+   310→    };
+   311→    document.addEventListener('mousedown', handleClickOutside);
+   312→    return () => document.removeEventListener('mousedown', handleClickOutside);
+   313→  }, [searchOpen]);
+   314→
+   315→  const toggleTheme = () => {
+   316→    setTheme(theme === 'dark' ? 'light' : 'dark');
+   317→  };
+   318→
+   319→  // Helper to get product category name
+   320→  const getProductCategoryName = (product: { category_id: string }) => {
+   321→    const cat = categories.find((c) => c.id === product.category_id);
+   322→    return cat ? getCategoryName(cat, language) : '';
+   323→  };
+   324→
+   325→  // Render a section separator (declared outside component)
+   326→  // Using a function instead of a component inside render
+   327→
+   328→  const renderSectionLabel = (icon: React.ElementType, label: string) => (
+   329→    <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-white/[0.03] border-y border-gray-100 dark:border-white/5">
+   330→      {React.createElement(icon, { className: 'w-3.5 h-3.5 text-gray-400 dark:text-gray-300' })}
+   331→      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-300">{label}</span>
+   332→    </div>
+   333→  );
+   334→
+   335→  // Category badge colors
+   336→  const categoryBadgeColors = [
+   337→    { bg: 'rgba(30,58,95,0.1)', text: '#1E3A5F', darkBg: 'rgba(122,176,224,0.1)', darkText: '#7AB0E0' },
+   338→    { bg: 'rgba(240,192,90,0.15)', text: '#8B6914', darkBg: 'rgba(240,192,90,0.1)', darkText: '#F0C05A' },
+   339→    { bg: 'rgba(16,185,129,0.1)', text: '#065F46', darkBg: 'rgba(16,185,129,0.1)', darkText: '#34D399' },
+   340→  ];
+   341→
+   342→  return (
+   343→    <motion.nav
+   344→      initial={{ y: -100 }}
+   345→      animate={{ y: 0 }}
+   346→      transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+   347→      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+   348→        scrolled
+   349→          ? 'bg-white/90 dark:bg-[#0f1d2e]/90 backdrop-blur-xl shadow-md'
+   350→          : 'bg-white/70 dark:bg-[#0f1d2e]/70 backdrop-blur-md'
+   351→      }`}
+   352→    >
+   353→      {/* Gold bottom border line when scrolled */}
+   354→      {scrolled && (
+   355→        <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: '#F0C05A' }} />
+   356→      )}
+   357→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   358→        <div className="flex items-center justify-between h-16 sm:h-18">
+   359→          {/* Logo */}
+   360→          <button
+   361→            onClick={() => handleNav('/')}
+   362→            className="flex items-center gap-2 group"
+   363→          >
+   364→            {logoUrl ? (
+   365→              <img
+   366→                src={logoUrl}
+   367→                alt={brandName}
+   368→                className="h-9 w-auto object-contain"
+   369→              />
+   370→            ) : (
+   371→              <div className="flex items-center gap-2">
+   372→                <div
+   373→                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+   374→                  style={{ backgroundColor: '#1E3A5F' }}
+   375→                >
+   376→                  ODG
+   377→                </div>
+   378→                <span
+   379→                  className="text-lg font-bold hidden sm:inline dark:text-[#7AB0E0]"
+   380→                  style={{ color: '#1E3A5F' }}
+   381→                >
+   382→                  {brandName}
+   383→                </span>
+   384→              </div>
+   385→            )}
+   386→          </button>
+   387→
+   388→          {/* Desktop Nav with active indicator */}
+   389→          <div className="hidden md:flex items-center gap-1">
+   390→            {navLinks.map((link) => {
+   391→              const isActive = route === link.routeName;
+   392→              const isCatalogue = link.routeName === 'catalogue';
+   393→              return (
+   394→                <div
+   395→                  key={link.routeName}
+   396→                  className="relative"
+   397→                  onMouseEnter={isCatalogue ? openCatalogueDropdown : undefined}
+   398→                  onMouseLeave={isCatalogue ? closeCatalogueDropdown : undefined}
+   399→                >
+   400→                  <button
+   401→                    onClick={() => handleNav(link.path)}
+   402→                    className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+   403→                      isActive
+   404→                        ? 'text-[#1E3A5F] dark:text-[#7AB0E0] border-b-2 border-[#F0C05A]'
+   405→                        : 'text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
+   406→                    }`}
+   407→                    aria-current={isActive ? 'page' : undefined}
+   408→                  >
+   409→                    {link.label}
+   410→                    {isCatalogue && (
+   411→                      <ChevronDown className={`w-3.5 h-3.5 inline-block ml-0.5 transition-transform duration-200 ${catalogueDropdownOpen ? 'rotate-180' : ''}`} />
+   412→                    )}
+   413→                    {/* Red dot indicator for promotions link */}
+   414→                    {'isPromo' in link && link.isPromo && (
+   415→                      <span className="absolute -top-0.5 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#C0564F' }} />
+   416→                    )}
+   417→                    {/* Gold accent line under active item */}
+   418→                    {isActive && (
+   419→                      <motion.div
+   420→                        layoutId="activeNavIndicator"
+   421→                        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+   422→                        style={{ backgroundColor: '#F0C05A', width: '60%' }}
+   423→                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+   424→                      />
+   425→                    )}
+   426→                  </button>
+   427→
+   428→                  {/* Catalogue dropdown */}
+   429→                  {isCatalogue && (
+   430→                    <AnimatePresence>
+   431→                      {catalogueDropdownOpen && (
+   432→                        <motion.div
+   433→                          initial={{ opacity: 0, y: -8 }}
+   434→                          animate={{ opacity: 1, y: 0 }}
+   435→                          exit={{ opacity: 0, y: -8 }}
+   436→                          transition={{ duration: 0.2, ease: 'easeOut' }}
+   437→                          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[480px] bg-white dark:bg-[#1a2d45] rounded-xl shadow-lg border border-gray-100 dark:border-white/10 p-3 z-50"
+   438→                        >
+   439→                          <div className="flex items-center justify-between mb-2 px-1">
+   440→                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-400">{t('nav.allCategories')}</span>
+   441→                            <button
+   442→                              onClick={() => handleNav('/catalogue')}
+   443→                              className="text-xs font-medium hover:underline"
+   444→                              style={{ color: '#1E3A5F' }}
+   445→                            >
+   446→                              {t('nav.viewAllProducts')} →
+   447→                            </button>
+   448→                          </div>
+   449→                          <div className="grid grid-cols-2 gap-1.5">
+   450→                            {categories.map((cat) => {
+   451→                              const catName = getCategoryName(cat, language);
+   452→                              const count = categoryProductCounts[cat.id] || 0;
+   453→                              const iconKey = cat.icon || cat.slug;
+   454→                              return (
+   455→                                <button
+   456→                                  key={cat.id}
+   457→                                  onClick={() => {
+   458→                                    handleNav(`/catalogue?category=${cat.slug}`);
+   459→                                    setCatalogueDropdownOpen(false);
+   460→                                  }}
+   461→                                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left group"
+   462→                                >
+   463→                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
+   464→                                    {navCategoryIcons[iconKey] || (
+   465→                                      <Package className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+   466→                                    )}
+   467→                                  </div>
+   468→                                  <div className="min-w-0 flex-1">
+   469→                                    <p className="text-sm font-medium truncate dark:text-white group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{catName}</p>
+   470→                                    <p className="text-[10px] text-gray-400">{count} {language === 'ar' ? 'منتج' : 'produits'}</p>
+   471→                                  </div>
+   472→                                </button>
+   473→                              );
+   474→                            })}
+   475→                          </div>
+   476→                        </motion.div>
+   477→                      )}
+   478→                    </AnimatePresence>
+   479→                  )}
+   480→                </div>
+   481→              );
+   482→            })}
+   483→          </div>
+   484→
+   485→          {/* Desktop Actions */}
+   486→          <div className="hidden md:flex items-center gap-2">
+   487→            {/* Search Toggle */}
+   488→            <Button
+   489→              variant="ghost"
+   490→              size="icon"
+   491→              onClick={() => searchOpen ? setSearchOpen(false) : openSearch()}
+   492→              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   493→              aria-label={t('accessibility.search')}
+   494→            >
+   495→              <Search className="w-4.5 h-4.5" />
+   496→            </Button>
+   497→
+   498→            {/* Theme Toggle */}
+   499→            <Button
+   500→              variant="ghost"
+   501→              size="icon"
+   502→              onClick={toggleTheme}
+   503→              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   504→              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+   505→            >
+   506→              <motion.div
+   507→                initial={false}
+   508→                animate={{
+   509→                  rotate: theme === 'dark' ? 180 : 0,
+   510→                  scale: mounted ? 1 : 0,
+   511→                }}
+   512→                transition={{ duration: 0.3, ease: 'easeInOut' }}
+   513→              >
+   514→                {mounted && (theme === 'dark' ? (
+   515→                  <Sun className="w-4.5 h-4.5 text-[#F0C05A]" />
+   516→                ) : (
+   517→                  <Moon className="w-4.5 h-4.5" />
+   518→                ))}
+   519→              </motion.div>
+   520→            </Button>
+   521→
+   522→            {/* Language Switcher */}
+   523→            <Button
+   524→              variant="ghost"
+   525→              size="sm"
+   526→              onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+   527→              className="gap-1.5 text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0]"
+   528→            >
+   529→              <Globe className="w-4 h-4" />
+   530→              <span className="text-xs font-semibold uppercase">
+   531→                {language === 'fr' ? 'AR' : 'FR'}
+   532→              </span>
+   533→            </Button>
+   534→
+   535→            {/* Cart with badge */}
+   536→            <Button
+   537→              variant="ghost"
+   538→              size="icon"
+   539→              onClick={() => handleNav('/devis')}
+   540→              className="relative text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   541→              aria-label={t('accessibility.cart')}
+   542→            >
+   543→              <ShoppingCart className="w-5 h-5" />
+   544→              {totalItems > 0 && (
+   545→                <motion.div
+   546→                  initial={{ scale: 0 }}
+   547→                  animate={{ scale: 1 }}
+   548→                  className="absolute -top-1 -right-1"
+   549→                >
+   550→                  <Badge
+   551→                    className="h-5 min-w-[20px] flex items-center justify-center p-0 text-[10px] font-bold"
+   552→                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   553→                  >
+   554→                    {totalItems}
+   555→                  </Badge>
+   556→                </motion.div>
+   557→              )}
+   558→            </Button>
+   559→
+   560→            {/* CTA */}
+   561→            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   562→              <Button
+   563→                onClick={() => handleNav('/devis')}
+   564→                size="sm"
+   565→                className="text-white font-semibold shadow-md hover:shadow-lg transition-all"
+   566→                style={{ backgroundColor: '#1E3A5F' }}
+   567→              >
+   568→                {t('nav.quote')}
+   569→              </Button>
+   570→            </motion.div>
+   571→          </div>
+   572→
+   573→          {/* Mobile Menu */}
+   574→          <div className="flex md:hidden items-center gap-0.5">
+   575→            {/* Search Toggle Mobile - 44px touch target */}
+   576→            <Button
+   577→              variant="ghost"
+   578→              size="icon"
+   579→              onClick={() => searchOpen ? setSearchOpen(false) : openSearch()}
+   580→              className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   581→              aria-label={t('accessibility.search')}
+   582→            >
+   583→              <Search className="w-5 h-5" />
+   584→            </Button>
+   585→
+   586→            {/* Theme Toggle Mobile - 44px touch target */}
+   587→            <Button
+   588→              variant="ghost"
+   589→              size="icon"
+   590→              onClick={toggleTheme}
+   591→              className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   592→              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+   593→            >
+   594→              <motion.div
+   595→                initial={false}
+   596→                animate={{ rotate: theme === 'dark' ? 180 : 0 }}
+   597→                transition={{ duration: 0.3, ease: 'easeInOut' }}
+   598→              >
+   599→                {mounted && (theme === 'dark' ? (
+   600→                  <Sun className="w-5 h-5 text-[#F0C05A]" />
+   601→                ) : (
+   602→                  <Moon className="w-5 h-5" />
+   603→                ))}
+   604→              </motion.div>
+   605→            </Button>
+   606→
+   607→            {/* Cart Mobile - 44px touch target */}
+   608→            <Button
+   609→              variant="ghost"
+   610→              size="icon"
+   611→              onClick={() => handleNav('/devis')}
+   612→              className="relative text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   613→              aria-label={t('accessibility.cart')}
+   614→            >
+   615→              <ShoppingCart className="w-5 h-5" />
+   616→              {totalItems > 0 && (
+   617→                <Badge
+   618→                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+   619→                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   620→                >
+   621→                  {totalItems}
+   622→                </Badge>
+   623→              )}
+   624→            </Button>
+   625→
+   626→            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   627→              <SheetTrigger asChild>
+   628→                <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none" aria-label={t('accessibility.menu')}>
+   629→                  <Menu className="w-5 h-5" />
+   630→                </Button>
+   631→              </SheetTrigger>
+   632→              <SheetContent
+   633→                side={isRTL ? 'left' : 'right'}
+   634→                className="w-[300px] sm:w-[350px] dark:bg-[#162236]"
+   635→              >
+   636→                <SheetHeader>
+   637→                  <SheetTitle
+   638→                    className={`dark:text-[#7AB0E0] ${isRTL ? 'text-right' : 'text-left'}`}
+   639→                    style={{ color: '#1E3A5F' }}
+   640→                  >
+   641→                    {brandName}
+   642→                  </SheetTitle>
+   643→                </SheetHeader>
+   644→
+   645→                <div className="flex flex-col gap-1.5 px-4 mt-4">
+   646→                  {navLinks.map((link, i) => {
+   647→                    const isActive = route === link.routeName;
+   648→                    return (
+   649→                      <motion.button
+   650→                        key={link.routeName}
+   651→                        onClick={() => handleNav(link.path)}
+   652→                        initial={{ opacity: 0, x: 20 }}
+   653→                        animate={{ opacity: 1, x: 0 }}
+   654→                        transition={{ delay: i * 0.05 }}
+   655→                        className={`w-full ${isRTL ? 'text-right' : 'text-left'} px-4 py-3.5 text-base font-medium rounded-lg transition-colors flex items-center gap-3 min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+   656→                          isActive
+   657→                            ? 'text-[#1E3A5F] dark:text-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+   658→                            : 'text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
+   659→                        }`}
+   660→                        aria-current={isActive ? 'page' : undefined}
+   661→                      >
+   662→                        {isActive && (
+   663→                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#F0C05A' }} />
+   664→                        )}
+   665→                        <span className="flex-1">{link.label}</span>
+   666→                        {'isPromo' in link && link.isPromo && (
+   667→                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#C0564F' }} />
+   668→                        )}
+   669→                      </motion.button>
+   670→                    );
+   671→                  })}
+   672→
+   673→                  <div className="my-3 border-t border-gray-100 dark:border-white/10" />
+   674→
+   675→                  {/* Language Switcher Mobile */}
+   676→                  <button
+   677→                    onClick={() => {
+   678→                      setLanguage(language === 'fr' ? 'ar' : 'fr');
+   679→                    }}
+   680→                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]`}
+   681→                  >
+   682→                    <Globe className="w-5 h-5" />
+   683→                    {language === 'fr' ? 'العربية' : 'Français'}
+   684→                  </button>
+   685→
+   686→                  {/* Dark Mode Toggle Mobile */}
+   687→                  <button
+   688→                    onClick={toggleTheme}
+   689→                    className="w-full flex items-center gap-3 px-4 py-3.5 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]"
+   690→                  >
+   691→                    {mounted && (theme === 'dark' ? (
+   692→                      <Sun className="w-5 h-5 text-[#F0C05A]" />
+   693→                    ) : (
+   694→                      <Moon className="w-5 h-5" />
+   695→                    ))}
+   696→                    {mounted && (theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode'))}
+   697→                  </button>
+   698→
+   699→                  {/* Admin */}
+   700→                  <button
+   701→                    onClick={() => handleNav('/admin-login')}
+   702→                    className={`w-full ${isRTL ? 'text-right' : 'text-left'} px-4 py-3.5 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[44px]`}
+   703→                  >
+   704→                    {t('nav.admin')}
+   705→                  </button>
+   706→                </div>
+   707→
+   708→                <div className="mt-auto px-4 pb-6">
+   709→                  <Button
+   710→                    onClick={() => handleNav('/devis')}
+   711→                    className="w-full text-white font-semibold shadow-md min-h-[44px]"
+   712→                    style={{ backgroundColor: '#1E3A5F' }}
+   713→                  >
+   714→                    {t('nav.quote')}
+   715→                  </Button>
+   716→                </div>
+   717→              </SheetContent>
+   718→            </Sheet>
+   719→          </div>
+   720→        </div>
+   721→      </div>
+   722→
+   723→      {/* Search Bar Dropdown */}
+   724→      <AnimatePresence>
+   725→        {searchOpen && (
+   726→          <motion.div
+   727→            initial={{ opacity: 0, height: 0 }}
+   728→            animate={{ opacity: 1, height: 'auto' }}
+   729→            exit={{ opacity: 0, height: 0 }}
+   730→            transition={{ duration: 0.2 }}
+   731→            className="border-t border-gray-100 dark:border-white/5 bg-white/95 dark:bg-[#0f1d2e]/95 backdrop-blur-xl"
+   732→          >
+   733→            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-3">
+   734→              {/* Mobile: full-width search with close button */}
+   735→              <div className="relative max-w-xl mx-auto flex items-center gap-2" data-search-area>
+   736→                <div className="relative flex-1">
+   737→                  <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+   738→                  <Input
+   739→                    ref={searchInputRef}
+   740→                    value={searchQuery}
+   741→                    onChange={(e) => setSearchQuery(e.target.value)}
+   742→                    onKeyDown={handleKeyDown}
+   743→                    placeholder={t('nav.searchPlaceholder')}
+   744→                    className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 sm:h-11 text-base bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 focus:border-[#1E3A5F] dark:focus:border-[#7AB0E0] focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:text-white dark:placeholder:text-gray-400`}
+   745→                    autoFocus
+   746→                  />
+   747→                  {searchQuery && (
+   748→                    <button
+   749→                      onClick={() => setSearchQuery('')}
+   750→                      className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 min-w-[44px] min-h-[44px] flex items-center justify-center ${isRTL ? 'left-0' : 'right-0'}`}
+   751→                      aria-label={t('nav.close')}
+   752→                    >
+   753→                      <XCircle className="w-4 h-4" />
+   754→                    </button>
+   755→                  )}
+   756→
+   757→                {/* Enhanced Search Results Dropdown */}
+   758→                <AnimatePresence>
+   759→                  {showDropdown && (
+   760→                    <motion.div
+   761→                      ref={dropdownRef}
+   762→                      initial={{ opacity: 0, y: -5 }}
+   763→                      animate={{ opacity: 1, y: 0 }}
+   764→                      exit={{ opacity: 0, y: -5 }}
+   765→                      className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1a2d45] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden z-50 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto"
+   766→                    >
+   767→                      {/* No query - show recent searches */}
+   768→                      {!hasQuery && recentSearches.length > 0 && (
+   769→                        <>
+   770→                          {renderSectionLabel(Clock, t('search.recent'))}
+   771→                          {recentSearches.map((query, idx) => {
+   772→                            const globalIdx = searchItems.findIndex(
+   773→                              (item) => item.type === 'recent' && item.query === query
+   774→                            );
+   775→                            return (
+   776→                              <div
+   777→                                key={`recent-${query}`}
+   778→                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+   779→                                  selectedIdx === globalIdx ? 'bg-gray-50 dark:bg-white/5' : ''
+   780→                                }`}
+   781→                                onClick={() => handleRecentClick(query)}
+   782→                              >
+   783→                                <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0" />
+   784→                                <span className="text-sm flex-1 truncate dark:text-gray-300" style={{ color: '#1E3A5F' }}>
+   785→                                  {query}
+   786→                                </span>
+   787→                                <button
+   788→                                  onClick={(e) => {
+   789→                                    e.stopPropagation();
+   790→                                    handleRecentRemove(query);
+   791→                                  }}
+   792→                                  className="text-gray-300 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-200 shrink-0"
+   793→                                >
+   794→                                  <X className="w-3.5 h-3.5" />
+   795→                                </button>
+   796→                              </div>
+   797→                            );
+   798→                          })}
+   799→                        </>
+   800→                      )}
+   801→
+   802→                      {/* Has query - show categorized results */}
+   803→                      {hasQuery && (
+   804→                        <>
+   805→                          {/* Products section */}
+   806→                          {matchedProducts.length > 0 && (
+   807→                            <>
+   808→                              {renderSectionLabel(Package, t('search.products'))}
+   809→                              {matchedProducts.map((product, idx) => {
+   810→                                const globalIdx = searchItems.findIndex(
+   811→                                  (item) => item.type === 'product' && item.slug === product.slug
+   812→                                );
+   813→                                const catName = getProductCategoryName(product);
+   814→                                return (
+   815→                                  <div
+   816→                                    key={`product-${product.id}`}
+   817→                                    className={`flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+   818→                                      selectedIdx === globalIdx ? 'bg-gray-50 dark:bg-white/5' : ''
+   819→                                    }`}
+   820→                                    onClick={() => handleSearchSelect(product.slug)}
+   821→                                  >
+   822→                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5 shrink-0">
+   823→                                      {product.images?.[0] ? (
+   824→                                        <img src={product.images[0]} alt={getProductName(product, language)} loading="lazy" className="w-full h-full object-cover" />
+   825→                                      ) : (
+   826→                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: '#1E3A5F10', color: '#1E3A5F' }}>
+   827→                                          ODG
+   828→                                        </div>
+   829→                                      )}
+   830→                                    </div>
+   831→                                    <div className="min-w-0 flex-1">
+   832→                                      <p className="font-medium text-sm truncate dark:text-white" style={{ color: '#1E3A5F' }}>
+   833→                                        {getProductName(product, language)}
+   834→                                      </p>
+   835→                                      <div className="flex items-center gap-2 mt-0.5">
+   836→                                        {product.brand && (
+   837→                                          <span className="text-xs text-gray-400">{product.brand}</span>
+   838→                                        )}
+   839→                                        {catName && (
+   840→                                          <Badge
+   841→                                            className="text-[9px] px-1.5 py-0 h-4 font-medium border-0"
+   842→                                            style={{
+   843→                                              backgroundColor: categoryBadgeColors[idx % categoryBadgeColors.length].bg,
+   844→                                              color: categoryBadgeColors[idx % categoryBadgeColors.length].text,
+   845→                                            }}
+   846→                                          >
+   847→                                            {catName}
+   848→                                          </Badge>
+   849→                                        )}
+   850→                                      </div>
+   851→                                    </div>
+   852→                                  </div>
+   853→                                );
+   854→                              })}
+   855→                            </>
+   856→                          )}
+   857→
+   858→                          {/* Categories section */}
+   859→                          {matchedCategories.length > 0 && (
+   860→                            <>
+   861→                              <div className="border-t border-gray-100 dark:border-white/5" />
+   862→                              {renderSectionLabel(Tag, t('search.categories'))}
+   863→                              {matchedCategories.map((cat, idx) => {
+   864→                                const globalIdx = searchItems.findIndex(
+   865→                                  (item) => item.type === 'category' && item.slug === cat.slug
+   866→                                );
+   867→                                return (
+   868→                                  <div
+   869→                                    key={`cat-${cat.id}`}
+   870→                                    className={`flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+   871→                                      selectedIdx === globalIdx ? 'bg-gray-50 dark:bg-white/5' : ''
+   872→                                    }`}
+   873→                                    onClick={() => handleCategorySelect(cat.slug)}
+   874→                                  >
+   875→                                    <div
+   876→                                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+   877→                                      style={{ backgroundColor: categoryBadgeColors[idx % categoryBadgeColors.length].bg }}
+   878→                                    >
+   879→                                      <Tag className="w-4 h-4" style={{ color: categoryBadgeColors[idx % categoryBadgeColors.length].text }} />
+   880→                                    </div>
+   881→                                    <span className="text-sm font-medium truncate dark:text-white" style={{ color: '#1E3A5F' }}>
+   882→                                      {getCategoryName(cat, language)}
+   883→                                    </span>
+   884→                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+   885→                                  </div>
+   886→                                );
+   887→                              })}
+   888→                            </>
+   889→                          )}
+   890→
+   891→                          {/* Articles section */}
+   892→                          {matchedArticles.length > 0 && (
+   893→                            <>
+   894→                              <div className="border-t border-gray-100 dark:border-white/5" />
+   895→                              {renderSectionLabel(FileText, t('search.articles'))}
+   896→                              {matchedArticles.map((article) => {
+   897→                                const globalIdx = searchItems.findIndex(
+   898→                                  (item) => item.type === 'article' && item.slug === article.slug
+   899→                                );
+   900→                                const title = language === 'ar' ? article.title_ar : article.title_fr;
+   901→                                return (
+   902→                                  <div
+   903→                                    key={`article-${article.id}`}
+   904→                                    className={`flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+   905→                                      selectedIdx === globalIdx ? 'bg-gray-50 dark:bg-white/5' : ''
+   906→                                    }`}
+   907→                                    onClick={() => handleArticleSelect(article.slug)}
+   908→                                  >
+   909→                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-50 dark:bg-orange-900/20 shrink-0">
+   910→                                      <FileText className="w-4 h-4 text-orange-500" />
+   911→                                    </div>
+   912→                                    <span className="text-sm font-medium truncate dark:text-white" style={{ color: '#1E3A5F' }}>
+   913→                                      {title}
+   914→                                    </span>
+   915→                                    <ArrowRight className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-400 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+   916→                                  </div>
+   917→                                );
+   918→                              })}
+   919→                            </>
+   920→                          )}
+   921→
+   922→                          {/* No results found */}
+   923→                          {matchedProducts.length === 0 && matchedCategories.length === 0 && matchedArticles.length === 0 && (
+   924→                            <div className="px-4 py-8 text-center">
+   925→                              <Search className="w-8 h-8 text-gray-200 dark:text-gray-400 mx-auto mb-2" />
+   926→                              <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
+   927→                                {t('search.noResults')}
+   928→                              </p>
+   929→                              <button
+   930→                                onClick={handleBrowseCatalogue}
+   931→                                className="text-xs font-medium hover:underline"
+   932→                                style={{ color: '#1E3A5F' }}
+   933→                              >
+   934→                                {t('search.browseCatalogue')} →
+   935→                              </button>
+   936→                            </div>
+   937→                          )}
+   938→
+   939→                          {/* View all results link */}
+   940→                          {(matchedProducts.length > 0 || matchedCategories.length > 0 || matchedArticles.length > 0) && (
+   941→                            <div className="border-t border-gray-100 dark:border-white/5">
+   942→                              <button
+   943→                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${
+   944→                                  selectedIdx === searchItems.length - 1 ? 'bg-gray-50 dark:bg-white/5' : ''
+   945→                                }`}
+   946→                                style={{ color: '#1E3A5F' }}
+   947→                                onClick={handleViewAll}
+   948→                              >
+   949→                                {t('search.viewAll')}
+   950→                                <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+   951→                              </button>
+   952→                            </div>
+   953→                          )}
+   954→                        </>
+   955→                      )}
+   956→                    </motion.div>
+   957→                  )}
+   958→                </AnimatePresence>
+   959→                </div>
+   960→                {/* Mobile close button */}
+   961→                <Button
+   962→                  variant="ghost"
+   963→                  size="sm"
+   964→                  onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+   965→                  className="md:hidden shrink-0 text-gray-500 dark:text-gray-300 min-h-[44px] min-w-[44px]"
+   966→                >
+   967→                  {t('nav.close')}
+   968→                </Button>
+   969→              </div>
+   970→            </div>
+   971→          </motion.div>
+   972→        )}
+   973→      </AnimatePresence>
+   974→    </motion.nav>
+   975→  );
+   976→}
+   977→

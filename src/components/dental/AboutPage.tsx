@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, useInView } from 'framer-motion';
 import {
   Award,
   MapPin,
@@ -19,12 +19,84 @@ import {
   Headphones,
   Wrench,
   GraduationCap,
+  Cpu,
+  Stethoscope,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { Card, CardContent } from '@/components/ui/card';
 
+// Animated counter hook with count-up on scroll
+function useCountUp(target: number, duration: number = 2000, startOnView: boolean = true) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const hasStarted = useRef(false);
+
+  useEffect(() => {
+    if (startOnView && !isInView) return;
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+
+    const startTime = Date.now();
+    const step = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setCount(target);
+      }
+    };
+    requestAnimationFrame(step);
+  }, [isInView, target, duration, startOnView]);
+
+  return { count, ref };
+}
+
+// Individual counter item component
+function CounterItem({ icon, value, suffix, label, color }: {
+  icon: React.ReactNode;
+  value: number;
+  suffix: string;
+  label: string;
+  color: string;
+}) {
+  const { count, ref } = useCountUp(value, 2000);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -5, scale: 1.02 }}
+      className="text-center"
+    >
+      <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full card-lift overflow-hidden">
+        <div className="h-1.5" style={{ backgroundColor: color }} />
+        <CardContent className="p-6">
+          <div
+            className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-md"
+            style={{ backgroundColor: color }}
+          >
+            {icon}
+          </div>
+          <div className="text-3xl sm:text-4xl font-bold mb-1 dark:text-[#7AB0E0] tabular-nums" style={{ color: '#1E3A5F' }}>
+            {count}{suffix}
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-300">{label}</div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function AboutPage() {
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, language } = useTranslation();
 
   const values = [
     {
@@ -67,6 +139,52 @@ export default function AboutPage() {
     { icon: <Globe className="w-6 h-6" />, value: '48', label: t('stats.wilayas') },
     { icon: <TrendingUp className="w-6 h-6" />, value: '15+', label: t('stats.brands') },
     { icon: <Headphones className="w-6 h-6" />, value: '48h', label: t('stats.sav') },
+  ];
+
+  // Animated counter numbers for "Nos Chiffres" section
+  const counterFigures = [
+    {
+      icon: <Building2 className="w-6 h-6" />,
+      value: 500,
+      suffix: '+',
+      label: language === 'ar' ? 'عيادة زبونة' : 'Cliniques clientes',
+      color: '#1E3A5F',
+    },
+    {
+      icon: <Globe className="w-6 h-6" />,
+      value: 48,
+      suffix: '',
+      label: language === 'ar' ? 'ولاية مغطاة' : 'Wilayas couvertes',
+      color: '#2A5F8F',
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6" />,
+      value: 15,
+      suffix: '+',
+      label: language === 'ar' ? 'ماركة عالمية' : 'Marques internationales',
+      color: '#3A7CB8',
+    },
+    {
+      icon: <Headphones className="w-6 h-6" />,
+      value: 48,
+      suffix: 'h',
+      label: language === 'ar' ? 'خدمة ما بعد البيع' : 'SAV',
+      color: '#F0C05A',
+    },
+    {
+      icon: <Wrench className="w-6 h-6" />,
+      value: 30,
+      suffix: '+',
+      label: language === 'ar' ? 'فني معتمد' : 'Techniciens certifiés',
+      color: '#3B8C6E',
+    },
+    {
+      icon: <Cpu className="w-6 h-6" />,
+      value: 2000,
+      suffix: '+',
+      label: language === 'ar' ? 'جهاز مثبّت' : 'Installations',
+      color: '#C0564F',
+    },
   ];
 
   const certifications = [
@@ -215,6 +333,45 @@ export default function AboutPage() {
           </div>
         </motion.div>
 
+        {/* ==================== NOS CHIFFRES - Animated Counter Section ==================== */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-16"
+        >
+          <div className="text-center mb-10">
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: 60 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="h-1 mx-auto mb-6 rounded-full"
+              style={{ backgroundColor: '#F0C05A' }}
+            />
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+              {language === 'ar' ? 'أرقامنا' : 'Nos Chiffres'}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+              {language === 'ar' ? 'أرقام تتحدث عن ثقتكم بنا' : 'Des chiffres qui parlent de notre engagement'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
+            {counterFigures.map((fig, i) => (
+              <CounterItem
+                key={i}
+                icon={fig.icon}
+                value={fig.value}
+                suffix={fig.suffix}
+                label={fig.label}
+                color={fig.color}
+              />
+            ))}
+          </div>
+        </motion.div>
+
         {/* Timeline / Milestones Section */}
         <motion.div
           variants={containerVariants}
@@ -277,7 +434,7 @@ export default function AboutPage() {
           </div>
         </motion.div>
 
-        {/* Key Figures Section */}
+        {/* Key Figures Section (existing) */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}

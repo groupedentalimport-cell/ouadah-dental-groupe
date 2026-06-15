@@ -1,52 +1,108 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import ZAI from 'z-ai-web-dev-sdk';
 
-export async function POST(request: Request) {
+const SYSTEM_PROMPT = `You are ODG Assistant, an expert advisor for Ouadah Dental Groupe (ODG), Algeria's leading dental equipment distributor since 2009. You help dentists and clinic owners find the right equipment for their needs.
+
+Key information about ODG:
+- Based in Oran, Algeria (Coopérative Azzouz Abdelkader, N°45, Es-Senia)
+- Phone: +213 771 88 89 48
+- Distributor of brands: Silver Fox, ICANCLAVE, OWANDY, and more
+- Services: Installation, training, and after-sales service (SAV 48h)
+- Product categories: Fauteuils Dentaires, Unités Dentaires, Radiologie, Stérilisation, Pneumatiques, Consommables, Instruments, Mobilier
+
+When recommending products:
+- Ask about their clinic size, specialty, and budget
+- Suggest specific product categories that match their needs
+- Mention installation and training included
+- Recommend requesting a quote for specific pricing
+- Be helpful, professional, and concise (respond in French or Arabic based on the user's language)
+
+Keep responses under 200 words. If asked about pricing, direct them to request a quote. If asked about non-dental topics, politely redirect to dental equipment.`;
+
+// In-memory conversation history store
+const conversationHistory = new Map<string, Array<{ role: string; content: string }>>();
+const MAX_MESSAGES = 20;
+
+// Lazy-initialize the ZAI instance
+let zaiInstance: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+
+async function getZAI() {
+  if (!zaiInstance) {
+    zaiInstance = await ZAI.create();
+  }
+  return zaiInstance;
+}
+
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message } = body;
-
-    // Simple response logic for the chat bot
-    const responses: Record<string, string> = {
-      default:
-        "Merci pour votre message ! Pour une assistance personnalisée, n'hésitez pas à nous contacter directement par téléphone au +213 771 88 89 48 ou par email à groupedentalimport@gmail.com. Notre équipe se fera un plaisir de vous aider.",
-      prix:
-        "Nos prix varient selon le produit et la configuration. Pour obtenir un devis personnalisé, veuillez utiliser notre formulaire de devis en ligne ou contactez-nous directement au +213 771 88 89 48.",
-      livraison:
-        "Nous assurons la livraison et l'installation sur les 48 wilayas d'Algérie. Les délais varient de 1 à 6 semaines selon le produit.",
-      sav:
-        "Notre service après-vente garantit une intervention sous 48h sur tout le territoire national. Contactez-nous au +213 771 88 89 48.",
-      garantie:
-        "Tous nos équipements bénéficient d'une garantie constructeur allant de 1 à 5 ans selon le produit. L'installation et la formation sont incluses pour la plupart des équipements.",
-      fauteuil:
-        "Nous proposons une gamme complète de fauteuils dentaires à partir de 3 500 000 DA. Consultez notre catalogue pour découvrir nos modèles.",
-      sterilisation:
-        "Notre gamme de stérilisation comprend des autoclaves Classe B à partir de 1 800 000 DA. Tous conformes aux normes internationales.",
+    const { messages, sessionId } = body as {
+      messages?: Array<{ role: string; content: string }>;
+      sessionId?: string;
     };
 
-    // Simple keyword matching
-    const lowerMsg = (message || '').toLowerCase();
-    let response = responses.default;
-
-    if (lowerMsg.includes('prix') || lowerMsg.includes('tarif') || lowerMsg.includes('coût') || lowerMsg.includes('combien')) {
-      response = responses.prix;
-    } else if (lowerMsg.includes('livraison') || lowerMsg.includes('délai') || lowerMsg.includes('expédition')) {
-      response = responses.livraison;
-    } else if (lowerMsg.includes('sav') || lowerMsg.includes('réparation') || lowerMsg.includes('maintenance') || lowerMsg.includes('après-vente')) {
-      response = responses.sav;
-    } else if (lowerMsg.includes('garantie') || lowerMsg.includes('warranty')) {
-      response = responses.garantie;
-    } else if (lowerMsg.includes('fauteuil') || lowerMsg.includes('chair')) {
-      response = responses.fauteuil;
-    } else if (lowerMsg.includes('stérilisation') || lowerMsg.includes('autoclave') || lowerMsg.includes('sterilisation')) {
-      response = responses.sterilisation;
-    } else if (lowerMsg.includes('bonjour') || lowerMsg.includes('salut') || lowerMsg.includes('hello') || lowerMsg.includes('مرحبا')) {
-      response = "Bonjour ! Bienvenue chez ODG. Comment puis-je vous aider ? Je peux vous renseigner sur nos produits, prix, livraison, garantie et service après-vente.";
+    if (!sessionId) {
+      return NextResponse.json(
+        { success: false, error: 'sessionId is required' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ message: response, response });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'messages array is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get or initialize conversation history for this session
+    let history = conversationHistory.get(sessionId) || [];
+
+    // Add the new user messages to history
+    const newMessages = messages.filter((m) => m.role === 'user');
+    for (const msg of newMessages) {
+      history.push({ role: msg.role, content: msg.content });
+    }
+
+    // Trim history to max messages (keep system prompt slot + recent messages)
+    if (history.length > MAX_MESSAGES) {
+      history = history.slice(-MAX_MESSAGES);
+    }
+
+    // Build the full message list with system prompt
+    const fullMessages = [
+      { role: 'assistant', content: SYSTEM_PROMPT },
+      ...history,
+    ];
+
+    // Call the LLM
+    const zai = await getZAI();
+    const completion = await zai.chat.completions.create({
+      messages: fullMessages,
+      thinking: { type: 'disabled' },
+    });
+
+    const aiResponse = completion.choices[0]?.message?.content;
+
+    if (!aiResponse || aiResponse.trim().length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Empty response from AI' },
+        { status: 500 }
+      );
+    }
+
+    // Add assistant response to history
+    history.push({ role: 'assistant', content: aiResponse });
+
+    // Save updated history
+    conversationHistory.set(sessionId, history);
+
+    return NextResponse.json({ success: true, response: aiResponse });
   } catch (error) {
+    console.error('Chat API error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { message: "Je suis désolé, une erreur s'est produite. Veuillez réessayer." },
+      { success: false, error: message },
       { status: 500 }
     );
   }

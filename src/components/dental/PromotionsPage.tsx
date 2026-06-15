@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Gift,
@@ -60,7 +60,7 @@ const activePromotions: PromoItem[] = [
     discount: 20,
     badge_fr: 'ÉCONOMISEZ 20%',
     badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), // 12 days
+    expiresAt: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
     brand: 'Ritter',
     slug: 'fauteuil-ritter-x500',
     isFree: false,
@@ -75,7 +75,7 @@ const activePromotions: PromoItem[] = [
     discount: 15,
     badge_fr: 'ÉCONOMISEZ 15%',
     badge_ar: 'وفّر 15%',
-    expiresAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), // 8 days
+    expiresAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
     brand: 'Owandy',
     slug: 'radio-owandy-pano',
     isFree: false,
@@ -90,7 +90,7 @@ const activePromotions: PromoItem[] = [
     discount: 0,
     badge_fr: 'FORMATION GRATUITE',
     badge_ar: 'تدريب مجاني',
-    expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), // 20 days
+    expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
     brand: 'W&H',
     slug: 'autoclave-wh-classb',
     isFree: true,
@@ -105,7 +105,7 @@ const activePromotions: PromoItem[] = [
     discount: 20,
     badge_fr: 'ÉCONOMISEZ 20%',
     badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
+    expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
     brand: 'V2S',
     slug: 'unite-v2s-evo',
     isFree: false,
@@ -120,7 +120,7 @@ const activePromotions: PromoItem[] = [
     discount: 20,
     badge_fr: 'ÉCONOMISEZ 20%',
     badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+    expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
     brand: 'ODG Pack',
     slug: 'pack-starter-cabinet',
     isFree: false,
@@ -157,35 +157,92 @@ const comingSoonItems: ComingSoonItem[] = [
   },
 ];
 
-// Helper function for countdown
+// Helper function for countdown with seconds
 function calcTimeLeft(date: Date) {
   const diff = date.getTime() - Date.now();
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0 };
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return { days, hours, minutes };
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  return { days, hours, minutes, seconds };
 }
 
-// Countdown timer component
+// Flip-card style digit component
+function FlipDigit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-10 h-12 sm:w-12 sm:h-14 rounded-lg overflow-hidden shadow-md" style={{ backgroundColor: '#1E3A5F' }}>
+        {/* Center line for flip effect */}
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-black/10 z-10" />
+        {/* Top half - slightly lighter */}
+        <div className="absolute inset-0 top-0 h-1/2" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-white font-bold text-lg sm:text-xl tabular-nums">
+            {String(value).padStart(2, '0')}
+          </span>
+        </div>
+      </div>
+      <span className="text-[9px] sm:text-[10px] font-medium mt-1.5 uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// Countdown timer component with flip-card digits
 function CountdownTimer({ targetDate }: { targetDate: Date }) {
   const [timeLeft, setTimeLeft] = useState(() => calcTimeLeft(targetDate));
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(calcTimeLeft(targetDate));
-    }, 60000); // update every minute
+    }, 1000); // Update every second
     return () => clearInterval(timer);
   }, [targetDate]);
 
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-white dark:bg-white/10" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
-        <Timer className="w-3 h-3" style={{ color: '#C0564F' }} />
-        <span className="dark:text-gray-300" style={{ color: '#1E3A5F' }}>
-          {timeLeft.days}j {timeLeft.hours}h {timeLeft.minutes}m
-        </span>
-      </div>
+    <div className="flex items-center gap-1 sm:gap-1.5">
+      <FlipDigit value={timeLeft.days} label="Jours" />
+      <span className="text-lg font-bold mt-[-14px]" style={{ color: '#1E3A5F' }}>:</span>
+      <FlipDigit value={timeLeft.hours} label="Heures" />
+      <span className="text-lg font-bold mt-[-14px]" style={{ color: '#1E3A5F' }}>:</span>
+      <FlipDigit value={timeLeft.minutes} label="Min" />
+      <span className="text-lg font-bold mt-[-14px]" style={{ color: '#1E3A5F' }}>:</span>
+      <FlipDigit value={timeLeft.seconds} label="Sec" />
+    </div>
+  );
+}
+
+// Compact countdown for card view
+function CountdownCompact({ targetDate }: { targetDate: Date }) {
+  const [timeLeft, setTimeLeft] = useState(() => calcTimeLeft(targetDate));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calcTimeLeft(targetDate));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <div className="flex items-center gap-1">
+      {[
+        { val: timeLeft.days, suffix: 'j' },
+        { val: timeLeft.hours, suffix: 'h' },
+        { val: timeLeft.minutes, suffix: 'm' },
+        { val: timeLeft.seconds, suffix: 's' },
+      ].map((unit, i) => (
+        <React.Fragment key={unit.suffix}>
+          <div
+            className="flex items-center justify-center min-w-[28px] h-7 rounded text-xs font-bold tabular-nums"
+            style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}
+          >
+            {String(unit.val).padStart(2, '0')}{unit.suffix}
+          </div>
+          {i < 3 && <span className="text-gray-300 text-xs">:</span>}
+        </React.Fragment>
+      ))}
     </div>
   );
 }
@@ -312,7 +369,7 @@ export default function PromotionsPage() {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="group border-0 shadow-lg dark:shadow-none dark:bg-[#162236] hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col card-lift">
+                <Card className="group border-0 shadow-lg dark:shadow-none dark:bg-[#162236] hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col card-lift relative">
                   {/* Promo badge */}
                   <div className="absolute top-0 left-0 right-0 z-10">
                     <div className="flex items-center justify-between p-3">
@@ -399,13 +456,13 @@ export default function PromotionsPage() {
                       )}
                     </div>
 
-                    {/* Countdown + CTA */}
-                    <div className="mt-auto flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1 text-xs" style={{ color: '#1E3A5F' }}>
-                        <Clock className="w-3 h-3 text-gray-400 dark:text-gray-400" />
+                    {/* Countdown - Real-time with seconds */}
+                    <div className="mt-auto">
+                      <div className="flex items-center gap-1 text-xs mb-2" style={{ color: '#1E3A5F' }}>
+                        <Timer className="w-3 h-3 text-gray-400 dark:text-gray-400" />
                         <span className="text-gray-500 dark:text-gray-300 text-[10px]">{t('promotions.expiresIn')}</span>
                       </div>
-                      <CountdownTimer targetDate={promo.expiresAt} />
+                      <CountdownCompact targetDate={promo.expiresAt} />
                     </div>
 
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-3">
@@ -422,6 +479,60 @@ export default function PromotionsPage() {
                 </Card>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ==================== HERO COUNTDOWN - Featured Deal ==================== */}
+      <section
+        className="py-12 sm:py-16 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #1E3A5F 0%, #2a4f7f 50%, #1E3A5F 100%)',
+        }}
+      >
+        <div className="absolute inset-0 opacity-5">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge className="mb-4 text-xs font-semibold px-3 py-1.5 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.2)', color: '#F0C05A' }}>
+              <Timer className="w-3.5 h-3.5 mr-1.5" />
+              {language === 'ar' ? 'العرض ينتهي قريباً' : 'Offre limitée'}
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              {activePromotions[0] ? (language === 'ar' ? activePromotions[0].name_ar : activePromotions[0].name_fr) : t('promotions.title')}
+            </h2>
+            <p className="text-blue-200/70 text-sm mb-8">
+              {language === 'ar' ? 'لا تفوّت هذا العرض الحصري' : 'Ne manquez pas cette offre exclusive'}
+            </p>
+
+            {/* Flip-card Countdown */}
+            <div className="flex justify-center mb-8">
+              <CountdownTimer targetDate={activePromotions[0]?.expiresAt || new Date()} />
+            </div>
+
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button
+                onClick={() => activePromotions[0] && navigate(`/product/${activePromotions[0].slug}`)}
+                className="h-12 px-8 font-semibold text-sm border-0 shadow-lg"
+                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+              >
+                {t('promotions.claimOffer')}
+                <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''} ml-2`} />
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </section>

@@ -28,7 +28,9 @@ export type RouteName =
   | 'mentions-legales'
   | 'politique-confidentialite'
   | 'conditions-vente'
-  | 'promotions';
+  | 'promotions'
+  | 'services'
+  | 'clinic-wizard';
 
 interface RouteParams {
   slug?: string;
@@ -92,6 +94,8 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     'politique-confidentialite': 'politique-confidentialite',
     'conditions-vente': 'conditions-vente',
     promotions: 'promotions',
+    services: 'services',
+    'clinic-wizard': 'clinic-wizard',
   };
 
   // Handle /product/slug patterns

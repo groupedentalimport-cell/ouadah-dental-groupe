@@ -54,6 +54,7 @@ const fr: Translations = {
   'nav.newArrivals': 'Nouveautés',
   'nav.bestSellers': 'Meilleures ventes',
   'nav.brand': 'ODG',
+  'nav.services': 'Services',
 
   // --- HERO ---
   'hero.title': 'Équipements Dentaires Professionnels',
@@ -557,6 +558,33 @@ const fr: Translations = {
   'products.inStockOnly': 'En stock uniquement',
   'products.productsFound': '{n} produits trouvés',
   'products.viewDetails': 'Voir détails',
+
+  // --- CHAT ---
+  'chat.newConversation': 'Nouvelle conversation',
+  'chat.errorFallback': "Désolé, je rencontre un problème technique. Veuillez réessayer ou nous contacter directement au +213 771 88 89 48",
+  'chat.welcomeMessage': "Bonjour ! Je suis l'assistant ODG. Comment puis-je vous aider à équiper votre cabinet dentaire ?",
+
+  // --- SERVICES ---
+  'services.title': 'Nos Services',
+  'services.subtitle': 'Un accompagnement complet pour votre cabinet',
+  'services.installation': 'Installation Professionnelle',
+  'services.training': 'Formation du Personnel',
+  'services.sav': 'SAV 48h',
+  'services.maintenance': 'Maintenance Préventive',
+  'services.design': 'Conception de Cabinet',
+  'services.financing': 'Financement',
+
+  // --- WIZARD ---
+  'wizard.title': 'Configurateur de Cabinet',
+  'wizard.subtitle': 'Configurez votre cabinet dentaire idéal',
+  'wizard.step1': 'Profil du Cabinet',
+  'wizard.step2': 'Besoins en Équipement',
+  'wizard.step3': 'Package Recommandé',
+  'wizard.operatories': 'Nombre de fauteuils',
+  'wizard.specialty': 'Spécialité',
+  'wizard.budget': 'Budget',
+  'wizard.next': 'Suivant',
+  'wizard.prev': 'Précédent',
 };
 
 // ============================================================
@@ -589,6 +617,7 @@ const ar: Translations = {
   'nav.newArrivals': 'وافد جديد',
   'nav.bestSellers': 'الأكثر مبيعاً',
   'nav.brand': 'ODG',
+  'nav.services': 'الخدمات',
 
   // --- HERO ---
   'hero.title': 'معدات طب الأسنان المهنية',
@@ -1092,6 +1121,33 @@ const ar: Translations = {
   'products.inStockOnly': 'المتوفر فقط',
   'products.productsFound': '{n} منتجات موجودة',
   'products.viewDetails': 'عرض التفاصيل',
+
+  // --- CHAT ---
+  'chat.newConversation': 'محادثة جديدة',
+  'chat.errorFallback': 'عذراً، أواجه مشكلة تقنية. يرجى المحاولة مرة أخرى أو الاتصال بنا على +213 771 88 89 48',
+  'chat.welcomeMessage': 'مرحبا! أنا مساعد ODG. كيف يمكنني مساعدتك في تجهيز عيادتك الأسنان؟',
+
+  // --- SERVICES ---
+  'services.title': 'خدماتنا',
+  'services.subtitle': 'مرافقة شاملة لعيادتك',
+  'services.installation': 'تركيب احترافي',
+  'services.training': 'تدريب الموظفين',
+  'services.sav': 'خدمة ما بعد البيع 48 ساعة',
+  'services.maintenance': 'صيانة وقائية',
+  'services.design': 'تصميم العيادة',
+  'services.financing': 'التمويل',
+
+  // --- WIZARD ---
+  'wizard.title': 'أداة تكوين العيادة',
+  'wizard.subtitle': 'جهز عيادتك الأسنان المثالية',
+  'wizard.step1': 'ملف العيادة',
+  'wizard.step2': 'احتياجات المعدات',
+  'wizard.step3': 'الحزمة الموصى بها',
+  'wizard.operatories': 'عدد الكراسي',
+  'wizard.specialty': 'التخصص',
+  'wizard.budget': 'الميزانية',
+  'wizard.next': 'التالي',
+  'wizard.prev': 'السابق',
 }
 
 const translations: Record<Language, Translations> = { fr, ar };
