@@ -26,7 +26,7 @@ export default function WhatsAppBubble() {
   const tooltipText = language === 'ar' ? 'تحدث معنا عبر واتساب' : 'Discutez avec nous sur WhatsApp';
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-2">
+    <div className="fixed bottom-6 left-6 sm:bottom-8 sm:left-8 z-40 flex flex-col items-start gap-2">
       {/* Tooltip */}
       <AnimatePresence>
         {showTooltip && (

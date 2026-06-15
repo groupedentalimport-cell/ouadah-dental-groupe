@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useTranslation } from '@/lib/i18n';
 import { RouterProvider, useRouter } from '@/lib/router';
 import { DataProvider } from '@/lib/data-service';
@@ -26,6 +27,19 @@ import {
   ConditionsGeneralesVente,
 } from '@/components/dental/LegalPages';
 import AdminPanel from '@/components/dental/AdminPanel';
+import ScrollToTop from '@/components/dental/ScrollToTop';
+
+const pageVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+};
+
+const pageTransition = {
+  type: 'tween',
+  ease: 'easeInOut',
+  duration: 0.25,
+};
 
 function AppContent() {
   const { route } = useRouter();
@@ -68,11 +82,25 @@ function AppContent() {
   return (
     <div className={`min-h-screen flex flex-col ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {!isAdminRoute && <Navbar />}
-      <main className="flex-1">{renderPage()}</main>
+      <main className="flex-1">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={route}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+          >
+            {renderPage()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <WhatsAppBubble />}
       {!isAdminRoute && <ChatBubble />}
       {!isAdminRoute && <CompareDrawer />}
+      {!isAdminRoute && <ScrollToTop />}
     </div>
   );
 }

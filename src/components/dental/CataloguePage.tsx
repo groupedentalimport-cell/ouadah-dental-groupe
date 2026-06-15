@@ -24,8 +24,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import type { Product } from '@/lib/data-service';
 import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+import QuickViewModal from '@/components/dental/QuickViewModal';
 
 type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
 
@@ -46,6 +48,9 @@ export default function CataloguePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sort, setSort] = useState<SortOption>('newest');
   const [showFilters, setShowFilters] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
 
   // Parse category from URL hash if present
   React.useEffect(() => {
@@ -426,6 +431,11 @@ export default function CataloguePage() {
                     addCompareProduct={addCompareProduct}
                     removeCompareProduct={removeCompareProduct}
                     compareFull={productIds.length >= 4}
+                    onQuickView={() => {
+                      setQuickViewProduct(product);
+                      setQuickViewOpen(true);
+                      addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
+                    }}
                   />
                 ))}
               </div>
@@ -433,6 +443,12 @@ export default function CataloguePage() {
           </div>
         </div>
       </div>
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        open={quickViewOpen}
+        onClose={() => setQuickViewOpen(false)}
+      />
     </div>
     </ContentWithLoading>
   );
@@ -452,6 +468,7 @@ function ProductCard({
   addCompareProduct,
   removeCompareProduct,
   compareFull,
+  onQuickView,
 }: {
   product: Product;
   index: number;
@@ -466,6 +483,7 @@ function ProductCard({
   addCompareProduct: (id: string) => void;
   removeCompareProduct: (id: string) => void;
   compareFull: boolean;
+  onQuickView: () => void;
 }) {
   const priceDisplay = formatPrice(product.price);
   const isOnQuote = !priceDisplay; // price is 0 or missing
@@ -540,6 +558,18 @@ function ProductCard({
               </Badge>
             </div>
           )}
+
+          {/* Quick View button - visible on hover (desktop), always on mobile */}
+          <button
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110"
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickView();
+            }}
+            title={t('products.quickView')}
+          >
+            <Eye className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+          </button>
 
           {/* Hover overlay with "Voir détails" button */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -34,6 +34,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import type { Product } from '@/lib/data-service';
 import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
 import { toast } from 'sonner';
@@ -71,6 +72,7 @@ export default function ProductDetailPage() {
   const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+  const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
 
   const product = useMemo(
     () => products.find((p) => p.slug === params.slug),
@@ -108,6 +110,19 @@ export default function ProductDetailPage() {
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomPosition({ x, y });
   }, []);
+
+  // Track recently viewed product
+  useEffect(() => {
+    if (product) {
+      addRecentlyViewed(
+        product.id,
+        product.slug,
+        getProductName(product, language),
+        product.images?.[0] || '',
+        product.price
+      );
+    }
+  }, [product, addRecentlyViewed, getProductName, language]);
 
   if (loading) {
     return <ProductDetailPageSkeleton />;
@@ -688,6 +703,87 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Recently Viewed Products Section */}
+      {recentlyViewedItems.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+              <h2 className="text-xl font-bold" style={{ color: '#1E3A5F' }}>
+                {t('products.recentlyViewed')}
+              </h2>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-gray-400 hover:text-red-500"
+              onClick={clearRecentlyViewed}
+            >
+              {t('products.recentlyViewed.clear')}
+            </Button>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {recentlyViewedItems
+              .filter((rv) => rv.id !== product.id)
+              .map((rv) => {
+                const rvProduct = products.find((p) => p.id === rv.id);
+                return (
+                  <motion.div
+                    key={rv.id}
+                    whileHover={{ y: -4 }}
+                    className="min-w-[160px] sm:min-w-[180px] shrink-0"
+                  >
+                    <Card
+                      className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+                      onClick={() => navigate(`/product/${rv.slug}`)}
+                    >
+                      <div className="h-28 overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
+                        {rv.image ? (
+                          <img
+                            src={rv.image}
+                            alt={rv.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{
+                              background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+                            }}
+                          >
+                            <Package className="w-8 h-8 text-white/30" />
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-2.5">
+                        {rvProduct?.brand && (
+                          <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+                            {rvProduct.brand}
+                          </span>
+                        )}
+                        <h3 className="font-semibold text-xs line-clamp-1 mt-0.5" style={{ color: '#1E3A5F' }}>
+                          {rv.name}
+                        </h3>
+                        <p className="text-[10px] font-medium mt-1" style={{ color: '#1E3A5F' }}>
+                          {rv.price && rv.price > 0
+                            ? `${rv.price.toLocaleString('fr-DZ')} DA`
+                            : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+                          }
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Sticky Add-to-Quote Bar on Mobile */}
       <motion.div

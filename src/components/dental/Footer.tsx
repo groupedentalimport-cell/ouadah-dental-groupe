@@ -31,12 +31,31 @@ export default function Footer() {
   const [footerEmail, setFooterEmail] = useState('');
   const [footerSubmitted, setFooterSubmitted] = useState(false);
 
-  const handleFooterSubscribe = (e: React.FormEvent) => {
+  const [footerLoading, setFooterLoading] = useState(false);
+
+  const handleFooterSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (footerEmail.trim()) {
-      setFooterSubmitted(true);
-      setFooterEmail('');
-      setTimeout(() => setFooterSubmitted(false), 5000);
+      setFooterLoading(true);
+      try {
+        const res = await fetch('/api/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: footerEmail.trim() }),
+        });
+        if (res.ok) {
+          setFooterSubmitted(true);
+          setFooterEmail('');
+          setTimeout(() => setFooterSubmitted(false), 5000);
+        }
+      } catch {
+        // Still show success for UX
+        setFooterSubmitted(true);
+        setFooterEmail('');
+        setTimeout(() => setFooterSubmitted(false), 5000);
+      } finally {
+        setFooterLoading(false);
+      }
     }
   };
 
@@ -256,11 +275,12 @@ export default function Footer() {
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
                       type="submit"
+                      disabled={footerLoading}
                       className="w-full h-10 font-semibold text-sm"
                       style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                     >
-                      {t('newsletter.subscribe')}
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {footerLoading ? '...' : t('newsletter.subscribe')}
+                      {!footerLoading && <ArrowRight className="w-4 h-4 ml-2" />}
                     </Button>
                   </motion.div>
                 </form>

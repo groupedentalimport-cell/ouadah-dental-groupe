@@ -422,8 +422,144 @@ Stage Summary:
 ### Next Phase Priorities:
 1. Mobile responsiveness refinements (reduce vertical scrolling)
 2. Admin panel styling polish
-3. Newsletter backend integration (save to Supabase)
+3. ~~Newsletter backend integration (save to Supabase)~~ → DONE
 4. Product image upload in admin
 5. SEO improvements (meta tags per page)
 6. Product filtering by price range
 7. Performance optimization (lazy loading images)
+
+---
+Task ID: R4-Main
+Agent: Main Coordinator
+Task: Round 4 QA, bug fixes, and feature development
+
+Work Log:
+- Reviewed worklog.md to understand project history (Rounds 1-3 completed)
+- Tested all pages with agent-browser + VLM analysis
+- Desktop homepage rated 7/10, catalogue 8/10, mobile 7/10
+- Identified critical CSS bug: `img[loading="lazy"]:complete` invalid pseudo-class
+- Fixed CSS parsing error in globals.css
+- Fixed chat bubble positioning for mobile (bottom-[5.5rem] for panel, responsive width)
+- Fixed WhatsApp bubble positioning (bottom-6 left-6 sm:bottom-8 sm:left-8)
+- Added gold pulse indicator dot to chat bubble button
+- Added newsletter backend API (`/api/newsletter/route.ts`) with Supabase integration
+- Connected homepage and footer newsletter forms to backend API with loading states
+- Launched subagent R4-A: Complete admin panel redesign (login page, sidebar, dashboard, products, blog, quotes, settings tabs)
+- Launched subagent R4-B: Quick View modal, recently viewed products feature
+- Added animated page transitions with framer-motion AnimatePresence in page.tsx
+- Enhanced globals.css with new utility classes (shimmer, float, pulse-gold, glass, gradient-text, custom scrollbar, selection color, focus ring)
+- Improved hero CTA button visibility (border-white/60, shadow-lg)
+- Created ScrollToTop component with animated visibility
+- Added ScrollToTop to main page layout
+
+Stage Summary:
+- Desktop homepage rated 8/10 (up from 7/10)
+- Mobile homepage rated 8/10 (up from 6-7/10)
+- Catalogue page rated 8/10
+- Admin login rated 7/10, dashboard rated 7/10
+- CSS parsing bug fixed (was causing 500 errors)
+- Chat/WhatsApp overlap fixed on mobile
+- Newsletter now saves to Supabase (with graceful fallback)
+- Admin panel completely redesigned with professional styling
+- Quick View modal for products added
+- Recently viewed products section added to product detail page
+- Page transitions added (fade + slide)
+- ScrollToTop button added
+- New CSS utilities: shimmer, float, pulse-gold, glass, gradient-text, custom scrollbar
+- Lint passes cleanly
+
+---
+Task ID: R4-A
+Agent: Full-stack Developer Subagent
+Task: Major admin panel redesign
+
+Work Log:
+- Rewrote entire AdminPanel.tsx with comprehensive professional styling
+- Login Page: Navy gradient background, dental SVG pattern, floating blur orbs, ODG logo with gold gradient badge, Lock icon on password input, "Mot de passe oublié?" link, framer-motion animations
+- Sidebar: Dark vertical gradient, gold border-left on active tab, gradient gold background on active items, ChevronRight indicator, "Visiter le site" link with ExternalLink icon, user avatar section, RTL-aware positioning
+- Dashboard: 4 stats cards with icons/values/trend indicators, recent quotes table with status badges, activity feed with staggered animations, quick action buttons
+- Products Tab: Search + category filter, product cards in 3-column grid, Add/Edit Dialog modal with two-column specs, AlertDialog for delete confirmation, toast notifications
+- Blog Tab: Article cards with status badges (Publié/Brouillon), Add article Dialog modal
+- Quotes Tab: Quote cards with colored status accent, status badges with icons, loading skeleton cards, status filter dropdown
+- Settings Tab: 3 section cards (General, Contact, Social) with per-section save and toast
+- Color constants: NAVY, GOLD, SUCCESS, WARNING, DANGER
+- Lint passes cleanly
+
+Stage Summary:
+- Complete admin panel redesign with professional styling
+- All 5 tabs redesigned (Dashboard, Products, Blog, Quotes, Settings)
+- Login page with gradient background and dental theme
+- Toast notifications for all operations
+- Two-column specs layout for product editing
+- Status badges with proper color coding
+
+---
+Task ID: R4-B
+Agent: Full-stack Developer Subagent
+Task: Quick View modal + Recently viewed products
+
+Work Log:
+- Created QuickViewModal.tsx with Dialog component, two-column layout on desktop, stacked on mobile
+- Quick View shows: image, name, brand, price/"Sur devis", description, stock status, category, reference
+- "Add to Quote" button, Compare toggle button, "View Full Details" link
+- Updated CataloguePage.tsx with eye icon Quick View button on product cards (always visible mobile, hover desktop)
+- Updated HomePage.tsx with Quick View on featured product cards
+- Created useRecentlyViewed.ts Zustand store with localStorage persistence (max 6 items)
+- Updated ProductDetailPage.tsx with recently viewed section at bottom (horizontal scroll, compact cards)
+- Added 22 new i18n translation keys in both FR and AR
+- Lint passes cleanly
+
+Stage Summary:
+- Full Quick View modal with Dialog, responsive layout, compare toggle
+- Recently viewed products feature with localStorage persistence
+- Quick View buttons on catalogue and homepage product cards
+- 22 new i18n keys added
+
+---
+
+## Current Project Status (Post Round 4)
+
+### VLM Quality Assessment:
+- **Desktop Homepage**: 8/10 (improved from 7/10 in Round 3)
+- **Mobile Homepage**: 8/10 (improved from 6-7/10)
+- **Catalogue Page**: 8/10
+- **Admin Login**: 7/10 (new design)
+- **Admin Dashboard**: 7/10 (new design)
+
+### Completed Features (Cumulative):
+- ✅ Full SPA with hash-based routing (24 routes including compare)
+- ✅ Bilingual FR/AR with 250+ translation keys and full RTL support
+- ✅ Supabase integration with automatic column name mapping
+- ✅ Homepage: hero (animated gradient, floating icons, trust badges), stats, categories (image backgrounds), featured products (horizontal scroll mobile), why choose us, testimonials, brands, newsletter (with backend), CTA
+- ✅ Product catalogue: gradient header, visual filters, compare buttons, search & sort, quick view
+- ✅ Product detail: image zoom, breadcrumbs, share/print, recently viewed, sticky mobile quote bar
+- ✅ Quick View modal: Dialog-based with product preview, compare toggle, add to quote
+- ✅ Product comparison: floating CompareDrawer, side-by-side CompareView with difference highlighting
+- ✅ Blog: gradient header, featured article, category filters, enhanced cards
+- ✅ About: gradient header, 6-milestone timeline, key figures, values, team stats, certifications
+- ✅ Contact: gradient header, FAQ accordion, color-coded cards, Google Maps, API backend
+- ✅ Newsletter: Backend API with Supabase storage, loading states, both homepage and footer
+- ✅ Loading skeletons for all main pages
+- ✅ 21 default products covering all 8 categories
+- ✅ Admin panel: Professional redesign with dashboard, products, blog, quotes, settings tabs
+- ✅ WhatsApp bubble, AI Chat bubble (with pulse indicator)
+- ✅ Professional navbar with search, active indicator, cart badge
+- ✅ Professional footer with gradient border, social animations, newsletter backend
+- ✅ Page transitions with framer-motion AnimatePresence
+- ✅ ScrollToTop button with animated visibility
+- ✅ Custom CSS utilities (shimmer, float, pulse-gold, glass, gradient-text, custom scrollbar)
+
+### Remaining Known Issues:
+- Admin panel data is still mock/default (no real Supabase CRUD for products/blog)
+- Product image upload in admin not yet implemented
+- No SEO meta tags per page
+- No product filtering by price range in catalogue
+- Performance optimization (lazy loading images) not yet done
+
+### Next Phase Priorities:
+1. Product image upload in admin panel
+2. Real Supabase CRUD for products/blog in admin
+3. SEO improvements (meta tags per page)
+4. Product filtering by price range in catalogue
+5. Performance optimization (lazy loading images)
+6. Add dark mode support

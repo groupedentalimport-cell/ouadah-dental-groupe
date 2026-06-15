@@ -1,0 +1,790 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Lock,
+     7→  LayoutDashboard,
+     8→  Package,
+     9→  FileText,
+    10→  ClipboardList,
+    11→  Settings,
+    12→  LogOut,
+    13→  Plus,
+    14→  Pencil,
+    15→  Trash2,
+    16→  Save,
+    17→  X,
+    18→  Eye,
+    19→  ChevronLeft,
+    20→  Menu,
+    21→  TrendingUp,
+    22→  ShoppingBag,
+    23→  MessageSquare,
+    24→  BookOpen,
+    25→} from 'lucide-react';
+    26→import { useTranslation } from '@/lib/i18n';
+    27→import { useRouter } from '@/lib/router';
+    28→import { useData } from '@/lib/data-service';
+    29→import { useAdminAuth } from '@/lib/admin-auth';
+    30→import { Button } from '@/components/ui/button';
+    31→import { Card, CardContent } from '@/components/ui/card';
+    32→import { Input } from '@/components/ui/input';
+    33→import { Textarea } from '@/components/ui/textarea';
+    34→import { Badge } from '@/components/ui/badge';
+    35→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+    36→
+    37→type AdminTab = 'dashboard' | 'products' | 'blog' | 'quotes' | 'settings';
+    38→
+    39→export default function AdminPanel() {
+    40→  const { t, language, isRTL } = useTranslation();
+    41→  const { navigate, params } = useRouter();
+    42→  const { isAuthenticated, login, logout, loading: authLoading } = useAdminAuth();
+    43→  const { products, blogPosts, categories, getProductName, refresh } = useData();
+    44→
+    45→  function getInitialTab(): AdminTab {
+    46→    if (typeof window === 'undefined') return 'dashboard';
+    47→    const hash = window.location.hash.slice(1);
+    48→    if (hash.includes('admin-products')) return 'products';
+    49→    if (hash.includes('admin-blog')) return 'blog';
+    50→    if (hash.includes('admin-quotes')) return 'quotes';
+    51→    if (hash.includes('admin-settings')) return 'settings';
+    52→    return 'dashboard';
+    53→  }
+    54→
+    55→  const [activeTab, setActiveTab] = useState<AdminTab>(getInitialTab);
+    56→  const [sidebarOpen, setSidebarOpen] = useState(false);
+    57→
+    58→  // Login screen
+    59→  if (authLoading) {
+    60→    return (
+    61→      <div className="min-h-screen flex items-center justify-center">
+    62→        <div className="animate-spin w-8 h-8 border-2 border-[#1E3A5F] border-t-transparent rounded-full" />
+    63→      </div>
+    64→    );
+    65→  }
+    66→
+    67→  if (!isAuthenticated) {
+    68→    return <AdminLogin onLogin={login} t={t} />;
+    69→  }
+    70→
+    71→  const tabs = [
+    72→    { id: 'dashboard' as AdminTab, icon: <LayoutDashboard className="w-5 h-5" />, label: t('nav.dashboard'), path: '/admin-dashboard' },
+    73→    { id: 'products' as AdminTab, icon: <Package className="w-5 h-5" />, label: t('nav.products'), path: '/admin-products' },
+    74→    { id: 'blog' as AdminTab, icon: <FileText className="w-5 h-5" />, label: t('nav.blogPosts'), path: '/admin-blog' },
+    75→    { id: 'quotes' as AdminTab, icon: <ClipboardList className="w-5 h-5" />, label: t('nav.quotes'), path: '/admin-quotes' },
+    76→    { id: 'settings' as AdminTab, icon: <Settings className="w-5 h-5" />, label: t('nav.settings'), path: '/admin-settings' },
+    77→  ];
+    78→
+    79→  return (
+    80→    <div className="min-h-screen bg-gray-100 flex">
+    81→      {/* Sidebar */}
+    82→      <aside
+    83→        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 transform transition-transform lg:translate-x-0 ${
+    84→          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+    85→        }`}
+    86→        style={{ backgroundColor: '#1E3A5F' }}
+    87→      >
+    88→        <div className="flex items-center justify-between p-4 border-b border-white/10">
+    89→          <h2 className="text-white font-bold text-lg">ODG Admin</h2>
+    90→          <Button
+    91→            variant="ghost"
+    92→            size="icon"
+    93→            className="lg:hidden text-white"
+    94→            onClick={() => setSidebarOpen(false)}
+    95→          >
+    96→            <X className="w-5 h-5" />
+    97→          </Button>
+    98→        </div>
+    99→        <nav className="p-3 space-y-1">
+   100→          {tabs.map((tab) => (
+   101→            <button
+   102→              key={tab.id}
+   103→              onClick={() => {
+   104→                setActiveTab(tab.id);
+   105→                navigate(tab.path);
+   106→                setSidebarOpen(false);
+   107→              }}
+   108→              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+   109→                activeTab === tab.id
+   110→                  ? 'bg-white/15 text-white'
+   111→                  : 'text-blue-200 hover:bg-white/10 hover:text-white'
+   112→              }`}
+   113→            >
+   114→              {tab.icon}
+   115→              {tab.label}
+   116→            </button>
+   117→          ))}
+   118→          <button
+   119→            onClick={() => {
+   120→              logout();
+   121→              navigate('/');
+   122→            }}
+   123→            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-colors"
+   124→          >
+   125→            <LogOut className="w-5 h-5" />
+   126→            {t('nav.logout')}
+   127→          </button>
+   128→        </nav>
+   129→      </aside>
+   130→
+   131→      {/* Overlay */}
+   132→      {sidebarOpen && (
+   133→        <div
+   134→          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+   135→          onClick={() => setSidebarOpen(false)}
+   136→        />
+   137→      )}
+   138→
+   139→      {/* Main Content */}
+   140→      <div className="flex-1 min-h-screen">
+   141→        {/* Top Bar */}
+   142→        <header className="bg-white shadow-sm px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+   143→          <div className="flex items-center gap-3">
+   144→            <Button
+   145→              variant="ghost"
+   146→              size="icon"
+   147→              className="lg:hidden"
+   148→              onClick={() => setSidebarOpen(true)}
+   149→            >
+   150→              <Menu className="w-5 h-5" />
+   151→            </Button>
+   152→            <h1 className="font-bold text-lg" style={{ color: '#1E3A5F' }}>
+   153→              {tabs.find((t) => t.id === activeTab)?.label}
+   154→            </h1>
+   155→          </div>
+   156→          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+   157→            <Eye className="w-4 h-4 mr-1" />
+   158→            Site
+   159→          </Button>
+   160→        </header>
+   161→
+   162→        <main className="p-4 sm:p-6">
+   163→          <AnimatePresence mode="wait">
+   164→            {activeTab === 'dashboard' && (
+   165→              <DashboardTab key="dashboard" products={products} blogPosts={blogPosts} t={t} />
+   166→            )}
+   167→            {activeTab === 'products' && (
+   168→              <ProductsTab key="products" products={products} categories={categories} getProductName={getProductName} language={language} t={t} refresh={refresh} />
+   169→            )}
+   170→            {activeTab === 'blog' && (
+   171→              <BlogTab key="blog" blogPosts={blogPosts} language={language} t={t} refresh={refresh} />
+   172→            )}
+   173→            {activeTab === 'quotes' && (
+   174→              <QuotesTab key="quotes" t={t} refresh={refresh} />
+   175→            )}
+   176→            {activeTab === 'settings' && (
+   177→              <SettingsTab key="settings" t={t} />
+   178→            )}
+   179→          </AnimatePresence>
+   180→        </main>
+   181→      </div>
+   182→    </div>
+   183→  );
+   184→}
+   185→
+   186→// ============ Login Screen ============
+   187→function AdminLogin({ onLogin, t }: { onLogin: (p: string) => boolean; t: (k: string) => string }) {
+   188→  const [password, setPassword] = useState('');
+   189→  const [error, setError] = useState(false);
+   190→
+   191→  const handleSubmit = (e: React.FormEvent) => {
+   192→    e.preventDefault();
+   193→    if (!onLogin(password)) {
+   194→      setError(true);
+   195→      setPassword('');
+   196→    }
+   197→  };
+   198→
+   199→  return (
+   200→    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+   201→      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+   202→        <Card className="w-full max-w-sm border-0 shadow-xl">
+   203→          <CardContent className="p-8 text-center">
+   204→            <div
+   205→              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white font-bold text-xl"
+   206→              style={{ backgroundColor: '#1E3A5F' }}
+   207→            >
+   208→              ODG
+   209→            </div>
+   210→            <h1 className="text-xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
+   211→              {t('admin.login.title')}
+   212→            </h1>
+   213→            <form onSubmit={handleSubmit} className="space-y-4">
+   214→              <div>
+   215→                <Input
+   216→                  type="password"
+   217→                  placeholder={t('admin.login.password')}
+   218→                  value={password}
+   219→                  onChange={(e) => {
+   220→                    setPassword(e.target.value);
+   221→                    setError(false);
+   222→                  }}
+   223→                  className="text-center"
+   224→                />
+   225→              </div>
+   226→              {error && (
+   227→                <p className="text-red-500 text-sm">{t('admin.login.error')}</p>
+   228→              )}
+   229→              <Button type="submit" className="w-full" style={{ backgroundColor: '#1E3A5F' }}>
+   230→                <Lock className="w-4 h-4 mr-2" />
+   231→                {t('admin.login.submit')}
+   232→              </Button>
+   233→            </form>
+   234→          </CardContent>
+   235→        </Card>
+   236→      </motion.div>
+   237→    </div>
+   238→  );
+   239→}
+   240→
+   241→// ============ Dashboard ============
+   242→function DashboardTab({ products, blogPosts, t }: { products: any[]; blogPosts: any[]; t: (k: string) => string }) {
+   243→  const stats = [
+   244→    { icon: <Package className="w-6 h-6" />, label: t('admin.dashboard.totalProducts'), value: products.length, color: '#1E3A5F' },
+   245→    { icon: <ClipboardList className="w-6 h-6" />, label: t('admin.dashboard.totalQuotes'), value: 0, color: '#2d5a8e' },
+   246→    { icon: <TrendingUp className="w-6 h-6" />, label: t('admin.dashboard.newQuotes'), value: 0, color: '#F0C05A' },
+   247→    { icon: <BookOpen className="w-6 h-6" />, label: t('admin.dashboard.totalBlog'), value: blogPosts.length, color: '#3b7dd8' },
+   248→  ];
+   249→
+   250→  return (
+   251→    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+   252→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   253→        {stats.map((stat, i) => (
+   254→          <Card key={i} className="border-0 shadow-sm">
+   255→            <CardContent className="p-5 flex items-center gap-4">
+   256→              <div
+   257→                className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0"
+   258→                style={{ backgroundColor: stat.color }}
+   259→              >
+   260→                {stat.icon}
+   261→              </div>
+   262→              <div>
+   263→                <p className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>{stat.value}</p>
+   264→                <p className="text-xs text-gray-500">{stat.label}</p>
+   265→              </div>
+   266→            </CardContent>
+   267→          </Card>
+   268→        ))}
+   269→      </div>
+   270→    </motion.div>
+   271→  );
+   272→}
+   273→
+   274→// ============ Products Tab ============
+   275→function ProductsTab({ products, categories, getProductName, language, t, refresh }: any) {
+   276→  const [showForm, setShowForm] = useState(false);
+   277→  const [editProduct, setEditProduct] = useState<any>(null);
+   278→  const [form, setForm] = useState({
+   279→    name_fr: '',
+   280→    name_ar: '',
+   281→    price: '',
+   282→    category_id: '',
+   283→    description_fr: '',
+   284→    brand: '',
+   285→    ref: '',
+   286→  });
+   287→
+   288→  const startEdit = (product: any) => {
+   289→    setEditProduct(product);
+   290→    setForm({
+   291→      name_fr: product.name_fr,
+   292→      name_ar: product.name_ar,
+   293→      price: String(product.price),
+   294→      category_id: product.category_id,
+   295→      description_fr: product.description_fr,
+   296→      brand: product.brand,
+   297→      ref: product.ref,
+   298→    });
+   299→    setShowForm(true);
+   300→  };
+   301→
+   302→  const resetForm = () => {
+   303→    setForm({ name_fr: '', name_ar: '', price: '', category_id: '', description_fr: '', brand: '', ref: '' });
+   304→    setEditProduct(null);
+   305→    setShowForm(false);
+   306→  };
+   307→
+   308→  const handleSave = async () => {
+   309→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   310→    if (!isSupabaseConfigured || !supabase) {
+   311→      resetForm();
+   312→      return;
+   313→    }
+   314→
+   315→    const data = {
+   316→      name_fr: form.name_fr,
+   317→      name_ar: form.name_ar,
+   318→      price: Number(form.price),
+   319→      category_id: form.category_id,
+   320→      description_fr: form.description_fr,
+   321→      brand: form.brand,
+   322→      ref: form.ref,
+   323→    };
+   324→
+   325→    if (editProduct) {
+   326→      await supabase.from('products').update(data).eq('id', editProduct.id);
+   327→    } else {
+   328→      await supabase.from('products').insert([{ ...data, slug: form.name_fr.toLowerCase().replace(/\s+/g, '-') }]);
+   329→    }
+   330→    refresh();
+   331→    resetForm();
+   332→  };
+   333→
+   334→  const handleDelete = async (id: string) => {
+   335→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   336→    if (!isSupabaseConfigured || !supabase) return;
+   337→    await supabase.from('products').delete().eq('id', id);
+   338→    refresh();
+   339→  };
+   340→
+   341→  const formatPrice = (price: number | undefined) => {
+   342→    if (price == null || isNaN(price)) return '— DA';
+   343→    return price.toLocaleString('fr-DZ') + ' DA';
+   344→  };
+   345→
+   346→  return (
+   347→    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+   348→      <div className="flex items-center justify-between">
+   349→        <h2 className="font-bold text-lg" style={{ color: '#1E3A5F' }}>
+   350→          {t('admin.products.title')}
+   351→        </h2>
+   352→        <Button
+   353→          onClick={() => { resetForm(); setShowForm(true); }}
+   354→          className="gap-2"
+   355→          style={{ backgroundColor: '#1E3A5F' }}
+   356→        >
+   357→          <Plus className="w-4 h-4" />
+   358→          {t('admin.products.add')}
+   359→        </Button>
+   360→      </div>
+   361→
+   362→      {/* Form */}
+   363→      <AnimatePresence>
+   364→        {showForm && (
+   365→          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+   366→            <Card className="border-0 shadow-sm">
+   367→              <CardContent className="p-5 space-y-4">
+   368→                <div className="flex items-center justify-between">
+   369→                  <h3 className="font-semibold" style={{ color: '#1E3A5F' }}>
+   370→                    {editProduct ? t('admin.products.edit') : t('admin.products.add')}
+   371→                  </h3>
+   372→                  <Button variant="ghost" size="icon" onClick={resetForm}>
+   373→                    <X className="w-4 h-4" />
+   374→                  </Button>
+   375→                </div>
+   376→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   377→                  <div>
+   378→                    <label className="text-sm font-medium mb-1 block">{t('admin.products.name')} (FR)</label>
+   379→                    <Input value={form.name_fr} onChange={(e) => setForm({ ...form, name_fr: e.target.value })} />
+   380→                  </div>
+   381→                  <div>
+   382→                    <label className="text-sm font-medium mb-1 block">{t('admin.products.name')} (AR)</label>
+   383→                    <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" />
+   384→                  </div>
+   385→                  <div>
+   386→                    <label className="text-sm font-medium mb-1 block">{t('admin.products.price')}</label>
+   387→                    <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+   388→                  </div>
+   389→                  <div>
+   390→                    <label className="text-sm font-medium mb-1 block">{t('admin.products.category')}</label>
+   391→                    <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+   392→                      <SelectTrigger><SelectValue /></SelectTrigger>
+   393→                      <SelectContent>
+   394→                        {categories.map((cat: any) => (
+   395→                          <SelectItem key={cat.id} value={cat.id}>{cat.name_fr}</SelectItem>
+   396→                        ))}
+   397→                      </SelectContent>
+   398→                    </Select>
+   399→                  </div>
+   400→                  <div>
+   401→                    <label className="text-sm font-medium mb-1 block">{t('products.brand')}</label>
+   402→                    <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
+   403→                  </div>
+   404→                  <div>
+   405→                    <label className="text-sm font-medium mb-1 block">{t('products.ref')}</label>
+   406→                    <Input value={form.ref} onChange={(e) => setForm({ ...form, ref: e.target.value })} />
+   407→                  </div>
+   408→                </div>
+   409→                <div>
+   410→                  <label className="text-sm font-medium mb-1 block">{t('admin.products.description')}</label>
+   411→                  <Textarea rows={3} value={form.description_fr} onChange={(e) => setForm({ ...form, description_fr: e.target.value })} />
+   412→                </div>
+   413→                <div className="flex gap-2">
+   414→                  <Button onClick={handleSave} className="gap-2" style={{ backgroundColor: '#1E3A5F' }}>
+   415→                    <Save className="w-4 h-4" />
+   416→                    {t('admin.products.save')}
+   417→                  </Button>
+   418→                  <Button variant="outline" onClick={resetForm}>{t('admin.products.cancel')}</Button>
+   419→                </div>
+   420→              </CardContent>
+   421→            </Card>
+   422→          </motion.div>
+   423→        )}
+   424→      </AnimatePresence>
+   425→
+   426→      {/* Product List */}
+   427→      <div className="space-y-2">
+   428→        {products.map((product: any) => (
+   429→          <Card key={product.id} className="border-0 shadow-sm">
+   430→            <CardContent className="p-4 flex items-center gap-4">
+   431→              <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#f0f4f8' }}>
+   432→                <Package className="w-5 h-5 text-gray-400" />
+   433→              </div>
+   434→              <div className="flex-1 min-w-0">
+   435→                <p className="font-semibold text-sm truncate" style={{ color: '#1E3A5F' }}>
+   436→                  {getProductName(product, language)}
+   437→                </p>
+   438→                <p className="text-xs text-gray-500">{product.brand} • {product.ref}</p>
+   439→              </div>
+   440→              <span className="text-sm font-medium shrink-0">{formatPrice(product.price)}</span>
+   441→              <div className="flex gap-1 shrink-0">
+   442→                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(product)}>
+   443→                  <Pencil className="w-3.5 h-3.5" />
+   444→                </Button>
+   445→                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDelete(product.id)}>
+   446→                  <Trash2 className="w-3.5 h-3.5" />
+   447→                </Button>
+   448→              </div>
+   449→            </CardContent>
+   450→          </Card>
+   451→        ))}
+   452→      </div>
+   453→    </motion.div>
+   454→  );
+   455→}
+   456→
+   457→// ============ Blog Tab ============
+   458→function BlogTab({ blogPosts, language, t, refresh }: any) {
+   459→  const [showForm, setShowForm] = useState(false);
+   460→  const [form, setForm] = useState({
+   461→    title_fr: '',
+   462→    title_ar: '',
+   463→    excerpt_fr: '',
+   464→    excerpt_ar: '',
+   465→    content_fr: '',
+   466→    content_ar: '',
+   467→    category: '',
+   468→    author: 'ODG Team',
+   469→  });
+   470→
+   471→  const handleSave = async () => {
+   472→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   473→    if (!isSupabaseConfigured || !supabase) {
+   474→      setShowForm(false);
+   475→      return;
+   476→    }
+   477→
+   478→    await supabase.from('blog_posts').insert([{
+   479→      title_fr: form.title_fr,
+   480→      title_ar: form.title_ar,
+   481→      excerpt_fr: form.excerpt_fr,
+   482→      excerpt_ar: form.excerpt_ar,
+   483→      content_fr: form.content_fr,
+   484→      content_ar: form.content_ar,
+   485→      category: form.category,
+   486→      author: form.author,
+   487→      slug: form.title_fr.toLowerCase().replace(/\s+/g, '-').substring(0, 60),
+   488→      date: new Date().toISOString().split('T')[0],
+   489→      read_time: 5,
+   490→      tags: [],
+   491→    }]);
+   492→    refresh();
+   493→    setShowForm(false);
+   494→    setForm({ title_fr: '', title_ar: '', excerpt_fr: '', excerpt_ar: '', content_fr: '', content_ar: '', category: '', author: 'ODG Team' });
+   495→  };
+   496→
+   497→  const handleDelete = async (id: string) => {
+   498→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   499→    if (!isSupabaseConfigured || !supabase) return;
+   500→    await supabase.from('blog_posts').delete().eq('id', id);
+   501→    refresh();
+   502→  };
+   503→
+   504→  const formatDate = (d: string) => {
+   505→    try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; }
+   506→  };
+   507→
+   508→  return (
+   509→    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+   510→      <div className="flex items-center justify-between">
+   511→        <h2 className="font-bold text-lg" style={{ color: '#1E3A5F' }}>{t('admin.blog.title')}</h2>
+   512→        <Button onClick={() => setShowForm(!showForm)} className="gap-2" style={{ backgroundColor: '#1E3A5F' }}>
+   513→          <Plus className="w-4 h-4" />
+   514→          {t('admin.blog.add')}
+   515→        </Button>
+   516→      </div>
+   517→
+   518→      <AnimatePresence>
+   519→        {showForm && (
+   520→          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+   521→            <Card className="border-0 shadow-sm">
+   522→              <CardContent className="p-5 space-y-4">
+   523→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   524→                  <div>
+   525→                    <label className="text-sm font-medium mb-1 block">Titre (FR)</label>
+   526→                    <Input value={form.title_fr} onChange={(e) => setForm({ ...form, title_fr: e.target.value })} />
+   527→                  </div>
+   528→                  <div>
+   529→                    <label className="text-sm font-medium mb-1 block">عنوان (AR)</label>
+   530→                    <Input value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} dir="rtl" />
+   531→                  </div>
+   532→                </div>
+   533→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   534→                  <div>
+   535→                    <label className="text-sm font-medium mb-1 block">Extrait (FR)</label>
+   536→                    <Textarea rows={2} value={form.excerpt_fr} onChange={(e) => setForm({ ...form, excerpt_fr: e.target.value })} />
+   537→                  </div>
+   538→                  <div>
+   539→                    <label className="text-sm font-medium mb-1 block">مقتطف (AR)</label>
+   540→                    <Textarea rows={2} value={form.excerpt_ar} onChange={(e) => setForm({ ...form, excerpt_ar: e.target.value })} dir="rtl" />
+   541→                  </div>
+   542→                </div>
+   543→                <div>
+   544→                  <label className="text-sm font-medium mb-1 block">Contenu (FR)</label>
+   545→                  <Textarea rows={4} value={form.content_fr} onChange={(e) => setForm({ ...form, content_fr: e.target.value })} />
+   546→                </div>
+   547→                <div>
+   548→                  <label className="text-sm font-medium mb-1 block">Catégorie</label>
+   549→                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+   550→                </div>
+   551→                <div className="flex gap-2">
+   552→                  <Button onClick={handleSave} className="gap-2" style={{ backgroundColor: '#1E3A5F' }}>
+   553→                    <Save className="w-4 h-4" />{t('admin.products.save')}
+   554→                  </Button>
+   555→                  <Button variant="outline" onClick={() => setShowForm(false)}>{t('admin.products.cancel')}</Button>
+   556→                </div>
+   557→              </CardContent>
+   558→            </Card>
+   559→          </motion.div>
+   560→        )}
+   561→      </AnimatePresence>
+   562→
+   563→      <div className="space-y-2">
+   564→        {blogPosts.map((post: any) => (
+   565→          <Card key={post.id} className="border-0 shadow-sm">
+   566→            <CardContent className="p-4 flex items-center gap-4">
+   567→              <div className="flex-1 min-w-0">
+   568→                <p className="font-semibold text-sm truncate" style={{ color: '#1E3A5F' }}>
+   569→                  {language === 'ar' ? post.title_ar : post.title_fr}
+   570→                </p>
+   571→                <p className="text-xs text-gray-500">{post.author} • {formatDate(post.date)}</p>
+   572→              </div>
+   573→              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDelete(post.id)}>
+   574→                <Trash2 className="w-3.5 h-3.5" />
+   575→              </Button>
+   576→            </CardContent>
+   577→          </Card>
+   578→        ))}
+   579→      </div>
+   580→    </motion.div>
+   581→  );
+   582→}
+   583→
+   584→// ============ Quotes Tab ============
+   585→function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => void }) {
+   586→  const [quotes, setQuotes] = useState<any[]>([]);
+   587→  const [loading, setLoading] = useState(true);
+   588→
+   589→  useEffect(() => {
+   590→    const fetchQuotes = async () => {
+   591→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   592→      if (!isSupabaseConfigured || !supabase) {
+   593→        setLoading(false);
+   594→        return;
+   595→      }
+   596→      const { data } = await supabase.from('quotes').select('*').order('created_at', { ascending: false });
+   597→      if (data) setQuotes(data);
+   598→      setLoading(false);
+   599→    };
+   600→    fetchQuotes();
+   601→  }, [refresh]);
+   602→
+   603→  const updateStatus = async (id: string, status: string) => {
+   604→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   605→    if (!isSupabaseConfigured || !supabase) return;
+   606→    await supabase.from('quotes').update({ status }).eq('id', id);
+   607→    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, status } : q)));
+   608→  };
+   609→
+   610→  const statusColors: Record<string, string> = {
+   611→    new: 'bg-blue-100 text-blue-700',
+   612→    in_progress: 'bg-yellow-100 text-yellow-700',
+   613→    processed: 'bg-green-100 text-green-700',
+   614→    archived: 'bg-gray-100 text-gray-700',
+   615→  };
+   616→
+   617→  const statusLabels: Record<string, string> = {
+   618→    new: t('admin.quotes.new'),
+   619→    in_progress: t('admin.quotes.inProgress'),
+   620→    processed: t('admin.quotes.processed'),
+   621→    archived: t('admin.quotes.archived'),
+   622→  };
+   623→
+   624→  if (loading) {
+   625→    return <div className="text-center py-12 text-gray-400">{t('common.loading')}</div>;
+   626→  }
+   627→
+   628→  return (
+   629→    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+   630→      <h2 className="font-bold text-lg" style={{ color: '#1E3A5F' }}>{t('admin.quotes.title')}</h2>
+   631→
+   632→      {quotes.length === 0 ? (
+   633→        <Card className="border-0 shadow-sm">
+   634→          <CardContent className="p-12 text-center text-gray-400">
+   635→            <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-50" />
+   636→            <p>Aucun devis pour le moment</p>
+   637→          </CardContent>
+   638→        </Card>
+   639→      ) : (
+   640→        <div className="space-y-2">
+   641→          {quotes.map((quote) => (
+   642→            <Card key={quote.id} className="border-0 shadow-sm">
+   643→              <CardContent className="p-4">
+   644→                <div className="flex items-start justify-between gap-4">
+   645→                  <div className="flex-1 min-w-0">
+   646→                    <p className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{quote.nom}</p>
+   647→                    <p className="text-xs text-gray-500">{quote.email} • {quote.telephone}</p>
+   648→                    <p className="text-xs text-gray-400">{quote.wilaya} • {quote.type_client}</p>
+   649→                    {quote.message && (
+   650→                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{quote.message}</p>
+   651→                    )}
+   652→                  </div>
+   653→                  <div className="flex flex-col items-end gap-2">
+   654→                    <Badge className={statusColors[quote.status] || statusColors.new}>
+   655→                      {statusLabels[quote.status] || quote.status}
+   656→                    </Badge>
+   657→                    <Select
+   658→                      value={quote.status}
+   659→                      onValueChange={(v) => updateStatus(quote.id, v)}
+   660→                    >
+   661→                      <SelectTrigger className="w-32 h-7 text-xs">
+   662→                        <SelectValue />
+   663→                      </SelectTrigger>
+   664→                      <SelectContent>
+   665→                        <SelectItem value="new">{t('admin.quotes.new')}</SelectItem>
+   666→                        <SelectItem value="in_progress">{t('admin.quotes.inProgress')}</SelectItem>
+   667→                        <SelectItem value="processed">{t('admin.quotes.processed')}</SelectItem>
+   668→                        <SelectItem value="archived">{t('admin.quotes.archived')}</SelectItem>
+   669→                      </SelectContent>
+   670→                    </Select>
+   671→                  </div>
+   672→                </div>
+   673→              </CardContent>
+   674→            </Card>
+   675→          ))}
+   676→        </div>
+   677→      )}
+   678→    </motion.div>
+   679→  );
+   680→}
+   681→
+   682→// ============ Settings Tab ============
+   683→function SettingsTab({ t }: { t: (k: string) => string }) {
+   684→  const [settings, setSettings] = useState({
+   685→    brand_name: 'ODG',
+   686→    logo_url: '',
+   687→    phone: '+213 771 88 89 48',
+   688→    email: 'groupedentalimport@gmail.com',
+   689→    address: "Coopérative Azzouz Abdelkader, N°45, Oran",
+   690→    facebook: 'https://facebook.com/odg.algeria',
+   691→    instagram: 'https://instagram.com/odg.algeria',
+   692→    linkedin: 'https://linkedin.com/company/odg-algeria',
+   693→  });
+   694→  const [saving, setSaving] = useState(false);
+   695→  const [saved, setSaved] = useState(false);
+   696→
+   697→  const handleSave = async () => {
+   698→    setSaving(true);
+   699→    const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   700→    if (isSupabaseConfigured && supabase) {
+   701→      for (const [key, value] of Object.entries(settings)) {
+   702→        await supabase
+   703→          .from('site_settings')
+   704→          .upsert({ key, value_fr: value, category: key.split('_')[0], type: 'text' }, { onConflict: 'key' });
+   705→      }
+   706→    }
+   707→    setSaving(false);
+   708→    setSaved(true);
+   709→    setTimeout(() => setSaved(false), 3000);
+   710→  };
+   711→
+   712→  return (
+   713→    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+   714→      <h2 className="font-bold text-lg" style={{ color: '#1E3A5F' }}>{t('admin.settings.title')}</h2>
+   715→
+   716→      {saved && (
+   717→        <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+   718→          {t('admin.settings.saved')}
+   719→        </div>
+   720→      )}
+   721→
+   722→      <Card className="border-0 shadow-sm">
+   723→        <CardContent className="p-5 space-y-4">
+   724→          <h3 className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{t('admin.settings.logo')}</h3>
+   725→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   726→            <div>
+   727→              <label className="text-sm font-medium mb-1 block">Nom de marque</label>
+   728→              <Input value={settings.brand_name} onChange={(e) => setSettings({ ...settings, brand_name: e.target.value })} />
+   729→            </div>
+   730→            <div>
+   731→              <label className="text-sm font-medium mb-1 block">Logo URL</label>
+   732→              <Input value={settings.logo_url} onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })} />
+   733→            </div>
+   734→          </div>
+   735→        </CardContent>
+   736→      </Card>
+   737→
+   738→      <Card className="border-0 shadow-sm">
+   739→        <CardContent className="p-5 space-y-4">
+   740→          <h3 className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{t('admin.settings.contact')}</h3>
+   741→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   742→            <div>
+   743→              <label className="text-sm font-medium mb-1 block">{t('contact.phone')}</label>
+   744→              <Input value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} />
+   745→            </div>
+   746→            <div>
+   747→              <label className="text-sm font-medium mb-1 block">{t('contact.email')}</label>
+   748→              <Input value={settings.email} onChange={(e) => setSettings({ ...settings, email: e.target.value })} />
+   749→            </div>
+   750→            <div className="sm:col-span-2">
+   751→              <label className="text-sm font-medium mb-1 block">{t('contact.address')}</label>
+   752→              <Input value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} />
+   753→            </div>
+   754→          </div>
+   755→        </CardContent>
+   756→      </Card>
+   757→
+   758→      <Card className="border-0 shadow-sm">
+   759→        <CardContent className="p-5 space-y-4">
+   760→          <h3 className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{t('admin.settings.social')}</h3>
+   761→          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   762→            <div>
+   763→              <label className="text-sm font-medium mb-1 block">Facebook</label>
+   764→              <Input value={settings.facebook} onChange={(e) => setSettings({ ...settings, facebook: e.target.value })} />
+   765→            </div>
+   766→            <div>
+   767→              <label className="text-sm font-medium mb-1 block">Instagram</label>
+   768→              <Input value={settings.instagram} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} />
+   769→            </div>
+   770→            <div>
+   771→              <label className="text-sm font-medium mb-1 block">LinkedIn</label>
+   772→              <Input value={settings.linkedin} onChange={(e) => setSettings({ ...settings, linkedin: e.target.value })} />
+   773→            </div>
+   774→          </div>
+   775→        </CardContent>
+   776→      </Card>
+   777→
+   778→      <Button
+   779→        onClick={handleSave}
+   780→        disabled={saving}
+   781→        className="gap-2"
+   782→        style={{ backgroundColor: '#1E3A5F' }}
+   783→      >
+   784→        <Save className="w-4 h-4" />
+   785→        {saving ? t('common.loading') : t('admin.settings.save')}
+   786→      </Button>
+   787→    </motion.div>
+   788→  );
+   789→}
+   790→

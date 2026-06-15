@@ -38,6 +38,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import QuickViewModal from '@/components/dental/QuickViewModal';
+import type { Product } from '@/lib/data-service';
 
 // Animated counter hook
 function useCounter(end: number, duration = 2000) {
@@ -104,8 +107,12 @@ export default function HomePage() {
   const { navigate } = useRouter();
   const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
+  const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
 
   const featuredProducts = products.filter((p) => p.is_featured).slice(0, 6);
+
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
 
   // Stats with icons
   const stat1 = useCounter(500);
@@ -197,13 +204,30 @@ export default function HomePage() {
 
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newsletterEmail.trim()) {
-      setNewsletterSubmitted(true);
-      setNewsletterEmail('');
-      setTimeout(() => setNewsletterSubmitted(false), 5000);
+      setNewsletterLoading(true);
+      try {
+        const res = await fetch('/api/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: newsletterEmail.trim() }),
+        });
+        if (res.ok) {
+          setNewsletterSubmitted(true);
+          setNewsletterEmail('');
+          setTimeout(() => setNewsletterSubmitted(false), 5000);
+        }
+      } catch {
+        setNewsletterSubmitted(true);
+        setNewsletterEmail('');
+        setTimeout(() => setNewsletterSubmitted(false), 5000);
+      } finally {
+        setNewsletterLoading(false);
+      }
     }
   };
 
@@ -335,7 +359,7 @@ export default function HomePage() {
                 onClick={() => navigate('/devis')}
                 size="lg"
                 variant="outline"
-                className="text-base font-semibold px-8 h-13 border-2 border-white/40 text-white hover:bg-white/15 backdrop-blur-sm transition-all duration-300 gap-2"
+                className="text-base font-semibold px-8 h-13 border-2 border-white/60 text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg"
               >
                 {t('hero.cta.quote')}
                 <ChevronRight className="w-5 h-5" />
@@ -632,8 +656,11 @@ export default function HomePage() {
                           style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/catalogue?product=${product.slug}`);
+                            setQuickViewProduct(product);
+                            setQuickViewOpen(true);
+                            addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
                           }}
+                          title={t('products.quickView')}
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
@@ -948,11 +975,12 @@ export default function HomePage() {
                 <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                   <Button
                     type="submit"
+                    disabled={newsletterLoading}
                     className="h-12 px-6 font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl gap-2"
                     style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                   >
-                    {t('newsletter.subscribe')}
-                    <ArrowRight className="w-4 h-4" />
+                    {newsletterLoading ? '...' : t('newsletter.subscribe')}
+                    {!newsletterLoading && <ArrowRight className="w-4 h-4" />}
                   </Button>
                 </motion.div>
               </form>
@@ -1045,6 +1073,13 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        open={quickViewOpen}
+        onClose={() => setQuickViewOpen(false)}
+      />
     </div>
   );
 }

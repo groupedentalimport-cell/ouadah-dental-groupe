@@ -371,6 +371,24 @@ const fr: Translations = {
   'products.breadcrumb.home': 'Accueil',
   'products.addToQuoteSticky': 'Ajouter au devis',
   'products.downloadInfo': 'Télécharger',
+
+  // --- QUICK VIEW ---
+  'products.quickView': 'Aperçu rapide',
+  'products.quickView.title': 'Aperçu du produit',
+  'products.quickView.viewFull': 'Voir la fiche complète',
+  'products.quickView.addToQuote': 'Ajouter au devis',
+  'products.quickView.compare': 'Comparer',
+  'products.quickView.addedToCompare': 'Ajouté à la comparaison',
+  'products.quickView.inStock': 'En stock',
+  'products.quickView.outOfStock': 'Rupture de stock',
+  'products.quickView.brand': 'Marque',
+  'products.quickView.reference': 'Réf.',
+  'products.quickView.category': 'Catégorie',
+
+  // --- RECENTLY VIEWED ---
+  'products.recentlyViewed': 'Produits récemment consultés',
+  'products.recentlyViewed.empty': 'Aucun produit consulté récemment',
+  'products.recentlyViewed.clear': 'Effacer l\'historique',
 };
 
 // ============================================================
@@ -720,6 +738,24 @@ const ar: Translations = {
   'products.breadcrumb.home': 'الرئيسية',
   'products.addToQuoteSticky': 'أضف إلى عرض السعر',
   'products.downloadInfo': 'تحميل',
+
+  // --- QUICK VIEW ---
+  'products.quickView': 'عرض سريع',
+  'products.quickView.title': 'معاينة المنتج',
+  'products.quickView.viewFull': 'عرض الصفحة الكاملة',
+  'products.quickView.addToQuote': 'أضف إلى عرض السعر',
+  'products.quickView.compare': 'مقارنة',
+  'products.quickView.addedToCompare': 'تمت الإضافة للمقارنة',
+  'products.quickView.inStock': 'متوفر',
+  'products.quickView.outOfStock': 'نفذ المخزون',
+  'products.quickView.brand': 'العلامة التجارية',
+  'products.quickView.reference': 'مرجع',
+  'products.quickView.category': 'الفئة',
+
+  // --- RECENTLY VIEWED ---
+  'products.recentlyViewed': 'منتجات شاهدها مؤخراً',
+  'products.recentlyViewed.empty': 'لم يتم مشاهدة أي منتج مؤخراً',
+  'products.recentlyViewed.clear': 'مسح السجل',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

@@ -89,9 +89,9 @@ export default function ChatBubble() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 260, damping: 25 }}
-            className={`fixed bottom-24 z-50 ${
-              isRTL ? 'left-6' : 'right-6'
-            } w-[340px] sm:w-[380px] max-h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
+            className={`fixed bottom-[5.5rem] z-50 ${
+              isRTL ? 'left-4' : 'right-4'
+            } w-[calc(100vw-2rem)] sm:w-[380px] max-h-[70vh] sm:max-h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden`}
           >
             {/* Header */}
             <div
@@ -208,15 +208,16 @@ export default function ChatBubble() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-shadow ${
-          isRTL ? 'right-6' : 'right-6'
-        }`}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-shadow"
         style={{ backgroundColor: isOpen ? '#64748b' : '#1E3A5F' }}
       >
         {isOpen ? (
           <X className="w-6 h-6 text-white" />
         ) : (
-          <MessageCircle className="w-6 h-6 text-white" />
+          <>
+            <MessageCircle className="w-6 h-6 text-white" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: '#F0C05A' }} />
+          </>
         )}
       </motion.button>
     </>
