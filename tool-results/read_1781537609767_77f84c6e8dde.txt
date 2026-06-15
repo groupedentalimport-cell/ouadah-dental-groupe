@@ -1,0 +1,699 @@
+     1→'use client';
+     2→
+     3→import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+     4→import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+     5→import { useTranslation } from '@/lib/i18n';
+     6→import type { Language } from '@/lib/i18n';
+     7→
+     8→// ============================================================
+     9→// Types
+    10→// ============================================================
+    11→export interface Category {
+    12→  id: string;
+    13→  slug: string;
+    14→  name_fr: string;
+    15→  name_ar: string;
+    16→  description_fr: string;
+    17→  description_ar: string;
+    18→  icon: string;
+    19→  image: string;
+    20→  sort_order: number;
+    21→}
+    22→
+    23→export interface Product {
+    24→  id: string;
+    25→  slug: string;
+    26→  name_fr: string;
+    27→  name_ar: string;
+    28→  description_fr: string;
+    29→  description_ar: string;
+    30→  short_description_fr: string;
+    31→  short_description_ar: string;
+    32→  category_id: string;
+    33→  price: number;
+    34→  images: string[];
+    35→  specs: Record<string, string>[];
+    36→  features_fr: string[];
+    37→  features_ar: string[];
+    38→  in_stock: boolean;
+    39→  is_featured: boolean;
+    40→  is_new: boolean;
+    41→  is_best_seller: boolean;
+    42→  brand: string;
+    43→  origin: string;
+    44→  warranty: string;
+    45→  delivery_time_fr: string;
+    46→  delivery_time_ar: string;
+    47→  installation_included: boolean;
+    48→  training_included: boolean;
+    49→  ref: string;
+    50→  target: string[];
+    51→  pdf_url: string;
+    52→  brochure_pdf: string;
+    53→  videos: { title_fr: string; title_ar: string; url: string; type: string }[];
+    54→  created_at: string;
+    55→}
+    56→
+    57→export interface BlogPost {
+    58→  id: string;
+    59→  slug: string;
+    60→  title_fr: string;
+    61→  title_ar: string;
+    62→  excerpt_fr: string;
+    63→  excerpt_ar: string;
+    64→  content_fr: string;
+    65→  content_ar: string;
+    66→  image: string;
+    67→  author: string;
+    68→  date: string;
+    69→  read_time: number;
+    70→  tags: string[];
+    71→  category: string;
+    72→  created_at: string;
+    73→}
+    74→
+    75→export interface ContactInfo {
+    76→  address: { fr: string; ar: string };
+    77→  phone: string;
+    78→  whatsapp: string;
+    79→  email: string;
+    80→  fax: string;
+    81→  hours: { fr: string; ar: string };
+    82→  social: {
+    83→    facebook: string;
+    84→    instagram: string;
+    85→    linkedin: string;
+    86→    youtube: string;
+    87→  };
+    88→}
+    89→
+    90→export interface QuoteSubmission {
+    91→  nom: string;
+    92→  email: string;
+    93→  telephone: string;
+    94→  wilaya: string;
+    95→  type_client: string;
+    96→  produits_selectionnes: { id: string; slug: string; name: string; quantity: number }[];
+    97→  message: string;
+    98→}
+    99→
+   100→// ============================================================
+   101→// Default / Fallback Data
+   102→// ============================================================
+   103→const defaultContactInfo: ContactInfo = {
+   104→  address: {
+   105→    fr: 'Coopérative Azzouz Abdelkader, N°45, Commune d\'Es-Senia, Oran, Algérie',
+   106→    ar: 'تعاونية عزوز عبد القادر، رقم 45، بلدية السانية، وهران، الجزائر',
+   107→  },
+   108→  phone: '+213 771 88 89 48',
+   109→  whatsapp: '+213771888948',
+   110→  email: 'groupedentalimport@gmail.com',
+   111→  fax: '041 28 28 55',
+   112→  hours: {
+   113→    fr: 'Dimanche - Jeudi : 8h00 - 17h00',
+   114→    ar: 'الأحد - الخميس: 8:00 - 17:00',
+   115→  },
+   116→  social: {
+   117→    facebook: 'https://facebook.com/odg.algeria',
+   118→    instagram: 'https://instagram.com/odg.algeria',
+   119→    linkedin: 'https://linkedin.com/company/odg-algeria',
+   120→    youtube: '',
+   121→  },
+   122→};
+   123→
+   124→// Default categories when Supabase is not available
+   125→const defaultCategories: Category[] = [
+   126→  {
+   127→    id: '1',
+   128→    slug: 'fauteuils',
+   129→    name_fr: 'Fauteuils Dentaires',
+   130→    name_ar: 'كراسي طب الأسنان',
+   131→    description_fr: 'Fauteuils dentaires de dernière génération avec ergonomie avancée',
+   132→    description_ar: 'كراسي أسنان من الجيل الأخير مع تصميم مريح متقدم',
+   133→    icon: 'Armchair',
+   134→    image: '/categories/fauteuils.jpg',
+   135→    sort_order: 1,
+   136→  },
+   137→  {
+   138→    id: '2',
+   139→    slug: 'unites',
+   140→    name_fr: 'Unités Dentaires',
+   141→    name_ar: 'وحدات طب الأسنان',
+   142→    description_fr: 'Unités dentaires complètes pour cabinet dentaire moderne',
+   143→    description_ar: 'وحدات أسنان كاملة لعيادة أسنان حديثة',
+   144→    icon: 'Monitor',
+   145→    image: '/categories/unites.jpg',
+   146→    sort_order: 2,
+   147→  },
+   148→  {
+   149→    id: '3',
+   150→    slug: 'radiologie',
+   151→    name_fr: 'Radiologie',
+   152→    name_ar: 'الأشعة',
+   153→    description_fr: 'Équipements de radiologie dentaire numérique et conventionnelle',
+   154→    description_ar: 'معدات أشعة الأسنان الرقمية والتقليدية',
+   155→    icon: 'Scan',
+   156→    image: '/categories/radiologie.jpg',
+   157→    sort_order: 3,
+   158→  },
+   159→  {
+   160→    id: '4',
+   161→    slug: 'sterilisation',
+   162→    name_fr: 'Stérilisation',
+   163→    name_ar: 'التعقيم',
+   164→    description_fr: 'Autoclaves et équipements de stérilisation professionnels',
+   165→    description_ar: 'أوتوكلاف ومعدات تعقيم احترافية',
+   166→    icon: 'Shield',
+   167→    image: '/categories/sterilisation.jpg',
+   168→    sort_order: 4,
+   169→  },
+   170→  {
+   171→    id: '5',
+   172→    slug: 'pneumatiques',
+   173→    name_fr: 'Pneumatiques',
+   174→    name_ar: 'الهوائية',
+   175→    description_fr: 'Compresseurs et équipements pneumatiques dentaires',
+   176→    description_ar: 'ضواغط ومعدات هوائية لطب الأسنان',
+   177→    icon: 'Wind',
+   178→    image: '/categories/pneumatiques.jpg',
+   179→    sort_order: 5,
+   180→  },
+   181→  {
+   182→    id: '6',
+   183→    slug: 'consommables',
+   184→    name_fr: 'Consommables',
+   185→    name_ar: 'المستهلكات',
+   186→    description_fr: 'Consommables et matériaux dentaires de qualité',
+   187→    description_ar: 'مواد ومستهلكات طب الأسنان عالية الجودة',
+   188→    icon: 'Package',
+   189→    image: '/categories/consommables.jpg',
+   190→    sort_order: 6,
+   191→  },
+   192→  {
+   193→    id: '7',
+   194→    slug: 'instruments',
+   195→    name_fr: 'Instruments',
+   196→    name_ar: 'الأدوات',
+   197→    description_fr: 'Instruments dentaires de précision',
+   198→    description_ar: 'أدوات أسنان دقيقة',
+   199→    icon: 'Wrench',
+   200→    image: '/categories/instruments.jpg',
+   201→    sort_order: 7,
+   202→  },
+   203→  {
+   204→    id: '8',
+   205→    slug: 'mobilier',
+   206→    name_fr: 'Mobilier',
+   207→    name_ar: 'الأثاث',
+   208→    description_fr: 'Mobilier de cabinet dentaire ergonomique',
+   209→    description_ar: 'أثاث عيادة أسنان مريح',
+   210→    icon: 'Lamp',
+   211→    image: '/categories/mobilier.jpg',
+   212→    sort_order: 8,
+   213→  },
+   214→];
+   215→
+   216→// Default featured products for when Supabase is not available
+   217→const defaultProducts: Product[] = [
+   218→  {
+   219→    id: '1',
+   220→    slug: 'fauteuil-dental-elite-pro',
+   221→    name_fr: 'Fauteuil Dentaire Elite Pro',
+   222→    name_ar: 'كرسي أسنان إيليت برو',
+   223→    description_fr: '<p>Le fauteuil dentaire Elite Pro offre un confort exceptionnel pour le praticien et le patient. Doté de la dernière technologie en matière d\'ergonomie et de contrôle, il représente le choix idéal pour les cabinets dentaires modernes.</p><h3>Caractéristiques principales</h3><ul><li>Positionnement automatique du patient</li><li>Écran tactile intégré</li><li>Éclairage LED haute performance</li><li>Système d\'aspiration silencieux</li></ul>',
+   224→    description_ar: '<p>كرسي أسنان إيليت برو يوفر راحة استثنائية للطبيب والمريض. مجهز بأحدث التكنولوجيا في مجال الراحة والتحكم، يمثل الخيار المثالي لعيادات الأسنان الحديثة.</p>',
+   225→    short_description_fr: 'Fauteuil dentaire haut de gamme avec écran tactile et positionnement automatique',
+   226→    short_description_ar: 'كرسي أسنان فاخر بشاشة لمس ووضعية تلقائية',
+   227→    category_id: '1',
+   228→    price: 3500000,
+   229→    images: [],
+   230→    specs: [
+   231→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   232→      { label_fr: 'Poids', label_ar: 'الوزن', value: '180 kg' },
+   233→      { label_fr: 'Dimensions', label_ar: 'الأبعاد', value: '200 x 80 x 140 cm' },
+   234→      { label_fr: 'Angle d\'inclinaison', label_ar: 'زاوية الميل', value: '-10° à 80°' },
+   235→    ],
+   236→    features_fr: ['Écran tactile 7 pouces', 'Positionnement automatique', 'Éclairage LED', 'Aspiration silencieuse', 'Garantie 5 ans'],
+   237→    features_ar: ['شاشة لمس 7 بوصة', 'وضعية تلقائية', 'إضاءة LED', 'شفط صامت', 'ضمان 5 سنوات'],
+   238→    in_stock: true,
+   239→    is_featured: true,
+   240→    is_new: true,
+   241→    is_best_seller: true,
+   242→    brand: 'ODG Elite',
+   243→    origin: 'Corée du Sud',
+   244→    warranty: '5 ans',
+   245→    delivery_time_fr: '2-4 semaines',
+   246→    delivery_time_ar: '2-4 أسابيع',
+   247→    installation_included: true,
+   248→    training_included: true,
+   249→    ref: 'FDE-001',
+   250→    target: ['Clinique', 'Revendeur'],
+   251→    pdf_url: '',
+   252→    brochure_pdf: '',
+   253→    videos: [],
+   254→    created_at: new Date().toISOString(),
+   255→  },
+   256→  {
+   257→    id: '2',
+   258→    slug: 'unite-dentaire-smart-touch',
+   259→    name_fr: 'Unité Dentaire Smart Touch',
+   260→    name_ar: 'وحدة أسنان سمارت تاتش',
+   261→    description_fr: '<p>L\'unité dentaire Smart Touch combine technologie de pointe et design élégant. Son interface intuitive permet un contrôle précis de tous les paramètres de traitement.</p>',
+   262→    description_ar: '<p>وحدة أسنان سمارت تاتش تجمع بين أحدث التكنولوجيا والتصميم الأنيق. واجهتها البديهية تسمح بالتحكم الدقيق في جميع معلمات العلاج.</p>',
+   263→    short_description_fr: 'Unité dentaire nouvelle génération avec interface tactile intuitive',
+   264→    short_description_ar: 'وحدة أسنان من الجيل الجديد بواجهة لمس بديهية',
+   265→    category_id: '2',
+   266→    price: 4200000,
+   267→    images: [],
+   268→    specs: [
+   269→      { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
+   270→      { label_fr: 'Syringe', label_ar: 'حقنة', value: '3 voies' },
+   271→      { label_fr: 'Turbine', label_ar: 'توربين', value: '2 connecteurs' },
+   272→    ],
+   273→    features_fr: ['Interface tactile', '4 connectiques', 'Spittoon céramique', 'Éclairage LED', 'Garantie 3 ans'],
+   274→    features_ar: ['واجهة لمس', '4 وصلات', 'بصاق خزفي', 'إضاءة LED', 'ضمان 3 سنوات'],
+   275→    in_stock: true,
+   276→    is_featured: true,
+   277→    is_new: false,
+   278→    is_best_seller: true,
+   279→    brand: 'SmartDent',
+   280→    origin: 'Chine',
+   281→    warranty: '3 ans',
+   282→    delivery_time_fr: '3-5 semaines',
+   283→    delivery_time_ar: '3-5 أسابيع',
+   284→    installation_included: true,
+   285→    training_included: true,
+   286→    ref: 'UDS-002',
+   287→    target: ['Clinique'],
+   288→    pdf_url: '',
+   289→    brochure_pdf: '',
+   290→    videos: [],
+   291→    created_at: new Date().toISOString(),
+   292→  },
+   293→  {
+   294→    id: '3',
+   295→    slug: 'radio-panoramique-digital-x',
+   296→    name_fr: 'Radio Panoramique Digital X',
+   297→    name_ar: 'أشعة بانورامية ديجيتال إكس',
+   298→    description_fr: '<p>Le radio panoramique Digital X offre une imagerie de haute qualité avec une exposition minimale aux rayons. Idéal pour les diagnostics précis et rapides.</p>',
+   299→    description_ar: '<p>الأشعة البانورامية ديجيتال إكس توفر تصويراً عالي الجودة بأقل تعرض للإشعاع. مثالية للتشخيص الدقيق والسريع.</p>',
+   300→    short_description_fr: 'Radio panoramique numérique haute résolution avec faible exposition',
+   301→    short_description_ar: 'أشعة بانورامية رقمية عالية الدقة مع تعرض منخفض',
+   302→    category_id: '3',
+   303→    price: 5800000,
+   304→    images: [],
+   305→    specs: [
+   306→      { label_fr: 'Résolution', label_ar: 'الدقة', value: '16 bit' },
+   307→      { label_fr: 'Tension', label_ar: 'الجهد', value: '60-90 kV' },
+   308→      { label_fr: 'Focale', label_ar: 'البؤرة', value: '0.5 mm' },
+   309→    ],
+   310→    features_fr: ['Haute résolution', 'Faible exposition', 'Logiciel 3D intégré', 'Capteur CCD', 'Garantie 2 ans'],
+   311→    features_ar: ['دقة عالية', 'تعرض منخفض', 'برنامج 3D مدمج', 'مستشعر CCD', 'ضمان سنتين'],
+   312→    in_stock: true,
+   313→    is_featured: true,
+   314→    is_new: true,
+   315→    is_best_seller: false,
+   316→    brand: 'DigiRay',
+   317→    origin: 'Italie',
+   318→    warranty: '2 ans',
+   319→    delivery_time_fr: '4-6 semaines',
+   320→    delivery_time_ar: '4-6 أسابيع',
+   321→    installation_included: true,
+   322→    training_included: true,
+   323→    ref: 'RPD-003',
+   324→    target: ['Clinique', 'Revendeur'],
+   325→    pdf_url: '',
+   326→    brochure_pdf: '',
+   327→    videos: [],
+   328→    created_at: new Date().toISOString(),
+   329→  },
+   330→  {
+   331→    id: '4',
+   332→    slug: 'autoclave-class-b-pro',
+   333→    name_fr: 'Autoclave Classe B Pro',
+   334→    name_ar: 'أوتوكلاف كلاس برو',
+   335→    description_fr: '<p>L\'autoclave Classe B Pro garantit une stérilisation parfaite conforme aux normes internationales les plus strictes. Cycle rapide et traçabilité complète.</p>',
+   336→    description_ar: '<p>الأوتوكلاف كلاس برو يضمن تعقيماً مثالياً يتوافق مع أصرم المعايير الدولية. دورة سريعة وتتبع كامل.</p>',
+   337→    short_description_fr: 'Autoclave Classe B avec cycle rapide et traçabilité complète',
+   338→    short_description_ar: 'أوتوكلاف فئة ب مع دورة سريعة وتتبع كامل',
+   339→    category_id: '4',
+   340→    price: 1800000,
+   341→    images: [],
+   342→    specs: [
+   343→      { label_fr: 'Capacité', label_ar: 'السعة', value: '23 litres' },
+   344→      { label_fr: 'Température', label_ar: 'الحرارة', value: '121-134°C' },
+   345→      { label_fr: 'Cycle', label_ar: 'الدورة', value: '20-45 min' },
+   346→    ],
+   347→    features_fr: ['Classe B', 'Cycle rapide 20 min', 'Impression intégrée', 'Écran LCD', 'Garantie 2 ans'],
+   348→    features_ar: ['فئة ب', 'دورة سريعة 20 دقيقة', 'طباعة مدمجة', 'شاشة LCD', 'ضمان سنتين'],
+   349→    in_stock: true,
+   350→    is_featured: true,
+   351→    is_new: false,
+   352→    is_best_seller: true,
+   353→    brand: 'SterilPro',
+   354→    origin: 'Allemagne',
+   355→    warranty: '2 ans',
+   356→    delivery_time_fr: '2-3 semaines',
+   357→    delivery_time_ar: '2-3 أسابيع',
+   358→    installation_included: true,
+   359→    training_included: false,
+   360→    ref: 'ACB-004',
+   361→    target: ['Clinique', 'Revendeur', 'Comptoir'],
+   362→    pdf_url: '',
+   363→    brochure_pdf: '',
+   364→    videos: [],
+   365→    created_at: new Date().toISOString(),
+   366→  },
+   367→  {
+   368→    id: '5',
+   369→    slug: 'compresseur-silent-air',
+   370→    name_fr: 'Compresseur Silent Air',
+   371→    name_ar: 'ضاغط سايلنت إير',
+   372→    description_fr: '<p>Le compresseur Silent Air offre un débit d\'air exceptionnel avec un niveau sonore minimal. Parfait pour les cabinets requiring un environnement de travail silencieux.</p>',
+   373→    description_ar: '<p>ضاغط سايلنت إير يوفر تدفق هواء استثنائي مع مستوى ضوضاء أدنى. مثالي لعيادات الأسنان التي تتطلب بيئة عمل هادئة.</p>',
+   374→    short_description_fr: 'Compresseur dentaire silencieux avec débit d\'air haute performance',
+   375→    short_description_ar: 'ضاغط أسنان صامت مع تدفق هواء عالي الأداء',
+   376→    category_id: '5',
+   377→    price: 950000,
+   378→    images: [],
+   379→    specs: [
+   380→      { label_fr: 'Débit', label_ar: 'التدفق', value: '80 L/min' },
+   381→      { label_fr: 'Pression', label_ar: 'الضغط', value: '8 bar' },
+   382→      { label_fr: 'Niveau sonore', label_ar: 'مستوى الضوضاء', value: '< 45 dB' },
+   383→    ],
+   384→    features_fr: ['Ultra silencieux', 'Sans huile', 'Réservoir 50L', 'Double moteur', 'Garantie 2 ans'],
+   385→    features_ar: ['فائق الصمت', 'بدون زيت', 'خزان 50 لتر', 'محرك مزدوج', 'ضمان سنتين'],
+   386→    in_stock: true,
+   387→    is_featured: false,
+   388→    is_new: true,
+   389→    is_best_seller: false,
+   390→    brand: 'AirTech',
+   391→    origin: 'France',
+   392→    warranty: '2 ans',
+   393→    delivery_time_fr: '1-2 semaines',
+   394→    delivery_time_ar: '1-2 أسبوع',
+   395→    installation_included: false,
+   396→    training_included: false,
+   397→    ref: 'CSA-005',
+   398→    target: ['Clinique', 'Comptoir'],
+   399→    pdf_url: '',
+   400→    brochure_pdf: '',
+   401→    videos: [],
+   402→    created_at: new Date().toISOString(),
+   403→  },
+   404→  {
+   405→    id: '6',
+   406→    slug: 'lampe-led-cure-pro',
+   407→    name_fr: 'Lampe LED Cure Pro',
+   408→    name_ar: 'مصباح LED كيور برو',
+   409→    description_fr: '<p>La lampe LED Cure Pro offre une polymérisation rapide et efficace pour tous les matériaux composites. Design ergonomique et légère.</p>',
+   410→    description_ar: '<p>مصباح LED كيور برو يوفر بلمرة سريعة وفعالة لجميع المواد المركبة. تصميم مريح وخفيف.</p>',
+   411→    short_description_fr: 'Lampe de polymérisation LED haute performance',
+   412→    short_description_ar: 'مصباح بلمرة LED عالي الأداء',
+   413→    category_id: '6',
+   414→    price: 45000,
+   415→    images: [],
+   416→    specs: [
+   417→      { label_fr: 'Longueur d\'onde', label_ar: 'طول الموجة', value: '420-480 nm' },
+   418→      { label_fr: 'Puissance', label_ar: 'القوة', value: '1200 mW/cm²' },
+   419→    ],
+   420→    features_fr: ['Polymerisation rapide', 'Sans fil', '3 modes', 'Écran LCD', 'Garantie 1 an'],
+   421→    features_ar: ['بلمرة سريعة', 'بدون سلك', '3 أوضاع', 'شاشة LCD', 'ضمان سنة'],
+   422→    in_stock: true,
+   423→    is_featured: false,
+   424→    is_new: true,
+   425→    is_best_seller: true,
+   426→    brand: 'CureMax',
+   427→    origin: 'Brésil',
+   428→    warranty: '1 an',
+   429→    delivery_time_fr: '1 semaine',
+   430→    delivery_time_ar: 'أسبوع',
+   431→    installation_included: false,
+   432→    training_included: false,
+   433→    ref: 'LLC-006',
+   434→    target: ['Clinique', 'Revendeur', 'Comptoir'],
+   435→    pdf_url: '',
+   436→    brochure_pdf: '',
+   437→    videos: [],
+   438→    created_at: new Date().toISOString(),
+   439→  },
+   440→];
+   441→
+   442→const defaultBlogPosts: BlogPost[] = [
+   443→  {
+   444→    id: '1',
+   445→    slug: 'tendances-equipements-dentaires-2024',
+   446→    title_fr: 'Tendances Équipements Dentaires 2024',
+   447→    title_ar: 'اتجاهات معدات طب الأسنان 2024',
+   448→    excerpt_fr: 'Découvrez les dernières innovations en matière d\'équipements dentaires qui transforment la pratique dentaire moderne.',
+   449→    excerpt_ar: 'اكتشف أحدث الابتكارات في معدات طب الأسنان التي تحول ممارسة طب الأسنان الحديثة.',
+   450→    content_fr: '<p>L\'année 2024 marque un tournant dans l\'évolution des équipements dentaires. Les technologies numériques, l\'intelligence artificielle et l\'ergonomie avancée redéfinissent les standards de la pratique dentaire.</p><h3>1. L\'imagerie 3D</h3><p>Les systèmes d\'imagerie 3D deviennent de plus en plus accessibles, permettant des diagnostics plus précis et des plans de traitement personnalisés.</p><h3>2. Le fauteuil connecté</h3><p>Les fauteuils dentaires de nouvelle génération intègrent des capteurs IoT pour un suivi en temps réel et une maintenance prédictive.</p>',
+   451→    content_ar: '<p>عام 2024 يمثل نقطة تحول في تطور معدات طب الأسنان. التكنولوجيا الرقمية والذكاء الاصطناعي والراحة المتقدمة تعيد تعريف معايير ممارسة طب الأسنان.</p>',
+   452→    image: '',
+   453→    author: 'ODG Team',
+   454→    date: '2024-03-15',
+   455→    read_time: 5,
+   456→    tags: ['innovation', 'technologie', '2024'],
+   457→    category: 'innovation',
+   458→    created_at: '2024-03-15T10:00:00Z',
+   459→  },
+   460→  {
+   461→    id: '2',
+   462→    slug: 'guide-choix-fauteuil-dentaire',
+   463→    title_fr: 'Guide de choix : Comment choisir son fauteuil dentaire',
+   464→    title_ar: 'دليل الاختيار: كيف تختار كرسي الأسنان',
+   465→    excerpt_fr: 'Tous les critères à considérer pour choisir le fauteuil dentaire adapté à votre cabinet et votre pratique.',
+   466→    excerpt_ar: 'جميع المعايير التي يجب مراعاتها لاختيار كرسي الأسنان المناسب لعيادتك وممارستك.',
+   467→    content_fr: '<p>Le choix d\'un fauteuil dentaire est une décision importante qui impacte directement la qualité de vos soins et le confort de vos patients. Voici les critères essentiels à considérer.</p>',
+   468→    content_ar: '<p>اختيار كرسي أسنان قرار مهم يؤثر مباشرة على جودة الرعاية وراحة المرضى. إليك المعايير الأساسية للنظر فيها.</p>',
+   469→    image: '',
+   470→    author: 'ODG Team',
+   471→    date: '2024-02-20',
+   472→    read_time: 8,
+   473→    tags: ['guide', 'fauteuil', 'choix'],
+   474→    category: 'guide',
+   475→    created_at: '2024-02-20T10:00:00Z',
+   476→  },
+   477→  {
+   478→    id: '3',
+   479→    slug: 'importance-sterilisation-cabinet',
+   480→    title_fr: 'L\'importance de la stérilisation en cabinet dentaire',
+   481→    title_ar: 'أهمية التعقيم في عيادة الأسنان',
+   482→    excerpt_fr: 'Pourquoi la stérilisation est essentielle et comment choisir les bons équipements pour garantir la sécurité de vos patients.',
+   483→    excerpt_ar: 'لماذا التعقيم ضروري وكيفية اختيار المعدات المناسبة لضمان سلامة المرضى.',
+   484→    content_fr: '<p>La stérilisation est un pilier fondamental de la pratique dentaire. Un cabinet dentaire bien équipé en matière de stérilisation garantit non seulement la sécurité des patients mais aussi celle du personnel.</p>',
+   485→    content_ar: '<p>التعقيم هو ركيزة أساسية في ممارسة طب الأسنان. عيادة أسنان مجهزة جيداً في مجال التعقيم تضمن سلامة المرضى والموظفين.</p>',
+   486→    image: '',
+   487→    author: 'ODG Team',
+   488→    date: '2024-01-10',
+   489→    read_time: 6,
+   490→    tags: ['sterilisation', 'securite', 'hygiene'],
+   491→    category: 'securite',
+   492→    created_at: '2024-01-10T10:00:00Z',
+   493→  },
+   494→];
+   495→
+   496→// ============================================================
+   497→// Data Context
+   498→// ============================================================
+   499→interface DataContextType {
+   500→  categories: Category[];
+   501→  products: Product[];
+   502→  blogPosts: BlogPost[];
+   503→  contactInfo: ContactInfo;
+   504→  loading: boolean;
+   505→  error: string | null;
+   506→  refresh: () => void;
+   507→  getCategoryName: (cat: Category, lang: Language) => string;
+   508→  getProductName: (product: Product, lang: Language) => string;
+   509→  getProductDescription: (product: Product, lang: Language) => string;
+   510→  getProductShortDescription: (product: Product, lang: Language) => string;
+   511→}
+   512→
+   513→const DataContext = createContext<DataContextType>({
+   514→  categories: defaultCategories,
+   515→  products: defaultProducts,
+   516→  blogPosts: defaultBlogPosts,
+   517→  contactInfo: defaultContactInfo,
+   518→  loading: false,
+   519→  error: null,
+   520→  refresh: () => {},
+   521→  getCategoryName: () => '',
+   522→  getProductName: () => '',
+   523→  getProductDescription: () => '',
+   524→  getProductShortDescription: () => '',
+   525→});
+   526→
+   527→export function DataProvider({ children }: { children: React.ReactNode }) {
+   528→  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+   529→  const [products, setProducts] = useState<Product[]>(defaultProducts);
+   530→  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(defaultBlogPosts);
+   531→  const [contactInfo] = useState<ContactInfo>(defaultContactInfo);
+   532→  const [loading, setLoading] = useState(true);
+   533→  const [error, setError] = useState<string | null>(null);
+   534→
+   535→  const fetchData = useCallback(async () => {
+   536→    if (!isSupabaseConfigured || !supabase) {
+   537→      // Use default data when Supabase is not configured
+   538→      setLoading(false);
+   539→      return;
+   540→    }
+   541→
+   542→    setLoading(true);
+   543→    setError(null);
+   544→
+   545→    try {
+   546→      // Fetch categories - map Supabase column names to our interface
+   547→      const { data: catsData, error: catsError } = await supabase
+   548→        .from('categories')
+   549→        .select('*')
+   550→        .order('ordre', { ascending: true });
+   551→
+   552→      if (!catsError && catsData && catsData.length > 0) {
+   553→        const mapped = catsData.map((c: Record<string, unknown>) => ({
+   554→          id: c.id as string,
+   555→          slug: c.slug as string,
+   556→          name_fr: (c.nom_fr || c.name_fr || '') as string,
+   557→          name_ar: (c.nom_ar || c.name_ar || '') as string,
+   558→          description_fr: (c.description_fr || '') as string,
+   559→          description_ar: (c.description_ar || '') as string,
+   560→          icon: (c.icone || c.icon || 'Package') as string,
+   561→          image: (c.image || `/categories/${c.slug}.jpg`) as string,
+   562→          sort_order: (c.ordre || c.sort_order || 0) as number,
+   563→        }));
+   564→        setCategories(mapped);
+   565→      }
+   566→
+   567→      // Fetch products - map Supabase column names to our interface
+   568→      const { data: prodsData, error: prodsError } = await supabase
+   569→        .from('products')
+   570→        .select('*')
+   571→        .order('created_at', { ascending: false });
+   572→
+   573→      if (!prodsError && prodsData && prodsData.length > 0) {
+   574→        const mapped = prodsData.map((p: Record<string, unknown>) => ({
+   575→          id: p.id as string,
+   576→          slug: p.slug as string,
+   577→          name_fr: (p.nom_fr || p.name_fr || '') as string,
+   578→          name_ar: (p.nom_ar || p.name_ar || '') as string,
+   579→          description_fr: (p.description_fr || '') as string,
+   580→          description_ar: (p.description_ar || '') as string,
+   581→          short_description_fr: (p.short_description_fr || (p.description_fr as string || '').substring(0, 120)) as string,
+   582→          short_description_ar: (p.short_description_ar || (p.description_ar as string || '').substring(0, 120)) as string,
+   583→          category_id: p.category_id as string,
+   584→          price: 0 as number, // Price not stored in Supabase - set on admin
+   585→          images: ((p.images || []) as string[]).map((img: string) => {
+   586→            // If already a full URL, return as-is
+   587→            if (img.startsWith('http')) return img;
+   588→            // Otherwise prefix with Supabase storage URL
+   589→            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+   590→            return `${supabaseUrl}/storage/v1/object/public/product-images/${img}`;
+   591→          }),
+   592→          specs: (p.specs || []) as Record<string, string>[],
+   593→          features_fr: (p.features_fr || []) as string[],
+   594→          features_ar: (p.features_ar || []) as string[],
+   595→          in_stock: (p.disponible ?? p.in_stock ?? true) as boolean,
+   596→          is_featured: (p.en_vedette ?? p.is_featured ?? false) as boolean,
+   597→          is_new: (p.is_new ?? false) as boolean,
+   598→          is_best_seller: (p.is_best_seller ?? false) as boolean,
+   599→          brand: (p.marque || p.brand || '') as string,
+   600→          origin: (p.origin || '') as string,
+   601→          warranty: (p.warranty || '') as string,
+   602→          delivery_time_fr: (p.delivery_time_fr || '') as string,
+   603→          delivery_time_ar: (p.delivery_time_ar || '') as string,
+   604→          installation_included: (p.installation_included ?? false) as boolean,
+   605→          training_included: (p.training_included ?? false) as boolean,
+   606→          ref: (p.ref || p.modele || '') as string,
+   607→          target: (p.cible || p.target || []) as string[],
+   608→          pdf_url: (p.pdf_url || '') as string,
+   609→          brochure_pdf: (p.brochure_pdf || '') as string,
+   610→          videos: (p.videos || []) as { title_fr: string; title_ar: string; url: string; type: string }[],
+   611→          created_at: p.created_at as string,
+   612→        }));
+   613→        setProducts(mapped);
+   614→      }
+   615→
+   616→      // Fetch blog posts - map Supabase column names
+   617→      const { data: blogData, error: blogError } = await supabase
+   618→        .from('blog_posts')
+   619→        .select('*')
+   620→        .order('created_at', { ascending: false });
+   621→
+   622→      if (!blogError && blogData && blogData.length > 0) {
+   623→        const mapped = blogData.map((b: Record<string, unknown>) => ({
+   624→          id: b.id as string,
+   625→          slug: b.slug as string,
+   626→          title_fr: (b.titre_fr || b.title_fr || '') as string,
+   627→          title_ar: (b.titre_ar || b.title_ar || '') as string,
+   628→          excerpt_fr: (b.excerpt_fr || '') as string,
+   629→          excerpt_ar: (b.excerpt_ar || '') as string,
+   630→          content_fr: (b.content_fr || '') as string,
+   631→          content_ar: (b.content_ar || '') as string,
+   632→          image: (() => {
+   633→            const img = (b.image || '') as string;
+   634→            if (!img || img.startsWith('http')) return img;
+   635→            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+   636→            return `${supabaseUrl}/storage/v1/object/public/blog-images/${img}`;
+   637→          })(),
+   638→          author: (b.author || 'ODG Team') as string,
+   639→          date: (b.date || b.created_at || '') as string,
+   640→          read_time: (b.read_time || 5) as number,
+   641→          tags: (b.tags || []) as string[],
+   642→          category: (b.category || '') as string,
+   643→          created_at: b.created_at as string,
+   644→        }));
+   645→        setBlogPosts(mapped);
+   646→      }
+   647→    } catch (err) {
+   648→      console.error('Error fetching data:', err);
+   649→      setError('Failed to load data');
+   650→    } finally {
+   651→      setLoading(false);
+   652→    }
+   653→  }, []);
+   654→
+   655→  useEffect(() => {
+   656→    fetchData();
+   657→  }, [fetchData]);
+   658→
+   659→  const getCategoryName = useCallback((cat: Category, lang: Language): string => {
+   660→    return lang === 'ar' ? cat.name_ar : cat.name_fr;
+   661→  }, []);
+   662→
+   663→  const getProductName = useCallback((product: Product, lang: Language): string => {
+   664→    return lang === 'ar' ? product.name_ar : product.name_fr;
+   665→  }, []);
+   666→
+   667→  const getProductDescription = useCallback((product: Product, lang: Language): string => {
+   668→    return lang === 'ar' ? product.description_ar : product.description_fr;
+   669→  }, []);
+   670→
+   671→  const getProductShortDescription = useCallback((product: Product, lang: Language): string => {
+   672→    return lang === 'ar' ? product.short_description_ar : product.short_description_fr;
+   673→  }, []);
+   674→
+   675→  return (
+   676→    <DataContext.Provider
+   677→      value={{
+   678→        categories,
+   679→        products,
+   680→        blogPosts,
+   681→        contactInfo,
+   682→        loading,
+   683→        error,
+   684→        refresh: fetchData,
+   685→        getCategoryName,
+   686→        getProductName,
+   687→        getProductDescription,
+   688→        getProductShortDescription,
+   689→      }}
+   690→    >
+   691→      {children}
+   692→    </DataContext.Provider>
+   693→  );
+   694→}
+   695→
+   696→export function useData() {
+   697→  return useContext(DataContext);
+   698→}
+   699→

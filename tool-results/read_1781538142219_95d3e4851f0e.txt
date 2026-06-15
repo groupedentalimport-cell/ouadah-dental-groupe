@@ -1,0 +1,706 @@
+     1→'use client';
+     2→
+     3→import React, { useEffect, useRef, useState } from 'react';
+     4→import { motion, useInView } from 'framer-motion';
+     5→import {
+     6→  ArrowRight,
+     7→  Shield,
+     8→  Wrench,
+     9→  Headphones,
+    10→  Truck,
+    11→  Armchair,
+    12→  Monitor,
+    13→  Scan,
+    14→  ShieldCheck,
+    15→  Wind,
+    16→  Package,
+    17→  WrenchIcon,
+    18→  Lamp,
+    19→  Building2,
+    20→  MapPin,
+    21→  Award,
+    22→  Eye,
+    23→  Stethoscope,
+    24→} from 'lucide-react';
+    25→import { useTranslation } from '@/lib/i18n';
+    26→import { useRouter } from '@/lib/router';
+    27→import { useData } from '@/lib/data-service';
+    28→import { Button } from '@/components/ui/button';
+    29→import { Card, CardContent } from '@/components/ui/card';
+    30→import { Badge } from '@/components/ui/badge';
+    31→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    32→
+    33→// Animated counter hook
+    34→function useCounter(end: number, duration = 2000) {
+    35→  const [count, setCount] = useState(0);
+    36→  const ref = useRef<HTMLDivElement>(null);
+    37→  const inView = useInView(ref, { once: true });
+    38→
+    39→  useEffect(() => {
+    40→    if (!inView) return;
+    41→    let start = 0;
+    42→    const step = end / (duration / 16);
+    43→    const timer = setInterval(() => {
+    44→      start += step;
+    45→      if (start >= end) {
+    46→        setCount(end);
+    47→        clearInterval(timer);
+    48→      } else {
+    49→        setCount(Math.floor(start));
+    50→      }
+    51→    }, 16);
+    52→    return () => clearInterval(timer);
+    53→  }, [inView, end, duration]);
+    54→
+    55→  return { count, ref };
+    56→}
+    57→
+    58→const categoryIcons: Record<string, React.ReactNode> = {
+    59→  Armchair: <Armchair className="w-8 h-8" />,
+    60→  Monitor: <Monitor className="w-8 h-8" />,
+    61→  Scan: <Scan className="w-8 h-8" />,
+    62→  Shield: <ShieldCheck className="w-8 h-8" />,
+    63→  Wind: <Wind className="w-8 h-8" />,
+    64→  Package: <Package className="w-8 h-8" />,
+    65→  Wrench: <WrenchIcon className="w-8 h-8" />,
+    66→  Lamp: <Lamp className="w-8 h-8" />,
+    67→};
+    68→
+    69→// Category image mapping based on slug
+    70→const categoryImages: Record<string, string> = {
+    71→  fauteuils: '/categories/fauteuils.jpg',
+    72→  unites: '/categories/unites.jpg',
+    73→  radiologie: '/categories/radiologie.jpg',
+    74→  sterilisation: '/categories/sterilisation.jpg',
+    75→  pneumatiques: '/categories/pneumatiques.jpg',
+    76→  consommables: '/categories/consommables.jpg',
+    77→  instruments: '/categories/instruments.jpg',
+    78→  mobilier: '/categories/mobilier.jpg',
+    79→};
+    80→
+    81→export default function HomePage() {
+    82→  const { t, language, isRTL } = useTranslation();
+    83→  const { navigate } = useRouter();
+    84→  const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
+    85→  const addItem = useQuoteCart((s) => s.addItem);
+    86→
+    87→  const featuredProducts = products.filter((p) => p.is_featured).slice(0, 6);
+    88→
+    89→  // Stats with icons
+    90→  const stat1 = useCounter(500);
+    91→  const stat2 = useCounter(48);
+    92→  const stat3 = useCounter(15);
+    93→  const stat4 = useCounter(48);
+    94→
+    95→  const stats = [
+    96→    { ref: stat1.ref, value: stat1.count, suffix: '+', label: t('stats.clinics'), icon: <Building2 className="w-7 h-7" /> },
+    97→    { ref: stat2.ref, value: stat2.count, suffix: '', label: t('stats.wilayas'), icon: <MapPin className="w-7 h-7" /> },
+    98→    { ref: stat3.ref, value: stat3.count, suffix: '+', label: t('stats.brands'), icon: <Award className="w-7 h-7" /> },
+    99→    { ref: stat4.ref, value: stat4.count, suffix: 'h', label: t('stats.sav'), icon: <Headphones className="w-7 h-7" /> },
+   100→  ];
+   101→
+   102→  const whyChooseUs = [
+   103→    {
+   104→      icon: <Shield className="w-7 h-7" />,
+   105→      title: t('products.warranty'),
+   106→      desc: language === 'ar'
+   107→        ? 'ضمان من 2 إلى 5 سنوات حسب المنتج، مع خدمة ما بعد البيع سريعة'
+   108→        : 'Garantie de 2 à 5 ans selon le produit, avec service après-vente réactif',
+   109→    },
+   110→    {
+   111→      icon: <Wrench className="w-7 h-7" />,
+   112→      title: t('products.installation'),
+   113→      desc: language === 'ar'
+   114→        ? 'تركيب احترافي وتدريب مشمولان مع كل معدات'
+   115→        : 'Installation professionnelle et formation incluses avec chaque équipement',
+   116→    },
+   117→    {
+   118→      icon: <Headphones className="w-7 h-7" />,
+   119→      title: 'SAV 48h',
+   120→      desc: language === 'ar'
+   121→        ? 'خدمة ما بعد البيع السريعة تغطي 48 ولاية في أقل من 48 ساعة'
+   122→        : 'Service après-vente réactif couvrant 48 wilayas en moins de 48h',
+   123→    },
+   124→    {
+   125→      icon: <Truck className="w-7 h-7" />,
+   126→      title: t('products.delivery'),
+   127→      desc: language === 'ar'
+   128→        ? 'توصيل في 58 ولاية جزائرية، مدة التسليم من 1 إلى 6 أسابيع'
+   129→        : 'Livraison dans les 58 wilayas algériennes, délai de 1 à 6 semaines',
+   130→    },
+   131→  ];
+   132→
+   133→  const partnerBrands = [
+   134→    { name: 'OWANDY', subtext: 'Radiologie' },
+   135→    { name: 'DENTALEZ', subtext: 'Fauteuils' },
+   136→    { name: 'RITTER', subtext: 'Unités' },
+   137→    { name: 'NSK', subtext: 'Instruments' },
+   138→    { name: 'VDW', subtext: 'Endodontie' },
+   139→    { name: 'SEILER', subtext: 'Microscopes' },
+   140→  ];
+   141→
+   142→  const sectionVariants = {
+   143→    hidden: { opacity: 0 },
+   144→    visible: {
+   145→      opacity: 1,
+   146→      transition: { staggerChildren: 0.1 },
+   147→    },
+   148→  };
+   149→
+   150→  const itemVariants = {
+   151→    hidden: { opacity: 0, y: 30 },
+   152→    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+   153→  };
+   154→
+   155→  return (
+   156→    <div className="overflow-hidden">
+   157→      {/* ==================== HERO SECTION ==================== */}
+   158→      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+   159→        {/* Background image with overlay */}
+   160→        <div
+   161→          className="absolute inset-0 bg-cover bg-center"
+   162→          style={{
+   163→            backgroundImage: `url('/images/hero-dental.jpg')`,
+   164→          }}
+   165→        />
+   166→        <div
+   167→          className="absolute inset-0"
+   168→          style={{
+   169→            background: `linear-gradient(135deg, rgba(30,58,95,0.92) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.90) 70%, rgba(15,43,71,0.95) 100%)`,
+   170→          }}
+   171→        />
+   172→        {/* Decorative shapes */}
+   173→        <div className="absolute inset-0 overflow-hidden">
+   174→          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
+   175→          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+   176→          <div className="absolute top-1/4 right-1/4 w-48 h-48 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+   177→          {/* Grid pattern */}
+   178→          <div className="absolute inset-0 opacity-5"
+   179→            style={{
+   180→              backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+   181→              backgroundSize: '40px 40px',
+   182→            }}
+   183→          />
+   184→        </div>
+   185→
+   186→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+   187→          <motion.div
+   188→            initial={{ opacity: 0, y: 40 }}
+   189→            animate={{ opacity: 1, y: 0 }}
+   190→            transition={{ duration: 0.8, ease: 'easeOut' }}
+   191→          >
+   192→            <Badge
+   193→              className="mb-6 text-sm font-medium px-4 py-1.5 border-0"
+   194→              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   195→            >
+   196→              {t('hero.subtitle')}
+   197→            </Badge>
+   198→          </motion.div>
+   199→
+   200→          <motion.h1
+   201→            initial={{ opacity: 0, y: 40 }}
+   202→            animate={{ opacity: 1, y: 0 }}
+   203→            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
+   204→            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6"
+   205→          >
+   206→            {t('hero.title')}
+   207→          </motion.h1>
+   208→
+   209→          <motion.p
+   210→            initial={{ opacity: 0, y: 40 }}
+   211→            animate={{ opacity: 1, y: 0 }}
+   212→            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+   213→            className="text-lg sm:text-xl text-blue-200 max-w-2xl mx-auto mb-10 leading-relaxed"
+   214→          >
+   215→            {t('hero.description')}
+   216→          </motion.p>
+   217→
+   218→          <motion.div
+   219→            initial={{ opacity: 0, y: 40 }}
+   220→            animate={{ opacity: 1, y: 0 }}
+   221→            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
+   222→            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+   223→          >
+   224→            <Button
+   225→              onClick={() => navigate('/catalogue')}
+   226→              size="lg"
+   227→              className="text-base font-semibold px-8 h-12 shadow-xl hover:shadow-2xl transition-all"
+   228→              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   229→            >
+   230→              {t('hero.cta.catalogue')}
+   231→              <ArrowRight className="w-5 h-5" />
+   232→            </Button>
+   233→            <Button
+   234→              onClick={() => navigate('/devis')}
+   235→              size="lg"
+   236→              variant="outline"
+   237→              className="text-base font-semibold px-8 h-12 border-2 border-white/50 text-white hover:bg-white/20 backdrop-blur-sm"
+   238→            >
+   239→              {t('hero.cta.quote')}
+   240→            </Button>
+   241→          </motion.div>
+   242→        </div>
+   243→
+   244→        {/* Bottom wave */}
+   245→        <div className="absolute bottom-0 left-0 right-0">
+   246→          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+   247→            <path
+   248→              d="M0,80 C360,120 720,40 1440,80 L1440,120 L0,120 Z"
+   249→              fill="#1E3A5F"
+   250→            />
+   251→          </svg>
+   252→        </div>
+   253→      </section>
+   254→
+   255→      {/* ==================== STATS SECTION ==================== */}
+   256→      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+   257→        {/* Subtle background pattern */}
+   258→        <div className="absolute inset-0 opacity-[0.04]"
+   259→          style={{
+   260→            backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+   261→            backgroundSize: '32px 32px',
+   262→          }}
+   263→        />
+   264→        {/* Decorative circles */}
+   265→        <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
+   266→        <div className="absolute -bottom-12 -right-12 w-40 h-40 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
+   267→
+   268→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   269→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+   270→            {stats.map((stat, i) => (
+   271→              <motion.div
+   272→                key={i}
+   273→                ref={stat.ref}
+   274→                initial={{ opacity: 0, y: 30 }}
+   275→                whileInView={{ opacity: 1, y: 0 }}
+   276→                viewport={{ once: true }}
+   277→                transition={{ delay: i * 0.12, duration: 0.5 }}
+   278→                className="text-center group"
+   279→              >
+   280→                <div className="bg-white/[0.08] backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/[0.08] hover:border-[#F0C05A]/30 transition-all duration-300 hover:bg-white/[0.12]">
+   281→                  <div
+   282→                    className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 transition-transform duration-300 group-hover:scale-110"
+   283→                    style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
+   284→                  >
+   285→                    {stat.icon}
+   286→                  </div>
+   287→                  <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-1.5">
+   288→                    {stat.value}<span style={{ color: '#F0C05A' }}>{stat.suffix}</span>
+   289→                  </div>
+   290→                  <div className="text-blue-200/70 text-sm font-medium">{stat.label}</div>
+   291→                </div>
+   292→              </motion.div>
+   293→            ))}
+   294→          </div>
+   295→        </div>
+   296→
+   297→        {/* Bottom wave transition */}
+   298→        <div className="absolute bottom-0 left-0 right-0">
+   299→          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+   300→            <path
+   301→              d="M0,40 C480,80 960,0 1440,40 L1440,80 L0,80 Z"
+   302→              fill="#f9fafb"
+   303→            />
+   304→          </svg>
+   305→        </div>
+   306→      </section>
+   307→
+   308→      {/* ==================== CATEGORIES SECTION ==================== */}
+   309→      <section className="py-16 sm:py-20 bg-gray-50">
+   310→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   311→          <motion.div
+   312→            initial={{ opacity: 0, y: 20 }}
+   313→            whileInView={{ opacity: 1, y: 0 }}
+   314→            viewport={{ once: true }}
+   315→            className="text-center mb-12"
+   316→          >
+   317→            <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+   318→              {t('categories.title')}
+   319→            </h2>
+   320→            <p className="text-gray-500 text-lg max-w-xl mx-auto">
+   321→              {t('categories.subtitle')}
+   322→            </p>
+   323→          </motion.div>
+   324→
+   325→          <motion.div
+   326→            variants={sectionVariants}
+   327→            initial="hidden"
+   328→            whileInView="visible"
+   329→            viewport={{ once: true }}
+   330→            className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+   331→          >
+   332→            {categories.map((cat) => {
+   333→              const imgSrc = categoryImages[cat.slug] || cat.image || '';
+   334→              return (
+   335→                <motion.div key={cat.id} variants={itemVariants}>
+   336→                  <div
+   337→                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-48 sm:h-56 shadow-md hover:shadow-2xl transition-all duration-500"
+   338→                    onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
+   339→                  >
+   340→                    {/* Background image */}
+   341→                    {imgSrc ? (
+   342→                      <div
+   343→                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+   344→                        style={{ backgroundImage: `url('${imgSrc}')` }}
+   345→                      />
+   346→                    ) : (
+   347→                      <div
+   348→                        className="absolute inset-0 flex items-center justify-center"
+   349→                        style={{ backgroundColor: '#1E3A5F' }}
+   350→                      >
+   351→                        {categoryIcons[cat.icon] || <Package className="w-12 h-12 text-white/30" />}
+   352→                      </div>
+   353→                    )}
+   354→                    {/* Dark overlay */}
+   355→                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F]/90 via-[#1E3A5F]/50 to-transparent transition-opacity duration-500 group-hover:from-[#1E3A5F]/70 group-hover:via-[#1E3A5F]/30 group-hover:to-transparent" />
+   356→                    {/* Content */}
+   357→                    <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
+   358→                      <div className="flex items-center gap-2 mb-1.5">
+   359→                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
+   360→                          {categoryIcons[cat.icon] || <Package className="w-4 h-4" />}
+   361→                        </div>
+   362→                        <h3 className="font-bold text-sm sm:text-base text-white">
+   363→                          {getCategoryName(cat, language)}
+   364→                        </h3>
+   365→                      </div>
+   366→                      <p className="text-white/50 text-xs">
+   367→                        {products.filter((p) => p.category_id === cat.id).length}{' '}
+   368→                        {language === 'ar' ? 'منتجات' : 'produits'}
+   369→                      </p>
+   370→                      {/* Hover arrow */}
+   371→                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 -translate-x-2">
+   372→                        <ArrowRight className="w-4 h-4 text-white" />
+   373→                      </div>
+   374→                    </div>
+   375→                  </div>
+   376→                </motion.div>
+   377→              );
+   378→            })}
+   379→          </motion.div>
+   380→        </div>
+   381→      </section>
+   382→
+   383→      {/* ==================== FEATURED PRODUCTS ==================== */}
+   384→      <section className="py-16 sm:py-20 bg-white">
+   385→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   386→          <motion.div
+   387→            initial={{ opacity: 0, y: 20 }}
+   388→            whileInView={{ opacity: 1, y: 0 }}
+   389→            viewport={{ once: true }}
+   390→            className="flex items-center justify-between mb-10"
+   391→          >
+   392→            <div>
+   393→              <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#1E3A5F' }}>
+   394→                {t('products.featured')}
+   395→              </h2>
+   396→            </div>
+   397→            <Button
+   398→              variant="outline"
+   399→              onClick={() => navigate('/catalogue')}
+   400→              className="hidden sm:flex gap-2"
+   401→              style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   402→            >
+   403→              {t('common.seeAll')}
+   404→              <ArrowRight className="w-4 h-4" />
+   405→            </Button>
+   406→          </motion.div>
+   407→
+   408→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+   409→            {featuredProducts.map((product, idx) => (
+   410→              <motion.div
+   411→                key={product.id}
+   412→                initial={{ opacity: 0, y: 30 }}
+   413→                whileInView={{ opacity: 1, y: 0 }}
+   414→                viewport={{ once: true }}
+   415→                transition={{ delay: idx * 0.08, duration: 0.5 }}
+   416→              >
+   417→                <Card className="group border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+   418→                  <div
+   419→                    className="h-52 flex items-center justify-center relative overflow-hidden"
+   420→                    style={{ backgroundColor: '#f0f4f8' }}
+   421→                  >
+   422→                    {product.images && product.images.length > 0 ? (
+   423→                      <img
+   424→                        src={product.images[0]}
+   425→                        alt={getProductName(product, language)}
+   426→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+   427→                      />
+   428→                    ) : (
+   429→                      /* Dental-themed placeholder */
+   430→                      <div className="flex flex-col items-center justify-center gap-3 text-gray-300">
+   431→                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
+   432→                          <Stethoscope className="w-10 h-10" style={{ color: '#1E3A5F', opacity: 0.25 }} />
+   433→                        </div>
+   434→                        <span className="text-xs font-medium" style={{ color: '#1E3A5F', opacity: 0.3 }}>
+   435→                          {product.brand || 'ODG'}
+   436→                        </span>
+   437→                      </div>
+   438→                    )}
+   439→                    {/* Badges */}
+   440→                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+   441→                      {product.is_new && (
+   442→                        <Badge className="text-[10px] px-2.5 py-0.5 font-semibold" style={{ backgroundColor: '#1E3A5F' }}>
+   443→                          {t('products.new')}
+   444→                        </Badge>
+   445→                      )}
+   446→                      {product.is_best_seller && (
+   447→                        <Badge className="text-[10px] px-2.5 py-0.5 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   448→                          {t('products.bestSeller')}
+   449→                        </Badge>
+   450→                      )}
+   451→                    </div>
+   452→                  </div>
+   453→                  <CardContent className="p-5 flex flex-col flex-1">
+   454→                    <p className="text-xs font-medium mb-1" style={{ color: '#F0C05A' }}>{product.brand}</p>
+   455→                    <h3
+   456→                      className="font-bold text-sm mb-1.5 line-clamp-1"
+   457→                      style={{ color: '#1E3A5F' }}
+   458→                    >
+   459→                      {getProductName(product, language)}
+   460→                    </h3>
+   461→                    <p className="text-xs text-gray-500 mb-4 line-clamp-2 flex-1">
+   462→                      {getProductShortDescription(product, language)}
+   463→                    </p>
+   464→                    <div className="flex items-center justify-between gap-2">
+   465→                      <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+   466→                        {(product.price ?? 0) === 0
+   467→                          ? (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+   468→                          : `${(product.price ?? 0).toLocaleString('fr-DZ')} DA`
+   469→                        }
+   470→                      </span>
+   471→                      <div className="flex items-center gap-2">
+   472→                        <Button
+   473→                          size="sm"
+   474→                          variant="outline"
+   475→                          className="text-xs h-8 px-3"
+   476→                          style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   477→                          onClick={(e) => {
+   478→                            e.stopPropagation();
+   479→                            navigate(`/catalogue?product=${product.slug}`);
+   480→                          }}
+   481→                        >
+   482→                          <Eye className="w-3.5 h-3.5" />
+   483→                          {language === 'ar' ? 'عرض' : 'Voir'}
+   484→                        </Button>
+   485→                        <Button
+   486→                          size="sm"
+   487→                          className="text-xs h-8 px-3"
+   488→                          style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   489→                          onClick={(e) => {
+   490→                            e.stopPropagation();
+   491→                            addItem({
+   492→                              id: product.id,
+   493→                              slug: product.slug,
+   494→                              name: getProductName(product, language),
+   495→                              price: product.price,
+   496→                              image: product.images?.[0] || '',
+   497→                            });
+   498→                          }}
+   499→                        >
+   500→                          {t('products.addQuote')}
+   501→                        </Button>
+   502→                      </div>
+   503→                    </div>
+   504→                  </CardContent>
+   505→                </Card>
+   506→              </motion.div>
+   507→            ))}
+   508→          </div>
+   509→
+   510→          <div className="mt-8 text-center sm:hidden">
+   511→            <Button
+   512→              variant="outline"
+   513→              onClick={() => navigate('/catalogue')}
+   514→              className="gap-2"
+   515→              style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   516→            >
+   517→              {t('common.seeAll')}
+   518→              <ArrowRight className="w-4 h-4" />
+   519→            </Button>
+   520→          </div>
+   521→        </div>
+   522→      </section>
+   523→
+   524→      {/* ==================== WHY CHOOSE US ==================== */}
+   525→      <section className="py-16 sm:py-20 relative overflow-hidden"
+   526→        style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}
+   527→      >
+   528→        {/* Subtle decorative pattern */}
+   529→        <div className="absolute inset-0 opacity-[0.03]"
+   530→          style={{
+   531→            backgroundImage: 'radial-gradient(circle, #1E3A5F 1px, transparent 1px)',
+   532→            backgroundSize: '24px 24px',
+   533→          }}
+   534→        />
+   535→
+   536→        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+   537→          <motion.div
+   538→            initial={{ opacity: 0, y: 20 }}
+   539→            whileInView={{ opacity: 1, y: 0 }}
+   540→            viewport={{ once: true }}
+   541→            className="text-center mb-12"
+   542→          >
+   543→            <Badge className="mb-4 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
+   544→              {language === 'ar' ? 'مميزاتنا' : 'Nos atouts'}
+   545→            </Badge>
+   546→            <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+   547→              {language === 'ar' ? 'لماذا تختارنا؟' : 'Pourquoi nous choisir ?'}
+   548→            </h2>
+   549→            <p className="text-gray-500 text-lg max-w-lg mx-auto">
+   550→              {language === 'ar'
+   551→                ? 'التزامنا بالجودة والخدمة يجعلنا الخيار الأول'
+   552→                : 'Notre engagement qualité et service fait de nous le choix n°1'
+   553→              }
+   554→            </p>
+   555→          </motion.div>
+   556→
+   557→          <motion.div
+   558→            variants={sectionVariants}
+   559→            initial="hidden"
+   560→            whileInView="visible"
+   561→            viewport={{ once: true }}
+   562→            className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6"
+   563→          >
+   564→            {whyChooseUs.map((item, i) => (
+   565→              <motion.div key={i} variants={itemVariants}>
+   566→                <div className="group bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full">
+   567→                  <div className="flex items-start gap-4">
+   568→                    <div
+   569→                      className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
+   570→                      style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}
+   571→                    >
+   572→                      {item.icon}
+   573→                    </div>
+   574→                    <div>
+   575→                      <h3 className="font-bold text-base mb-2" style={{ color: '#1E3A5F' }}>
+   576→                        {item.title}
+   577→                      </h3>
+   578→                      <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+   579→                    </div>
+   580→                  </div>
+   581→                </div>
+   582→              </motion.div>
+   583→            ))}
+   584→          </motion.div>
+   585→        </div>
+   586→      </section>
+   587→
+   588→      {/* ==================== PARTNERS / BRANDS SECTION ==================== */}
+   589→      <section className="py-14 sm:py-16 bg-white border-y border-gray-100">
+   590→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   591→          <motion.div
+   592→            initial={{ opacity: 0, y: 20 }}
+   593→            whileInView={{ opacity: 1, y: 0 }}
+   594→            viewport={{ once: true }}
+   595→            className="text-center mb-10"
+   596→          >
+   597→            <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+   598→              {language === 'ar' ? 'علاماتنا الشريكة' : 'Nos Marques Partenaires'}
+   599→            </h2>
+   600→            <p className="text-gray-400 text-sm">
+   601→              {language === 'ar'
+   602→                ? 'موزع حصري لأكبر العلامات العالمية'
+   603→                : 'Distributeur exclusif des plus grandes marques mondiales'
+   604→              }
+   605→            </p>
+   606→          </motion.div>
+   607→
+   608→          <motion.div
+   609→            initial={{ opacity: 0, y: 20 }}
+   610→            whileInView={{ opacity: 1, y: 0 }}
+   611→            viewport={{ once: true }}
+   612→            className="flex flex-wrap items-center justify-center gap-6 sm:gap-10"
+   613→          >
+   614→            {partnerBrands.map((brand, i) => (
+   615→              <motion.div
+   616→                key={brand.name}
+   617→                initial={{ opacity: 0, y: 15 }}
+   618→                whileInView={{ opacity: 1, y: 0 }}
+   619→                viewport={{ once: true }}
+   620→                transition={{ delay: i * 0.08 }}
+   621→                className="group flex flex-col items-center justify-center"
+   622→              >
+   623→                <div className="w-28 sm:w-32 h-16 sm:h-20 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-1 transition-all duration-300 group-hover:border-gray-200 group-hover:shadow-md grayscale hover:grayscale-0">
+   624→                  <span className="text-sm sm:text-base font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
+   625→                    {brand.name}
+   626→                  </span>
+   627→                  <span className="text-[10px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
+   628→                    {brand.subtext}
+   629→                  </span>
+   630→                </div>
+   631→              </motion.div>
+   632→            ))}
+   633→          </motion.div>
+   634→        </div>
+   635→      </section>
+   636→
+   637→      {/* ==================== CTA SECTION ==================== */}
+   638→      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+   639→        {/* Decorative dental pattern */}
+   640→        <div className="absolute inset-0 overflow-hidden">
+   641→          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
+   642→          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+   643→          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.03]"
+   644→            style={{ backgroundColor: '#F0C05A' }}
+   645→          />
+   646→          {/* Subtle tooth/toothbrush pattern */}
+   647→          <div className="absolute inset-0 opacity-[0.03]"
+   648→            style={{
+   649→              backgroundImage: 'radial-gradient(circle, #F0C05A 1.5px, transparent 1.5px)',
+   650→              backgroundSize: '48px 48px',
+   651→            }}
+   652→          />
+   653→          {/* Top accent line */}
+   654→          <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#F0C05A', opacity: 0.4 }} />
+   655→        </div>
+   656→
+   657→        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+   658→          <motion.div
+   659→            initial={{ opacity: 0, y: 30 }}
+   660→            whileInView={{ opacity: 1, y: 0 }}
+   661→            viewport={{ once: true }}
+   662→            transition={{ duration: 0.6 }}
+   663→          >
+   664→            {/* Decorative icon */}
+   665→            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
+   666→              <Stethoscope className="w-8 h-8" style={{ color: '#F0C05A' }} />
+   667→            </div>
+   668→
+   669→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+   670→              {language === 'ar'
+   671→                ? 'هل أنت مستعد لتجهيز عيادتك؟'
+   672→                : 'Prêt à équiper votre cabinet ?'
+   673→              }
+   674→            </h2>
+   675→            <p className="text-blue-200/70 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+   676→              {language === 'ar'
+   677→                ? 'احصل على عرض سعر مخصص في أقل من 24 ساعة. فريقنا متاح لمساعدتك.'
+   678→                : 'Obtenez un devis personnalisé en moins de 24h. Notre équipe est à votre disposition.'
+   679→              }
+   680→            </p>
+   681→            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+   682→              <Button
+   683→                onClick={() => navigate('/devis')}
+   684→                size="lg"
+   685→                className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all"
+   686→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   687→              >
+   688→                {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
+   689→                <ArrowRight className="w-5 h-5" />
+   690→              </Button>
+   691→              <Button
+   692→                onClick={() => navigate('/contact')}
+   693→                size="lg"
+   694→                variant="outline"
+   695→                className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10"
+   696→              >
+   697→                {language === 'ar' ? 'اتصل بنا' : 'Nous contacter'}
+   698→              </Button>
+   699→            </div>
+   700→          </motion.div>
+   701→        </div>
+   702→      </section>
+   703→    </div>
+   704→  );
+   705→}
+   706→

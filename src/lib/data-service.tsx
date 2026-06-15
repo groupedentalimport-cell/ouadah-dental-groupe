@@ -581,8 +581,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           short_description_fr: (p.short_description_fr || (p.description_fr as string || '').substring(0, 120)) as string,
           short_description_ar: (p.short_description_ar || (p.description_ar as string || '').substring(0, 120)) as string,
           category_id: p.category_id as string,
-          price: (p.price || 0) as number,
-          images: (p.images || []) as string[],
+          price: 0 as number, // Price not stored in Supabase - set on admin
+          images: ((p.images || []) as string[]).map((img: string) => {
+            // If already a full URL, return as-is
+            if (img.startsWith('http')) return img;
+            // Otherwise prefix with Supabase storage URL
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            return `${supabaseUrl}/storage/v1/object/public/product-images/${img}`;
+          }),
           specs: (p.specs || []) as Record<string, string>[],
           features_fr: (p.features_fr || []) as string[],
           features_ar: (p.features_ar || []) as string[],
@@ -623,7 +629,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           excerpt_ar: (b.excerpt_ar || '') as string,
           content_fr: (b.content_fr || '') as string,
           content_ar: (b.content_ar || '') as string,
-          image: (b.image || '') as string,
+          image: (() => {
+            const img = (b.image || '') as string;
+            if (!img || img.startsWith('http')) return img;
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            return `${supabaseUrl}/storage/v1/object/public/blog-images/${img}`;
+          })(),
           author: (b.author || 'ODG Team') as string,
           date: (b.date || b.created_at || '') as string,
           read_time: (b.read_time || 5) as number,

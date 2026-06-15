@@ -110,6 +110,13 @@ const fr: Translations = {
   'products.ref': 'Référence',
   'products.downloadPdf': 'Télécharger la fiche technique',
   'products.videos': 'Vidéos',
+  'products.priceOnQuote': 'Sur devis',
+  'products.requestQuote': 'Demander un devis',
+  'products.clearFilters': 'Réinitialiser les filtres',
+  'products.noResultsTip': 'Essayez de modifier vos critères de recherche ou de réinitialiser les filtres',
+  'products.relatedProducts': 'Produits similaires',
+  'products.description': 'Description',
+  'products.availability': 'Disponibilité',
 
   // --- BLOG ---
   'blog.title': 'Blog & Actualités',
@@ -197,6 +204,21 @@ const fr: Translations = {
   'footer.rights': 'Tous droits réservés.',
   'footer.madeWith': 'Fait avec',
   'footer.in': 'en',
+  'footer.cta': 'Équipez votre cabinet avec les meilleurs',
+  'footer.newsletter.mini': 'Inscrivez-vous à notre newsletter',
+  'footer.requestQuote': 'Demander un devis',
+
+  // --- TESTIMONIALS ---
+  'testimonials.title': 'Ce que disent nos clients',
+  'testimonials.subtitle': 'Ils nous font confiance',
+
+  // --- NEWSLETTER ---
+  'newsletter.title': 'Restez informé',
+  'newsletter.subtitle': 'Recevez nos offres exclusives et nouveautés',
+  'newsletter.placeholder': 'Votre adresse email',
+  'newsletter.subscribe': 'S\'inscrire',
+  'newsletter.privacy': 'Nous respectons votre vie privée. Désabonnement possible à tout moment.',
+  'newsletter.success': 'Merci ! Vous êtes inscrit à notre newsletter.',
 
   // --- ADMIN ---
   'admin.login.title': 'Connexion Admin',
@@ -347,6 +369,13 @@ const ar: Translations = {
   'products.ref': 'المرجع',
   'products.downloadPdf': 'تحميل البطاقة التقنية',
   'products.videos': 'فيديوهات',
+  'products.priceOnQuote': 'على أساس التسعير',
+  'products.requestQuote': 'طلب عرض سعر',
+  'products.clearFilters': 'إعادة تعيين الفلاتر',
+  'products.noResultsTip': 'حاول تعديل معايير البحث أو إعادة تعيين الفلاتر',
+  'products.relatedProducts': 'منتجات مشابهة',
+  'products.description': 'الوصف',
+  'products.availability': 'التوفر',
 
   // --- BLOG ---
   'blog.title': 'المدونة والأخبار',
@@ -434,6 +463,21 @@ const ar: Translations = {
   'footer.rights': 'جميع الحقوق محفوظة.',
   'footer.madeWith': 'صنع بـ',
   'footer.in': 'في',
+  'footer.cta': 'جهز عيادتك بأفضل المعدات',
+  'footer.newsletter.mini': 'اشترك في نشرتنا الإخبارية',
+  'footer.requestQuote': 'طلب عرض سعر',
+
+  // --- TESTIMONIALS ---
+  'testimonials.title': 'ماذا يقول عملاؤنا',
+  'testimonials.subtitle': 'يثقون بنا',
+
+  // --- NEWSLETTER ---
+  'newsletter.title': 'ابق على اطلاع',
+  'newsletter.subtitle': 'استلم عروضنا الحصرية والأخبار',
+  'newsletter.placeholder': 'عنوان بريدك الإلكتروني',
+  'newsletter.subscribe': 'اشترك',
+  'newsletter.privacy': 'نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.',
+  'newsletter.success': 'شكراً! أنت مشترك في نشرتنا الإخبارية.',
 
   // --- ADMIN ---
   'admin.login.title': 'تسجيل الدخول',
