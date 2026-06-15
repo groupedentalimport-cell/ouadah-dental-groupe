@@ -216,7 +216,7 @@ export default function ContactPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
               {t('contact.title')}
             </h1>
             <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
@@ -233,8 +233,9 @@ export default function ContactPage() {
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ delay: i * 0.08 }}
             >
               <motion.div whileHover={{ y: -5 }} className="h-full">
                 <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 h-full overflow-hidden group">
@@ -272,7 +273,8 @@ export default function ContactPage() {
           {/* Contact Form - Improved */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ delay: 0.2 }}
           >
             <Card className="border-0 shadow-sm overflow-hidden">
@@ -405,7 +407,8 @@ export default function ContactPage() {
           {/* Map & Social */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
@@ -534,7 +537,7 @@ export default function ContactPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mt-16"
         >
           <div className="text-center mb-10">

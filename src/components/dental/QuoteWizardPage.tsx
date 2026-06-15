@@ -195,10 +195,10 @@ export default function QuoteWizardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Header */}
-      <div style={{ backgroundColor: '#1E3A5F' }} className="py-10 sm:py-12">
+      <div style={{ backgroundColor: '#1E3A5F' }} className="py-10 sm:py-12 relative">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 gradient-border-animated inline-block px-5 py-1.5">
               {t('quote.title')}
             </h1>
             <p className="text-blue-200 text-sm">{t('quote.subtitle')}</p>

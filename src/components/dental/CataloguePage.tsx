@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -16,6 +16,7 @@ import {
   Check,
   FileText,
   Heart,
+  Star,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -34,6 +35,30 @@ import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/S
 import QuickViewModal from '@/components/dental/QuickViewModal';
 
 type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
+
+// Star Rating component
+function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.5;
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) stars.push('full');
+    else if (i === fullStars && hasHalf) stars.push('half');
+    else stars.push('empty');
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+        {stars.map((type, i) => (
+          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+        ))}
+      </div>
+      {count !== undefined && (
+        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+      )}
+    </div>
+  );
+}
 
 // Category accent colors for left borders
 const categoryColors = [
@@ -291,7 +316,7 @@ export default function CataloguePage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
               {t('products.title')}
             </h1>
             <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
@@ -752,25 +777,66 @@ function ProductCard({
 }) {
   const priceDisplay = formatPrice(product.price);
   const isOnQuote = !priceDisplay; // price is 0 or missing
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    // Max 5 degrees tilt
+    const rotateY = ((x - centerX) / centerX) * 5;
+    const rotateX = ((centerY - y) / centerY) * 5;
+    setTilt({ x: rotateX, y: rotateY });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+    setIsHovered(false);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.3) }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ delay: Math.min(index * 0.08, 0.3) }}
     >
-      <Card
-        className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 hover-lift"
-        onClick={() => navigate(`/product/${product.slug}`)}
+      <div
+        ref={cardRef}
+        className="tilt-card gold-bottom-hover"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onMouseEnter={handleMouseEnter}
+        style={{
+          transform: isHovered
+            ? `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1.02)`
+            : 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)',
+          boxShadow: isHovered
+            ? '0 20px 40px -12px rgba(30, 58, 95, 0.25)'
+            : undefined,
+        }}
       >
-        {/* Image area */}
-        <div className="h-48 relative overflow-hidden">
-          {product.images && product.images.length > 0 ? (
-            <img
-              src={product.images[0]}
-              alt={getProductName(product, language)}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+        <Card
+          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40"
+          onClick={() => navigate(`/product/${product.slug}`)}
+        >
+          {/* Image area */}
+          <div className="h-48 relative overflow-hidden">
+            {product.images && product.images.length > 0 ? (
+              <img
+                src={product.images[0]}
+                alt={getProductName(product, language)}
+                className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-105' : 'scale-100'}`}
+              />
           ) : (
             <div
               className="w-full h-full flex items-center justify-center"
@@ -894,6 +960,13 @@ function ProductCard({
             {getProductName(product, language)}
           </h3>
 
+          {/* Star rating */}
+          {product.rating && (
+            <div className="mb-1">
+              <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+            </div>
+          )}
+
           {/* Short description */}
           <p className="text-xs text-gray-500 dark:text-gray-300 mb-3 line-clamp-2 flex-1">
             {getProductShortDescription(product, language)}
@@ -951,7 +1024,7 @@ function ProductCard({
               {/* Add to Quote button */}
               <Button
                 size="sm"
-                className="text-xs h-8 gap-1.5 shadow-sm"
+                className="text-xs h-8 gap-1.5 shadow-sm touch-target"
                 style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -971,6 +1044,7 @@ function ProductCard({
           </div>
         </CardContent>
       </Card>
+      </div>
     </motion.div>
   );
 }

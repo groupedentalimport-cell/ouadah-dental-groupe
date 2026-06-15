@@ -91,7 +91,7 @@ export default function BlogPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
               {t('blog.title')}
             </h1>
             <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
@@ -136,7 +136,7 @@ export default function BlogPage() {
               </span>
             </div>
             <Card
-              className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer"
+              className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer"
               onClick={() => navigate(`/article/${featuredPost.slug}`)}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -210,12 +210,13 @@ export default function BlogPage() {
               <motion.div
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: i * 0.08 }}
               >
                 <motion.div whileHover={{ y: -5 }} className="h-full">
                   <Card
-                    className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col"
+                    className="group glass border-0 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col"
                     onClick={() => navigate(`/article/${post.slug}`)}
                   >
                     <div className="h-48 overflow-hidden relative" style={{ backgroundColor: '#f0f4f8' }}>

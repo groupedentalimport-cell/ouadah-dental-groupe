@@ -127,17 +127,49 @@ const categoryImages: Record<string, string> = {
   mobilier: '/categories/mobilier.jpg',
 };
 
-// Floating icon data for hero background decoration
-const floatingIcons = [
-  { icon: '🦷', x: '10%', y: '20%', delay: 0, duration: 6 },
-  { icon: '🔬', x: '85%', y: '15%', delay: 1.5, duration: 7 },
-  { icon: '⚕️', x: '75%', y: '70%', delay: 0.8, duration: 5.5 },
-  { icon: '🪥', x: '15%', y: '75%', delay: 2, duration: 8 },
-  { icon: '💊', x: '90%', y: '45%', delay: 1, duration: 6.5 },
-  { icon: '🩺', x: '5%', y: '50%', delay: 2.5, duration: 7.5 },
-  { icon: '✨', x: '50%', y: '10%', delay: 0.5, duration: 5 },
-  { icon: '✨', x: '35%', y: '80%', delay: 3, duration: 6 },
+// Floating geometric particles for hero background
+const heroParticles = [
+  // Circles
+  { shape: 'circle' as const, x: '8%', size: 6, color: '#F0C05A', opacity: 0.12, duration: 18, delay: 0 },
+  { shape: 'circle' as const, x: '92%', size: 4, color: '#1E3A5F', opacity: 0.15, duration: 22, delay: 3 },
+  { shape: 'circle' as const, x: '45%', size: 5, color: '#F0C05A', opacity: 0.08, duration: 20, delay: 7 },
+  { shape: 'circle' as const, x: '72%', size: 3, color: '#F0C05A', opacity: 0.10, duration: 16, delay: 5 },
+  // Diamonds
+  { shape: 'diamond' as const, x: '18%', size: 8, color: '#1E3A5F', opacity: 0.10, duration: 24, delay: 2 },
+  { shape: 'diamond' as const, x: '65%', size: 6, color: '#F0C05A', opacity: 0.08, duration: 20, delay: 8 },
+  { shape: 'diamond' as const, x: '88%', size: 5, color: '#1E3A5F', opacity: 0.12, duration: 26, delay: 11 },
+  // Crosses
+  { shape: 'cross' as const, x: '30%', size: 7, color: '#F0C05A', opacity: 0.10, duration: 19, delay: 4 },
+  { shape: 'cross' as const, x: '78%', size: 5, color: '#1E3A5F', opacity: 0.08, duration: 23, delay: 9 },
+  { shape: 'cross' as const, x: '52%', size: 6, color: '#F0C05A', opacity: 0.06, duration: 21, delay: 13 },
+  // Extra subtle circles
+  { shape: 'circle' as const, x: '25%', size: 3, color: '#F0C05A', opacity: 0.06, duration: 28, delay: 6 },
+  { shape: 'circle' as const, x: '58%', size: 4, color: '#1E3A5F', opacity: 0.08, duration: 25, delay: 15 },
 ];
+
+// Star Rating component
+function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.5;
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) stars.push('full');
+    else if (i === fullStars && hasHalf) stars.push('half');
+    else stars.push('empty');
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+        {stars.map((type, i) => (
+          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+        ))}
+      </div>
+      {count !== undefined && (
+        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+      )}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { t, language, isRTL } = useTranslation();
@@ -145,6 +177,7 @@ export default function HomePage() {
   const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
+  const recentlyViewedItems = useRecentlyViewed((s) => s.items);
 
   const featuredProducts = products.filter((p) => p.is_featured).slice(0, 6);
 
@@ -318,27 +351,38 @@ export default function HomePage() {
           }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
-        {/* Floating dental icons as background decoration */}
+        {/* Floating geometric particles as background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {floatingIcons.map((item, i) => (
-            <motion.div
+          {heroParticles.map((p, i) => (
+            <div
               key={i}
-              className="absolute text-3xl sm:text-4xl opacity-[0.07]"
-              style={{ left: item.x, top: item.y }}
-              animate={{
-                y: [0, -20, 0],
-                rotate: [0, 10, -10, 0],
-                opacity: [0.05, 0.1, 0.05],
-              }}
-              transition={{
-                duration: item.duration,
-                repeat: Infinity,
-                delay: item.delay,
-                ease: 'easeInOut',
+              className="hero-particle absolute"
+              style={{
+                left: p.x,
+                bottom: '-10px',
+                width: p.size,
+                height: p.size,
+                backgroundColor: p.color,
+                opacity: p.opacity,
+                borderRadius: p.shape === 'circle' ? '50%' : p.shape === 'diamond' ? '2px' : '0',
+                transform: p.shape === 'diamond' ? 'rotate(45deg)' : 'none',
+                animationDuration: `${p.duration}s`,
+                animationDelay: `${p.delay}s`,
+                ...(p.shape === 'cross' ? {
+                  backgroundColor: 'transparent',
+                  width: p.size,
+                  height: p.size,
+                  position: 'absolute' as const,
+                } : {}),
               }}
             >
-              {item.icon}
-            </motion.div>
+              {p.shape === 'cross' && (
+                <svg width={p.size} height={p.size} viewBox={`0 0 ${p.size} ${p.size}`} style={{ opacity: p.opacity / 0.1 }}>
+                  <line x1="50%" y1="0" x2="50%" y2="100%" stroke={p.color} strokeWidth="1.5" />
+                  <line x1="0" y1="50%" x2="100%" y2="50%" stroke={p.color} strokeWidth="1.5" />
+                </svg>
+              )}
+            </div>
           ))}
         </div>
         {/* Decorative shapes */}
@@ -362,7 +406,7 @@ export default function HomePage() {
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
             <Badge
-              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5 relative overflow-hidden"
+              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5 relative overflow-hidden hero-badge-responsive"
               style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
             >
               <motion.div
@@ -372,7 +416,14 @@ export default function HomePage() {
                 transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
               />
               <Sparkles className="w-3.5 h-3.5 relative z-10" />
-              <span className="relative z-10">{t('hero.subtitle')}</span>
+              <motion.span
+                className="relative z-10 inline-block overflow-hidden whitespace-nowrap"
+                initial={{ maxWidth: 0 }}
+                animate={{ maxWidth: 300 }}
+                transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
+              >
+                {t('hero.subtitle')}
+              </motion.span>
             </Badge>
           </motion.div>
 
@@ -380,7 +431,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-5"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-5 hero-title-responsive"
           >
             {t('hero.title')}
           </motion.h1>
@@ -389,7 +440,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}
-            className="text-lg sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-8 leading-relaxed"
+            className="text-lg sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-8 leading-relaxed hero-subtitle-responsive"
           >
             {t('hero.description')}
           </motion.p>
@@ -498,7 +549,7 @@ export default function HomePage() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -60, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-            className="relative"
+            className="relative glass"
           >
             {/* Gold top accent line */}
             <div className="h-[2px] w-full" style={{ backgroundColor: '#F0C05A' }} />
@@ -516,7 +567,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
                     size="sm"
-                    className="h-8 px-4 text-xs font-semibold shadow-md hover:shadow-lg transition-all"
+                    className="h-8 px-4 text-xs font-semibold shadow-md hover:shadow-lg transition-all touch-target"
                     style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                     onClick={() => navigate('/catalogue')}
                   >
@@ -524,7 +575,7 @@ export default function HomePage() {
                   </Button>
                   <button
                     onClick={dismissPromo}
-                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10 touch-target flex items-center justify-center"
                     aria-label="Fermer"
                   >
                     <X className="w-4 h-4" />
@@ -567,7 +618,7 @@ export default function HomePage() {
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: '-80px' }}
                 transition={{ delay: i * 0.1, duration: 0.4 }}
                 className="text-center group py-6 sm:py-8 px-4"
               >
@@ -585,11 +636,15 @@ export default function HomePage() {
         </div>
 
         {/* Bottom wave transition */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+        <div className="absolute bottom-0 left-0 right-0 wave-divider">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" preserveAspectRatio="none">
             <path
-              d="M0,35 C480,70 960,0 1440,35 L1440,70 L0,70 Z"
+              d="M0,30 C240,70 480,10 720,50 C960,90 1200,20 1440,40 L1440,80 L0,80 Z"
               className="fill-gray-50 dark:fill-[#0c1622]"
+            />
+            <path
+              d="M0,50 C360,20 720,70 1080,30 C1260,15 1380,45 1440,50 L1440,80 L0,80 Z"
+              className="fill-gray-50/50 dark:fill-[#0c1622]/50"
             />
           </svg>
         </div>
@@ -601,11 +656,11 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block gradient-border-animated px-6 py-2" style={{ color: '#1E3A5F' }}>
               <span className="dark:text-[#7AB0E0]">
               {t('categories.title')}
               </span>
@@ -628,7 +683,7 @@ export default function HomePage() {
             variants={sectionVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
           >
             {categories.map((cat, idx) => {
@@ -698,9 +753,10 @@ export default function HomePage() {
       </section>
 
       {/* Section divider: wave between Categories and Featured Products */}
-      <div className="bg-gray-50 dark:bg-[#0c1622]">
-        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,20 C360,50 720,0 1440,20 L1440,50 L0,50 Z" fill="var(--background)" />
+      <div className="bg-gray-50 dark:bg-[#0c1622] wave-divider">
+        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+          <path d="M0,20 C360,50 720,0 1080,30 C1260,45 1380,10 1440,20 L1440,60 L0,60 Z" className="fill-white dark:fill-[#0f1d2e]" />
+          <path d="M0,35 C480,10 960,55 1440,25 L1440,60 L0,60 Z" className="fill-white/40 dark:fill-[#0f1d2e]/40" />
         </svg>
       </div>
 
@@ -710,7 +766,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
             className="flex items-center justify-between mb-8"
           >
@@ -726,7 +782,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               onClick={() => navigate('/catalogue')}
-              className="hidden sm:flex gap-2 group"
+              className="hidden sm:flex gap-2 group touch-target"
               style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
             >
               {t('common.seeAll')}
@@ -741,8 +797,8 @@ export default function HomePage() {
                 key={product.id}
                 initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.06, duration: 0.4 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: idx * 0.08, duration: 0.4 }}
                 className="min-w-[260px] sm:min-w-0"
               >
                 <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col hover-lift" style={{ borderTop: '2px solid #F0C05A' }}>
@@ -788,6 +844,12 @@ export default function HomePage() {
                     >
                       {getProductName(product, language)}
                     </h3>
+                    {/* Star rating */}
+                    {product.rating && (
+                      <div className="mb-1">
+                        <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
                       {getProductShortDescription(product, language)}
                     </p>
@@ -858,10 +920,105 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ==================== RECENTLY VIEWED ==================== */}
+      {recentlyViewedItems.length > 0 && (
+        <section className="py-10 sm:py-12 bg-gray-50 dark:bg-[#0c1622]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center justify-between mb-6"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }} />
+                    <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                      {t('recentlyViewed.title')}
+                    </h2>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    {t('recentlyViewed.subtitle')}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Horizontal scrollable row */}
+            <div className="flex gap-4 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {recentlyViewedItems.map((item, idx) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05, duration: 0.35 }}
+                  className="min-w-[220px] sm:min-w-[240px] max-w-[260px]"
+                >
+                  <Card
+                    className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer hover-lift"
+                    style={{ borderTop: '2px solid #F0C05A' }}
+                    onClick={() => navigate(`/product/${item.slug}`)}
+                  >
+                    <div className="h-36 flex items-center justify-center relative overflow-hidden">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 text-gray-300">
+                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.06)' }}>
+                            <Stethoscope className="w-6 h-6" style={{ color: '#1E3A5F', opacity: 0.2 }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-3">
+                      <p className="font-bold text-sm mb-1 line-clamp-1 dark:text-white" style={{ color: '#1E3A5F' }}>
+                        {item.name}
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        {(item.price ?? 0) === 0 ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide dark:text-[#F0C05A]" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+                            {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
+                          </span>
+                        ) : (
+                          <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                            {(item.price ?? 0).toLocaleString('fr-DZ')} DA
+                          </span>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-[10px] h-6 px-2"
+                          style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/product/${item.slug}`);
+                          }}
+                        >
+                          {language === 'ar' ? 'عرض التفاصيل' : 'Voir les détails'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Section divider: wave between Featured Products and Why Choose Us */}
-      <div className="bg-white dark:bg-[#0f1d2e]">
-        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,30 C240,50 480,10 720,30 C960,50 1200,10 1440,30 L1440,50 L0,50 Z" fill="var(--background)" />
+      <div className="bg-white dark:bg-[#0f1d2e] wave-divider">
+        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+          <path d="M0,30 C240,50 480,10 720,30 C960,50 1200,10 1440,30 L1440,60 L0,60 Z" className="fill-gray-50 dark:fill-[#0c1622]" />
+          <path d="M0,40 C360,15 720,55 1080,25 C1260,10 1380,35 1440,40 L1440,60 L0,60 Z" className="fill-gray-50/50 dark:fill-[#0c1622]/50" />
         </svg>
       </div>
 
@@ -887,7 +1044,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
@@ -909,12 +1066,12 @@ export default function HomePage() {
             variants={sectionVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
           >
             {whyChooseUs.map((item, i) => (
               <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
-                <div className="group bg-white dark:bg-[#162236] rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 border border-gray-100 dark:border-white/5 h-full relative overflow-hidden">
+                <div className="group glass rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 h-full relative overflow-hidden">
                   {/* Accent bar at top */}
                   <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300" style={{ backgroundColor: item.accent, opacity: 0.6 }} />
                   {/* Subtle bg glow on hover */}
@@ -943,9 +1100,10 @@ export default function HomePage() {
       </section>
 
       {/* Section divider: wave between Why Choose Us and Testimonials */}
-      <div style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}>
-        <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,25 C480,0 960,40 1440,15 L1440,40 L0,40 Z" fill="#ffffff" />
+      <div style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }} className="wave-divider">
+        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+          <path d="M0,25 C360,5 720,45 1080,15 C1260,5 1380,30 1440,25 L1440,50 L0,50 Z" fill="#ffffff" className="dark:fill-[#0f1d2e]" />
+          <path d="M0,35 C480,50 960,10 1440,35 L1440,50 L0,50 Z" fill="#ffffff" className="dark:fill-[#0f1d2e]" opacity="0.5" />
         </svg>
       </div>
 
@@ -962,7 +1120,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
             className="text-center mb-8"
           >
@@ -978,7 +1136,7 @@ export default function HomePage() {
             variants={sectionVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5"
           >
             {testimonials.map((testimonial, i) => {
@@ -988,7 +1146,7 @@ export default function HomePage() {
               const avatarColors = ['#2A5F8F', '#3B8C6E', '#C0564F'];
               return (
                 <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} style={{ transform: `translateY(${i * 8}px)` }}>
-                  <Card className="h-full border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 bg-white dark:bg-[#162236] relative overflow-hidden">
+                  <Card className="h-full glass shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 relative overflow-hidden">
                     {/* Colored top accent */}
                     <div className="h-1 w-full" style={{ backgroundColor: avatarColors[i % 3] }} />
                     {/* Decorative large quote mark */}
@@ -1050,7 +1208,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.4 }}
             className="text-center mb-8"
           >
@@ -1106,9 +1264,10 @@ export default function HomePage() {
       </section>
 
       {/* Section divider: wave between brands and newsletter */}
-      <div className="bg-gray-50 dark:bg-[#0c1622]">
-        <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,20 C360,40 720,0 1440,20 L1440,40 L0,40 Z" fill="#1E3A5F" />
+      <div className="bg-gray-50 dark:bg-[#0c1622] wave-divider">
+        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+          <path d="M0,20 C360,40 720,0 1080,25 C1260,35 1380,10 1440,20 L1440,50 L0,50 Z" fill="#1E3A5F" />
+          <path d="M0,30 C480,10 960,45 1440,20 L1440,50 L0,50 Z" fill="#1E3A5F" opacity="0.5" />
         </svg>
       </div>
 
@@ -1152,7 +1311,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
           >
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
@@ -1241,7 +1400,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
           >
             {/* Decorative icon */}

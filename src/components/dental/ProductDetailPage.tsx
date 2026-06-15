@@ -28,6 +28,11 @@ import {
   ZoomIn,
   Maximize2,
   Heart,
+  Star,
+  Copy,
+  MessageCircle,
+  Facebook,
+  Linkedin,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -88,6 +93,30 @@ function ScrollProgressBar() {
         background: 'linear-gradient(90deg, #1E3A5F, #F0C05A)',
       }}
     />
+  );
+}
+
+// Star Rating component
+function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.5;
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) stars.push('full');
+    else if (i === fullStars && hasHalf) stars.push('half');
+    else stars.push('empty');
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+        {stars.map((type, i) => (
+          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+        ))}
+      </div>
+      {count !== undefined && (
+        <span className={`text-gray-500 dark:text-gray-400 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+      )}
+    </div>
   );
 }
 
@@ -542,9 +571,16 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Product Name */}
-            <h1 className="text-2xl sm:text-3xl font-bold mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {getProductName(product, language)}
             </h1>
+
+            {/* Star Rating */}
+            {product.rating && (
+              <div className="mb-3">
+                <StarRating rating={product.rating} count={product.reviewCount} size="md" />
+              </div>
+            )}
 
             {/* Brand & Reference Badges */}
             <div className="flex flex-wrap gap-2 mb-5">
@@ -714,16 +750,92 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Share & Print Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
-                  onClick={handleShare}
-                >
-                  <Share2 className="w-4 h-4" />
-                  {t('products.share')}
-                </Button>
+              <div className="flex gap-2 relative">
+                <div className="flex-1 relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
+                    onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    {t('products.share')}
+                  </Button>
+                  <AnimatePresence>
+                    {shareMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-white dark:bg-[#162236] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden"
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              const url = window.location.origin + '/#/product/' + product.slug;
+                              navigator.clipboard.writeText(url).then(() => {
+                                toast.success(t('share.linkCopied'), {
+                                  icon: <Copy className="w-4 h-4" />,
+                                });
+                              }).catch(() => {
+                                const textArea = document.createElement('textarea');
+                                textArea.value = url;
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(textArea);
+                                toast.success(t('share.linkCopied'), {
+                                  icon: <Copy className="w-4 h-4" />,
+                                });
+                              });
+                              setShareMenuOpen(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <Copy className="w-4 h-4 text-gray-400" />
+                            {t('share.copyLink')}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const url = window.location.origin + '/#/product/' + product.slug;
+                              const text = `${getProductName(product, language)} - ${url}`;
+                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                              setShareMenuOpen(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4 text-green-500" />
+                            {t('share.whatsapp')}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const url = window.location.origin + '/#/product/' + product.slug;
+                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                              setShareMenuOpen(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <Facebook className="w-4 h-4 text-blue-600" />
+                            {t('share.facebook')}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const url = window.location.origin + '/#/product/' + product.slug;
+                              const productName = getProductName(product, language);
+                              window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(productName)}`, '_blank');
+                              setShareMenuOpen(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <Linkedin className="w-4 h-4 text-blue-700" />
+                            {t('share.linkedin')}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"

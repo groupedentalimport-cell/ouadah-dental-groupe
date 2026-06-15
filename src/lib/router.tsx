@@ -27,7 +27,8 @@ export type RouteName =
   | 'admin-settings'
   | 'mentions-legales'
   | 'politique-confidentialite'
-  | 'conditions-vente';
+  | 'conditions-vente'
+  | 'promotions';
 
 interface RouteParams {
   slug?: string;
@@ -90,6 +91,7 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     'mentions-legales': 'mentions-legales',
     'politique-confidentialite': 'politique-confidentialite',
     'conditions-vente': 'conditions-vente',
+    promotions: 'promotions',
   };
 
   // Handle /product/slug patterns

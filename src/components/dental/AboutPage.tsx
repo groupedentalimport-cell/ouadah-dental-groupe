@@ -151,7 +151,7 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
               {t('about.title')}
             </h1>
             <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
@@ -166,10 +166,10 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
-          <Card className="border-0 shadow-sm overflow-hidden">
+          <Card className="glass border-0 shadow-sm overflow-hidden">
             <div className="h-1" style={{ backgroundColor: '#F0C05A' }} />
             <CardContent className="p-6 sm:p-10">
               <div className="flex items-center gap-3 mb-6">
@@ -192,7 +192,7 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
           <div className="text-center max-w-3xl mx-auto">
@@ -218,7 +218,7 @@ export default function AboutPage() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
           <div className="text-center mb-10">
@@ -279,7 +279,7 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
           <div className="text-center mb-10">
@@ -302,8 +302,8 @@ export default function AboutPage() {
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: i * 0.08 }}
                 whileHover={{ y: -5 }}
               >
                 <Card className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 text-center h-full">
@@ -330,7 +330,7 @@ export default function AboutPage() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
           <div className="text-center mb-10">
@@ -378,7 +378,7 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-16"
         >
           <Card className="border-0 shadow-sm overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
@@ -395,8 +395,8 @@ export default function AboutPage() {
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ delay: i * 0.08 }}
                     className="text-center"
                   >
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
@@ -416,7 +416,7 @@ export default function AboutPage() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-80px' }}
           className="mb-8"
         >
           <div className="text-center mb-10">

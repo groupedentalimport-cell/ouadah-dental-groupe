@@ -375,3 +375,113 @@ html.dark {
 .dark .product-img-placeholder {
   background: linear-gradient(135deg, #1a2a3f 0%, #0f1d2e 50%, #1a2a3f 100%);
 }
+
+/* Animated gradient border with animation */
+.gradient-border-animated {
+  position: relative;
+  border-radius: 0.75rem;
+}
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, #F0C05A, #1E3A5F, #F0C05A, #1E3A5F);
+  background-size: 300% 300%;
+  animation: gradient-shift 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 3D tilt card perspective container */
+.tilt-card {
+  transform-style: preserve-3d;
+  perspective: 800px;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+}
+
+/* Gold border-bottom accent on hover */
+.gold-bottom-hover {
+  position: relative;
+  border-bottom: 3px solid transparent;
+  transition: border-color 0.3s ease;
+}
+.gold-bottom-hover:hover {
+  border-bottom-color: #F0C05A;
+}
+
+/* Touch target minimum size */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Glass morphism - enhanced variant with more blur */
+.glass-strong {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.dark .glass-strong {
+  background: rgba(22, 34, 54, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hero particle animations */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.hero-particle {
+  animation: float-up linear infinite;
+  pointer-events: none;
+}
+
+/* Typing reveal animation */
+@keyframes typing-reveal {
+  from { max-width: 0; }
+  to { max-width: 100%; }
+}
+
+/* Wave divider styles */
+.wave-divider {
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+
+/* Responsive hero text sizing */
+@media (max-width: 380px) {
+  .hero-title-responsive {
+    font-size: 1.75rem !important;
+  }
+  .hero-subtitle-responsive {
+    font-size: 0.875rem !important;
+  }
+  .hero-badge-responsive {
+    font-size: 0.7rem !important;
+  }
+}

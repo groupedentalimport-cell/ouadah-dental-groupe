@@ -14,6 +14,7 @@ import ChatBubble from '@/components/dental/ChatBubble';
 import CompareView from '@/components/dental/CompareView';
 import CompareDrawer from '@/components/dental/CompareDrawer';
 import WishlistDrawer from '@/components/dental/WishlistDrawer';
+import WishlistPage from '@/components/dental/WishlistPage';
 import HomePage from '@/components/dental/HomePage';
 import CataloguePage from '@/components/dental/CataloguePage';
 import ProductDetailPage from '@/components/dental/ProductDetailPage';
@@ -22,6 +23,7 @@ import ArticleDetailPage from '@/components/dental/ArticleDetailPage';
 import AboutPage from '@/components/dental/AboutPage';
 import ContactPage from '@/components/dental/ContactPage';
 import QuoteWizardPage from '@/components/dental/QuoteWizardPage';
+import PromotionsPage from '@/components/dental/PromotionsPage';
 import {
   MentionsLegales,
   PolitiqueConfidentialite,
@@ -43,6 +45,8 @@ const routeTitles: Record<string, string> = {
   'mentions-legales': 'Mentions légales | ODG',
   'politique-confidentialite': 'Politique de confidentialité | ODG',
   'conditions-vente': 'Conditions générales de vente | ODG',
+  promotions: 'Offres & Promotions | ODG',
+  wishlist: 'Mes favoris | ODG',
 };
 
 function PageTitleUpdater() {
@@ -123,6 +127,10 @@ function AppContent() {
         return <ContactPage />;
       case 'devis':
         return <QuoteWizardPage />;
+      case 'wishlist':
+        return <WishlistPage />;
+      case 'promotions':
+        return <PromotionsPage />;
       case 'mentions-legales':
         return <MentionsLegales />;
       case 'politique-confidentialite':

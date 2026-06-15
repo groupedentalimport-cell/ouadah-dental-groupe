@@ -51,6 +51,8 @@ export interface Product {
   pdf_url: string;
   brochure_pdf: string;
   videos: { title_fr: string; title_ar: string; url: string; type: string }[];
+  rating?: number;
+  reviewCount?: number;
   created_at: string;
 }
 
@@ -251,6 +253,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.8,
+    reviewCount: 124,
     created_at: new Date().toISOString(),
   },
   {
@@ -288,6 +292,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.5,
+    reviewCount: 89,
     created_at: new Date().toISOString(),
   },
   {
@@ -325,6 +331,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.7,
+    reviewCount: 56,
     created_at: new Date().toISOString(),
   },
   {
@@ -362,6 +370,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.6,
+    reviewCount: 73,
     created_at: new Date().toISOString(),
   },
   {
@@ -399,6 +409,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.3,
+    reviewCount: 41,
     created_at: new Date().toISOString(),
   },
   {
@@ -435,6 +447,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.2,
+    reviewCount: 67,
     created_at: new Date().toISOString(),
   },
   // ---- Additional Products for Richer Demo ----
@@ -473,6 +487,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 3.9,
+    reviewCount: 38,
     created_at: new Date().toISOString(),
   },
   {
@@ -510,6 +526,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.4,
+    reviewCount: 52,
     created_at: new Date().toISOString(),
   },
   {
@@ -547,6 +565,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.9,
+    reviewCount: 31,
     created_at: new Date().toISOString(),
   },
   {
@@ -584,6 +604,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.1,
+    reviewCount: 44,
     created_at: new Date().toISOString(),
   },
   {
@@ -621,6 +643,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 3.5,
+    reviewCount: 18,
     created_at: new Date().toISOString(),
   },
   {
@@ -658,6 +682,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.0,
+    reviewCount: 29,
     created_at: new Date().toISOString(),
   },
   {
@@ -695,6 +721,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.5,
+    reviewCount: 156,
     created_at: new Date().toISOString(),
   },
   {
@@ -732,6 +760,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.3,
+    reviewCount: 22,
     created_at: new Date().toISOString(),
   },
   {
@@ -769,6 +799,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 3.8,
+    reviewCount: 14,
     created_at: new Date().toISOString(),
   },
   {
@@ -806,6 +838,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.4,
+    reviewCount: 83,
     created_at: new Date().toISOString(),
   },
   {
@@ -843,6 +877,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 3.7,
+    reviewCount: 25,
     created_at: new Date().toISOString(),
   },
   {
@@ -880,6 +916,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.6,
+    reviewCount: 62,
     created_at: new Date().toISOString(),
   },
   {
@@ -917,6 +955,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.0,
+    reviewCount: 97,
     created_at: new Date().toISOString(),
   },
   {
@@ -954,6 +994,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 3.6,
+    reviewCount: 11,
     created_at: new Date().toISOString(),
   },
   {
@@ -991,6 +1033,8 @@ const defaultProducts: Product[] = [
     pdf_url: '',
     brochure_pdf: '',
     videos: [],
+    rating: 4.8,
+    reviewCount: 36,
     created_at: new Date().toISOString(),
   },
 ];
@@ -1164,6 +1208,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           pdf_url: (p.pdf_url || '') as string,
           brochure_pdf: (p.brochure_pdf || '') as string,
           videos: (p.videos || []) as { title_fr: string; title_ar: string; url: string; type: string }[],
+          rating: (p.rating ?? undefined) as number | undefined,
+          reviewCount: (p.review_count ?? p.reviewCount ?? undefined) as number | undefined,
           created_at: p.created_at as string,
         }));
         setProducts(mapped);

@@ -387,6 +387,13 @@ const fr: Translations = {
   'products.addToQuoteSticky': 'Ajouter au devis',
   'products.downloadInfo': 'Télécharger',
 
+  // --- SHARE ---
+  'share.copyLink': 'Copier le lien',
+  'share.whatsapp': 'Partager sur WhatsApp',
+  'share.facebook': 'Partager sur Facebook',
+  'share.linkedin': 'Partager sur LinkedIn',
+  'share.linkCopied': 'Lien copié !',
+
   // --- QUICK VIEW ---
   'products.quickView': 'Aperçu rapide',
   'products.quickView.title': 'Aperçu du produit',
@@ -477,6 +484,33 @@ const fr: Translations = {
   // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
   'products.youMayAlsoLike': 'Vous aimerez aussi',
   'products.relatedCategories': 'Catégories associées',
+
+  // --- SEARCH ENHANCED ---
+  'search.recent': 'Recherches récentes',
+  'search.products': 'Produits',
+  'search.categories': 'Catégories',
+  'search.articles': 'Articles',
+  'search.noResults': 'Aucun résultat trouvé',
+  'search.browseCatalogue': 'Parcourir le catalogue',
+  'search.viewAll': 'Voir tous les résultats',
+
+  // --- RECENTLY VIEWED SECTION ---
+  'recentlyViewed.title': 'Récemment consultés',
+  'recentlyViewed.subtitle': 'Produits que vous avez récemment consultés',
+
+  // --- PROMOTIONS ---
+  'promotions.title': 'Offres & Promotions',
+  'promotions.subtitle': 'Profitez de nos offres exclusives',
+  'promotions.active': 'Offres en cours',
+  'promotions.comingSoon': 'Prochainement',
+  'promotions.save': 'ÉCONOMISEZ',
+  'promotions.free': 'GRATUIT',
+  'promotions.newsletterCta': 'Ne manquez aucune offre',
+  'promotions.newsletterSub': 'Inscrivez-vous pour être alerté des nouvelles promotions',
+  'promotions.expiresIn': 'Expire dans',
+  'promotions.claimOffer': "Profiter de l'offre",
+  'promotions.originalPrice': 'Prix original',
+  'promotions.promoPrice': 'Prix promotionnel',
 };
 
 // ============================================================
@@ -842,6 +876,13 @@ const ar: Translations = {
   'products.addToQuoteSticky': 'أضف إلى عرض السعر',
   'products.downloadInfo': 'تحميل',
 
+  // --- SHARE ---
+  'share.copyLink': 'نسخ الرابط',
+  'share.whatsapp': 'مشاركة على واتساب',
+  'share.facebook': 'مشاركة على فيسبوك',
+  'share.linkedin': 'مشاركة على لينكدإن',
+  'share.linkCopied': 'تم نسخ الرابط!',
+
   // --- QUICK VIEW ---
   'products.quickView': 'عرض سريع',
   'products.quickView.title': 'معاينة المنتج',
@@ -932,6 +973,33 @@ const ar: Translations = {
   // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
   'products.youMayAlsoLike': 'قد يعجبك أيضاً',
   'products.relatedCategories': 'الفئات المرتبطة',
+
+  // --- SEARCH ENHANCED ---
+  'search.recent': 'عمليات البحث الأخيرة',
+  'search.products': 'المنتجات',
+  'search.categories': 'الفئات',
+  'search.articles': 'المقالات',
+  'search.noResults': 'لا توجد نتائج',
+  'search.browseCatalogue': 'تصفح الكتالوج',
+  'search.viewAll': 'عرض جميع النتائج',
+
+  // --- RECENTLY VIEWED SECTION ---
+  'recentlyViewed.title': 'شوهد مؤخراً',
+  'recentlyViewed.subtitle': 'المنتجات التي شاهدتها مؤخراً',
+
+  // --- PROMOTIONS ---
+  'promotions.title': 'العروض والتخفيضات',
+  'promotions.subtitle': 'استفد من عروضنا الحصرية',
+  'promotions.active': 'العروض الحالية',
+  'promotions.comingSoon': 'قريباً',
+  'promotions.save': 'وفّر',
+  'promotions.free': 'مجاني',
+  'promotions.newsletterCta': 'لا تفوت أي عرض',
+  'promotions.newsletterSub': 'سجل ليتم إعلامك بالعروض الجديدة',
+  'promotions.expiresIn': 'ينتهي في',
+  'promotions.claimOffer': 'استفد من العرض',
+  'promotions.originalPrice': 'السعر الأصلي',
+  'promotions.promoPrice': 'السعر الترويجي',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

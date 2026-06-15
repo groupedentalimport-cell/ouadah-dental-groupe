@@ -1421,3 +1421,172 @@ Stage Summary:
 5. Product video integration (embed YouTube/Vimeo)
 6. Advanced search with autocomplete
 7. Lazy loading for product images
+
+---
+Task ID: R8-B
+Agent: Full-stack Developer
+Task: Add Wishlist full page, star ratings display, and social share buttons
+
+Work Log:
+- Added `rating` (optional number, 0-5 with half-star support) and `reviewCount` (optional number) fields to the Product interface in data-service.tsx
+- Added default ratings (3.5-4.9 range) and review counts to all 21 default products in data-service.tsx
+- Added Supabase mapping for rating/reviewCount fields in the product fetch function
+- Created `/src/components/dental/WishlistPage.tsx` with full page wishlist view including:
+  - Gradient header section with heart icon and title
+  - Responsive grid layout (1 col mobile, 2 col tablet, 3 col desktop)
+  - Product cards showing image, name, brand, category, rating, price/"Sur devis", remove button
+  - Empty state with heart icon illustration, message, and CTA to browse catalogue
+  - "Clear All" button and "Add All to Quote" button
+  - Toast notifications for all actions
+  - Full bilingual FR/AR support with RTL
+  - Dark mode compatibility
+- Updated `/src/app/page.tsx` to import WishlistPage and add `case 'wishlist'` route
+- Added `wishlist: 'Mes favoris | ODG'` to routeTitles in page.tsx
+- Added inline StarRating component to CataloguePage.tsx (below product name on each card)
+- Added inline StarRating component to ProductDetailPage.tsx (next to product name, size='md')
+- Added inline StarRating component to HomePage.tsx (on featured product cards)
+- Expanded share functionality in ProductDetailPage.tsx with dropdown/popover containing:
+  - Copy Link (copies product URL to clipboard)
+  - Share on WhatsApp (opens wa.me with product text)
+  - Share on Facebook (opens facebook sharer)
+  - Share on LinkedIn (opens linkedin share)
+  - AnimatePresence for dropdown animation
+  - Toast notification on "Copy Link" success
+- Added FR/AR i18n keys for share labels: share.copyLink, share.whatsapp, share.facebook, share.linkedin, share.linkCopied
+- All modified files pass lint with zero new errors (pre-existing Navbar.tsx errors remain)
+
+Stage Summary:
+- WishlistPage full page view created with responsive grid, empty state, clear all, add all to quote
+- Star ratings displayed on all product cards across Catalogue, Product Detail, and Home pages
+- Social share dropdown with Copy Link, WhatsApp, Facebook, LinkedIn options on Product Detail page
+- All 21 default products now have rating and reviewCount data
+- Bilingual FR/AR support with RTL for all new features
+- Dark mode compatible
+
+---
+Task ID: R8-C
+Agent: Full-stack Developer
+Task: Add enhanced search, recently viewed section, and promotions page
+
+Work Log:
+- Updated i18n.tsx with all new translation keys for search, recently viewed, and promotions (FR + AR)
+- Updated router.tsx to add 'promotions' route type and route mapping
+- Updated page.tsx to import PromotionsPage, add promotions route case, and add promotions page title
+- Rewrote Navbar.tsx with enhanced search: categorized results (Recent Searches, Products, Categories, Articles), keyboard navigation (up/down/enter), no-results state, browse catalogue link, view all results link, section separators with icons
+- Changed Navbar promotions nav link to navigate to '/promotions' instead of '/catalogue'
+- Added localStorage-based recent searches (key: odg-recent-searches, max 5)
+- Added recently viewed products section to HomePage.tsx after featured products, using useRecentlyViewed hook, horizontal scrollable carousel
+- Created PromotionsPage.tsx with gradient header, active promotions (5 hardcoded items with countdown timers, badges, prices), coming soon section (3 items), newsletter CTA
+- Fixed React Compiler lint errors: moved state initialization out of effects, removed useCallback with mismatched deps, replaced inner component with render function
+
+Stage Summary:
+- Enhanced search with categorized autocomplete (Recent Searches, Products, Categories, Articles), keyboard nav, no-results state
+- Recently Viewed section on homepage (horizontal scrollable cards, clock icon, bilingual)
+- Promotions page with active deals (countdown timers, discount badges, CTA buttons), coming soon section, newsletter signup
+- All features support dark mode and bilingual FR/AR with RTL
+- All lint checks pass cleanly
+
+---
+
+### Task ID: R8-A
+**Agent:** Frontend Styling Expert
+**Task:** Advanced styling enhancements - hero particles, 3D card effects, glassmorphism, scroll reveals, typing effect, section dividers, mobile responsive improvements
+
+**Work Log:**
+- Added new CSS utilities to globals.css: `gradient-border-animated` (animated gradient border with keyframes), `tilt-card` (3D perspective), `gold-bottom-hover` (gold border-bottom on hover), `touch-target` (min 44px), `glass-strong` (enhanced glassmorphism), `hero-particle` (float-up animation), `wave-divider`, responsive hero text media queries
+- Replaced floating emoji icons in hero with geometric particles (circles, diamonds, crosses) using pure CSS animation (float-up keyframes) with gold (#F0C05A) and navy (#1E3A5F) at low opacity
+- Added typing/reveal animation to hero subtitle badge using framer-motion `initial={{ maxWidth: 0 }}` to `animate={{ maxWidth: 300 }}` with 1.5s duration and 0.5s delay
+- Applied `glass` class to: promotional banner, "Why Choose Us" cards, testimonial cards, blog featured article card, blog post cards, about page history card
+- Added `gradient-border-animated` class to section headers: "Nos Categories" (homepage), catalogue page header, blog page header, contact page header, about page header, quote wizard page header
+- Replaced plain wave dividers with enhanced multi-layer SVG wave dividers using `preserveAspectRatio="none"` and dual-path gradients for depth
+- Added `viewport={{ once: true, margin: '-80px' }}` to all whileInView animations across all pages for proper scroll-triggered reveals
+- Changed stagger delay from 0.04-0.06s to 0.08s for card grids as specified
+- Implemented 3D tilt effect on CataloguePage ProductCard: onMouseMove calculates rotateX/rotateY (max 5deg), onMouseLeave resets, with scale(1.02) and shadow increase on hover, gold border-bottom accent appears via `gold-bottom-hover` class
+- Added image zoom on hover (scale 1.05) controlled by isHovered state for 3D tilt cards
+- Added `touch-target` class to mobile navbar buttons (search, theme, cart, hamburger menu) and promo banner buttons
+- Reduced gap in mobile navbar actions from gap-1 to gap-0.5 to prevent overflow
+- Added responsive text classes `hero-title-responsive`, `hero-subtitle-responsive`, `hero-badge-responsive` for very small screens (<380px)
+- Applied `touch-target` class to catalogue "Add to Quote" buttons
+- Changed ContactPage cards to use whileInView instead of animate for scroll-triggered reveals
+- Changed BlogPage blog cards to use whileInView with stagger instead of animate
+- All pages now have consistent scroll reveal behavior with viewport margin
+
+**Stage Summary:**
+- Hero section: geometric floating particles (circles, diamonds, crosses) with CSS float-up animation, typing effect on subtitle badge
+- Product cards: 3D tilt effect with mouse tracking (max 5deg), hover zoom, gold bottom border accent
+- Glassmorphism: applied to promo banner, Why Choose Us cards, testimonials, blog cards, about history card
+- Animated gradient borders: applied to all page section headers with shifting gradient animation
+- Wave dividers: enhanced with dual-layer SVG paths for depth and smoother transitions
+- Scroll reveals: all sections use whileInView with margin -80px and 0.08s stagger for grid items
+- Mobile: touch targets (44px min) on navbar/buttons, reduced navbar gaps, responsive hero text for small screens
+
+---
+Task ID: R8-Main
+Agent: Main Coordinator
+Task: Round 8 - Advanced styling, new features (Wishlist page, star ratings, share, search, recently viewed, promotions), QA
+
+Work Log:
+- Reviewed worklog.md to understand project history (Rounds 1-7 completed)
+- Tested all pages with agent-browser QA
+- Confirmed dev server compiling without errors
+- Launched 3 parallel subagents for R8 development:
+  - R8-A: Frontend Styling Expert - hero particles, 3D card effects, glassmorphism, scroll reveals, typing effect, section dividers, mobile responsive
+  - R8-B: Full-stack Developer - Wishlist full page, star ratings, social share buttons
+  - R8-C: Full-stack Developer - Enhanced search, recently viewed section, promotions page
+- Final QA testing across all pages (homepage, catalogue, blog, about, contact, devis, promotions, wishlist, product detail)
+- Lint check passes cleanly
+- Dev server compiles successfully
+
+Stage Summary:
+- **Styling**: Hero particles (12 geometric shapes with float-up CSS animation), 3D tilt product cards, glassmorphism on multiple sections, animated gradient borders on page headers, enhanced wave dividers, scroll reveal animations on all sections, typing effect on hero subtitle, improved mobile touch targets
+- **Wishlist Page**: Full page view with gradient header, responsive grid, product cards with ratings, empty state, Clear All + Add All to Quote buttons
+- **Star Ratings**: Added `rating` and `reviewCount` fields to Product type, StarRating component on catalogue cards, product detail page, and homepage featured products
+- **Social Share**: Dropdown on product detail with Copy Link, WhatsApp, Facebook, LinkedIn options with toast notifications
+- **Enhanced Search**: Categorized results (Products, Categories, Articles sections), recent searches in localStorage, keyboard navigation (arrow keys + Enter), no-results state
+- **Recently Viewed**: Horizontal scrollable section on homepage after featured products, uses existing useRecentlyViewed hook
+- **Promotions Page**: Full page with active promotions (5 items with countdown timers, discount badges, original/promo prices), Coming Soon section, newsletter CTA
+- **New i18n keys**: 8 search keys, 2 recently viewed keys, 12 promotions keys, 5 share keys (all FR+AR)
+- **New routes**: wishlist, promotions (with page titles)
+- All lint checks pass, dev server compiles without errors
+
+---
+
+## Current Project Status (Post Round 8)
+
+### Completed Features (Cumulative):
+- ✅ Full SPA with hash-based routing (27+ routes including wishlist, promotions)
+- ✅ Bilingual FR/AR with 350+ translation keys and full RTL support
+- ✅ Supabase integration with automatic column name mapping
+- ✅ Homepage: parallax hero, animated gradient, floating particles, trust badges, stats (animated counter), categories (hover-lift, gold badges), featured products (hover-lift, gold border, star ratings), why choose us (glassmorphism), testimonials (glassmorphism, parallax), brand marquee, newsletter, promotional banner (glassmorphism), CTA, wave dividers, scroll-down indicator, hero badge shimmer, typing effect, recently viewed section
+- ✅ Product catalogue: gradient header, visual filters, brand filter, price range filter, compare buttons, search & sort, quick view, badges, hover glow, wishlist hearts, 3D tilt cards, star ratings
+- ✅ Product detail: image gallery/lightbox with zoom, breadcrumbs, share/print (social share dropdown), recently viewed, sticky mobile quote bar, related categories, "Vous aimerez aussi", sticky sidebar, scroll progress bar, image hover glow, star ratings
+- ✅ Wishlist: Full page view + floating drawer, Zustand hook with localStorage, heart buttons, toast notifications
+- ✅ Product comparison: floating CompareDrawer, side-by-side CompareView with difference highlighting
+- ✅ Blog: gradient header, featured article, category filters, enhanced cards, glassmorphism
+- ✅ About: gradient header, 6-milestone timeline, key figures, values, team stats, certifications, glassmorphism
+- ✅ Contact: gradient header, FAQ accordion, color-coded cards, Google Maps, API backend, Call/WhatsApp buttons
+- ✅ Promotions page: active deals with countdown timers, discount badges, Coming Soon section, newsletter CTA
+- ✅ Quote wizard: visual stepper (1-2-3), confetti celebration on submit, improved form styling
+- ✅ Enhanced search: categorized results (Products, Categories, Articles), recent searches, keyboard navigation
+- ✅ Newsletter: Backend API with Supabase storage
+- ✅ Admin panel: Professional redesign with dashboard, products, blog, quotes, settings tabs
+- ✅ Dark mode: Full support across all pages with improved contrast
+- ✅ SEO: Meta tags, Open Graph, Twitter cards, JSON-LD, dynamic page titles, sitemap.xml, robots.txt
+- ✅ PWA: manifest.json, service worker with caching, Apple meta tags
+- ✅ Advanced CSS: shimmer, float, pulse-gold, glass, gradient-text, custom scrollbar, hover-lift, gold-underline, gradient-border, gradient-border-animated, product-img-placeholder, scroll-hint, badge-pulse, float-up particles, 3D tilt cards
+
+### Remaining Known Issues:
+- Hydration warning (pre-existing, related to next-themes SSR/client mismatch - non-blocking)
+- Product image upload in admin panel not yet functional (URL input only)
+- Real Supabase CRUD for products/blog in admin not implemented (uses mock data for admin)
+- Performance optimization (lazy loading images, code splitting) partially done
+
+### Next Phase Priorities:
+1. Real Supabase CRUD for products/blog in admin panel (highest priority)
+2. Product image upload in admin (file upload to Supabase Storage)
+3. Advanced search with autocomplete (fuzzy matching, typo tolerance)
+4. Product video integration (embed YouTube/Vimeo on product detail)
+5. Lazy loading for product images
+6. Performance audit (Lighthouse)
+7. Accessibility audit and improvements
+- Lint passes cleanly, build succeeds
