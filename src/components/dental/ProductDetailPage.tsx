@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -18,6 +18,13 @@ import {
   Tag,
   Hash,
   CircleDot,
+  GitCompareArrows,
+  Check,
+  Share2,
+  Printer,
+  Home,
+  ChevronDown,
+  Link2,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -26,13 +33,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { useCompare } from '@/hooks/useCompare';
 import type { Product } from '@/lib/data-service';
+import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+import { toast } from 'sonner';
 
 // Decode double-encoded HTML entities
 function decodeHtmlEntities(text: string): string {
   if (!text) return '';
   let decoded = text;
-  // Multiple passes to handle double/triple encoding
   for (let i = 0; i < 3; i++) {
     const prev = decoded;
     decoded = decoded
@@ -47,15 +56,11 @@ function decodeHtmlEntities(text: string): string {
   return decoded;
 }
 
-// Basic HTML sanitizer - removes script tags and dangerous attributes
 function sanitizeHtml(html: string): string {
   if (!html) return '';
   let sanitized = decodeHtmlEntities(html);
-  // Remove script tags and their content
   sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-  // Remove event handlers
   sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-  // Remove javascript: URLs
   sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, '');
   return sanitized;
 }
@@ -63,8 +68,9 @@ function sanitizeHtml(html: string): string {
 export default function ProductDetailPage() {
   const { t, language, isRTL } = useTranslation();
   const { params, navigate, goBack } = useRouter();
-  const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName } = useData();
+  const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
+  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
 
   const product = useMemo(
     () => products.find((p) => p.slug === params.slug),
@@ -88,6 +94,24 @@ export default function ProductDetailPage() {
 
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+
+  // Image zoom state
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const [isZooming, setIsZooming] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current) return;
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  }, []);
+
+  if (loading) {
+    return <ProductDetailPageSkeleton />;
+  }
 
   if (!product) {
     return (
@@ -118,15 +142,40 @@ export default function ProductDetailPage() {
 
   const descriptionHtml = sanitizeHtml(getProductDescription(product, language));
 
-  // Check if warranty is non-default (not just "5 ans" default)
   const hasWarranty = product.warranty && product.warranty.length > 0 && product.warranty !== '-';
   const hasInstallation = product.installation_included === true;
   const hasTraining = product.training_included === true;
   const hasDelivery = (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr) &&
     (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr).length > 0;
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t('products.linkCopied'), {
+        icon: <Link2 className="w-4 h-4" />,
+      });
+    } catch {
+      // Fallback
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success(t('products.linkCopied'), {
+        icon: <Link2 className="w-4 h-4" />,
+      });
+    }
+    setShareMenuOpen(false);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 pt-20 animate-in fade-in duration-500">
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxOpen && images.length > 0 && (
@@ -179,6 +228,34 @@ export default function ProductDetailPage() {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumbs */}
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-2 text-sm text-gray-400 mb-6 flex-wrap"
+        >
+          <button onClick={() => navigate('/')} className="hover:text-[#1E3A5F] transition-colors flex items-center gap-1">
+            <Home className="w-3.5 h-3.5" />
+            {t('products.breadcrumb.home')}
+          </button>
+          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+          <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] transition-colors">
+            {t('products.title')}
+          </button>
+          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+          {category && (
+            <>
+              <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] transition-colors">
+                {getCategoryName(category, language)}
+              </button>
+              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+            </>
+          )}
+          <span className="text-gray-500 font-medium truncate max-w-[200px]">
+            {getProductName(product, language)}
+          </span>
+        </motion.div>
+
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -196,20 +273,28 @@ export default function ProductDetailPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Image Gallery */}
+          {/* Image Gallery with Zoom */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
             <div
-              className="aspect-square rounded-2xl overflow-hidden bg-white shadow-sm cursor-pointer"
+              ref={imageRef}
+              className="aspect-square rounded-2xl overflow-hidden bg-white shadow-sm cursor-crosshair relative"
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              onMouseMove={handleMouseMove}
               onClick={() => images.length > 0 && setLightboxOpen(true)}
             >
               {images.length > 0 ? (
                 <img
                   src={images[currentImage]}
                   alt={getProductName(product, language)}
-                  className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-300"
+                  className="w-full h-full object-cover transition-transform duration-200"
+                  style={{
+                    transform: isZooming ? 'scale(1.5)' : 'scale(1)',
+                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  }}
                 />
               ) : (
                 <div
@@ -224,6 +309,13 @@ export default function ProductDetailPage() {
                       {language === 'ar' ? 'صورة غير متوفرة' : 'Image non disponible'}
                     </p>
                   </div>
+                </div>
+              )}
+              {/* Zoom indicator */}
+              {isZooming && images.length > 0 && (
+                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/50 text-white text-xs flex items-center gap-1 pointer-events-none">
+                  <Share2 className="w-3 h-3 rotate-90" />
+                  {language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir'}
                 </div>
               )}
             </div>
@@ -249,22 +341,6 @@ export default function ProductDetailPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-              <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] transition-colors">
-                {t('products.title')}
-              </button>
-              <span>/</span>
-              {category && (
-                <>
-                  <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] transition-colors">
-                    {getCategoryName(category, language)}
-                  </button>
-                  <span>/</span>
-                </>
-              )}
-            </div>
-
             {/* Status Badges */}
             <div className="flex flex-wrap gap-2 mb-4">
               {product.is_new && (
@@ -345,7 +421,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Service Badges - only show if meaningful */}
+            {/* Service Badges */}
             {(hasWarranty || hasInstallation || hasTraining || hasDelivery) && (
               <div className="flex flex-wrap gap-2 mb-6">
                 {hasWarranty && (
@@ -375,25 +451,80 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Add to Quote / Request Quote */}
+            {/* Action Buttons */}
             <div className="space-y-3">
-              <Button
-                size="lg"
-                className="w-full h-12 text-base font-semibold shadow-lg"
-                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                onClick={() => {
-                  addItem({
-                    id: product.id,
-                    slug: product.slug,
-                    name: getProductName(product, language),
-                    price: product.price,
-                    image: product.images?.[0] || '',
-                  });
-                }}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {t('products.addQuote')}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  className="flex-1 h-12 text-base font-semibold shadow-lg"
+                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                  onClick={() => {
+                    addItem({
+                      id: product.id,
+                      slug: product.slug,
+                      name: getProductName(product, language),
+                      price: product.price,
+                      image: product.images?.[0] || '',
+                    });
+                  }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {t('products.addQuote')}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className={`h-12 px-4 font-semibold ${
+                    isInCompare(product.id)
+                      ? 'bg-amber-50 border-amber-400 text-amber-700 hover:bg-amber-100'
+                      : 'border-gray-300 text-gray-500 hover:border-amber-400 hover:text-amber-600'
+                  }`}
+                  disabled={!isInCompare(product.id) && productIds.length >= 4}
+                  title={
+                    isInCompare(product.id)
+                      ? t('compare.remove')
+                      : productIds.length >= 4
+                      ? t('compare.maxReached')
+                      : t('compare.add')
+                  }
+                  onClick={() => {
+                    if (isInCompare(product.id)) {
+                      removeCompareProduct(product.id);
+                    } else {
+                      addCompareProduct(product.id);
+                    }
+                  }}
+                >
+                  {isInCompare(product.id) ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <GitCompareArrows className="w-5 h-5" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Share & Print Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2 text-gray-600"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-4 h-4" />
+                  {t('products.share')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2 text-gray-600"
+                  onClick={handlePrint}
+                >
+                  <Printer className="w-4 h-4" />
+                  {t('products.print')}
+                </Button>
+              </div>
+
               {isOnQuote && (
                 <Button
                   size="lg"
@@ -418,7 +549,8 @@ export default function ProductDetailPage() {
             viewport={{ once: true }}
             className="mt-12"
           >
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
                   {t('products.features')}
@@ -444,7 +576,8 @@ export default function ProductDetailPage() {
             viewport={{ once: true }}
             className="mt-8"
           >
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1" style={{ backgroundColor: '#2A5F8F' }} />
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
                   {t('products.specs')}
@@ -474,7 +607,8 @@ export default function ProductDetailPage() {
             viewport={{ once: true }}
             className="mt-8"
           >
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="h-1" style={{ backgroundColor: '#3A7CB8' }} />
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
                   {t('products.description')}
@@ -496,7 +630,7 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
 
-        {/* Related Products */}
+        {/* Related Products - Prominent heading */}
         {relatedProducts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -504,9 +638,12 @@ export default function ProductDetailPage() {
             viewport={{ once: true }}
             className="mt-12"
           >
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
-              {t('products.relatedProducts')}
-            </h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+              <h2 className="text-xl font-bold" style={{ color: '#1E3A5F' }}>
+                {t('products.relatedProducts')}
+              </h2>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {relatedProducts.map((rp) => (
                 <Card
@@ -551,6 +688,44 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Sticky Add-to-Quote Bar on Mobile */}
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+      >
+        <div className="px-4 py-3 flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold truncate" style={{ color: '#1E3A5F' }}>
+              {getProductName(product, language)}
+            </p>
+            {priceDisplay ? (
+              <p className="text-xs font-semibold" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
+            ) : (
+              <p className="text-xs font-medium" style={{ color: '#F0C05A' }}>
+                {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+              </p>
+            )}
+          </div>
+          <Button
+            className="h-10 px-5 font-semibold shadow-md shrink-0"
+            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+            onClick={() => {
+              addItem({
+                id: product.id,
+                slug: product.slug,
+                name: getProductName(product, language),
+                price: product.price,
+                image: product.images?.[0] || '',
+              });
+            }}
+          >
+            <ShoppingCart className="w-4 h-4 mr-1.5" />
+            {t('products.addToQuoteSticky')}
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 }

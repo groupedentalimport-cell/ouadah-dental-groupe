@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Menu, X, ShoppingCart, ChevronDown } from 'lucide-react';
+import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useSiteSettings } from '@/lib/site-settings';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { useData } from '@/lib/data-service';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -14,17 +15,21 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 export default function Navbar() {
   const { t, language, setLanguage, isRTL } = useTranslation();
   const { navigate } = useRouter();
+  const { route } = useRouter();
   const { getText } = useSiteSettings();
+  const { products, getProductName } = useData();
   const totalItems = useQuoteCart((s) => s.totalItems());
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -36,15 +41,36 @@ export default function Navbar() {
   const logoUrl = getText('logo_url');
 
   const navLinks = [
-    { label: t('nav.catalogue'), path: '/catalogue' },
-    { label: t('nav.blog'), path: '/blog' },
-    { label: t('nav.about'), path: '/about' },
-    { label: t('nav.contact'), path: '/contact' },
+    { label: t('nav.catalogue'), path: '/catalogue', routeName: 'catalogue' },
+    { label: t('nav.blog'), path: '/blog', routeName: 'blog' },
+    { label: t('nav.about'), path: '/about', routeName: 'about' },
+    { label: t('nav.contact'), path: '/contact', routeName: 'contact' },
   ];
+
+  // Search results
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim() || searchQuery.length < 2) return [];
+    const q = searchQuery.toLowerCase();
+    return products
+      .filter((p) => {
+        const name = getProductName(p, language).toLowerCase();
+        const brand = (p.brand || '').toLowerCase();
+        return name.includes(q) || brand.includes(q);
+      })
+      .slice(0, 5);
+  }, [searchQuery, products, language, getProductName]);
 
   const handleNav = (path: string) => {
     navigate(path);
     setMobileOpen(false);
+    setSearchOpen(false);
+    setSearchQuery('');
+  };
+
+  const handleSearchSelect = (slug: string) => {
+    navigate(`/product/${slug}`);
+    setSearchOpen(false);
+    setSearchQuery('');
   };
 
   return (
@@ -54,8 +80,8 @@ export default function Navbar() {
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100'
-          : 'bg-white/80 backdrop-blur-sm'
+          ? 'bg-white/90 backdrop-blur-xl shadow-lg border-b border-gray-100/50'
+          : 'bg-white/70 backdrop-blur-md'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,21 +115,47 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav with active indicator */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.path}
-                onClick={() => handleNav(link.path)}
-                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#1E3A5F] rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                {link.label}
-              </button>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = route === link.routeName;
+              return (
+                <button
+                  key={link.path}
+                  onClick={() => handleNav(link.path)}
+                  className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-[#1E3A5F]'
+                      : 'text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-50'
+                  }`}
+                >
+                  {link.label}
+                  {/* Gold accent line under active item */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavIndicator"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+                      style={{ backgroundColor: '#F0C05A', width: '60%' }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Search Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="text-gray-600 hover:text-[#1E3A5F] relative"
+            >
+              <Search className="w-4.5 h-4.5" />
+            </Button>
+
             {/* Language Switcher */}
             <Button
               variant="ghost"
@@ -117,7 +169,7 @@ export default function Navbar() {
               </span>
             </Button>
 
-            {/* Cart */}
+            {/* Cart with badge */}
             <Button
               variant="ghost"
               size="icon"
@@ -126,28 +178,46 @@ export default function Navbar() {
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <Badge
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1"
                 >
-                  {totalItems}
-                </Badge>
+                  <Badge
+                    className="h-5 min-w-[20px] flex items-center justify-center p-0 text-[10px] font-bold"
+                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                  >
+                    {totalItems}
+                  </Badge>
+                </motion.div>
               )}
             </Button>
 
             {/* CTA */}
-            <Button
-              onClick={() => handleNav('/devis')}
-              size="sm"
-              className="text-white font-semibold shadow-md hover:shadow-lg transition-all"
-              style={{ backgroundColor: '#1E3A5F' }}
-            >
-              {t('nav.quote')}
-            </Button>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button
+                onClick={() => handleNav('/devis')}
+                size="sm"
+                className="text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                style={{ backgroundColor: '#1E3A5F' }}
+              >
+                {t('nav.quote')}
+              </Button>
+            </motion.div>
           </div>
 
           {/* Mobile Menu */}
           <div className="flex md:hidden items-center gap-2">
+            {/* Search Toggle Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="text-gray-600"
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+
             {/* Cart Mobile */}
             <Button
               variant="ghost"
@@ -186,15 +256,28 @@ export default function Navbar() {
                 </SheetHeader>
 
                 <div className="flex flex-col gap-1 px-4 mt-4">
-                  {navLinks.map((link) => (
-                    <button
-                      key={link.path}
-                      onClick={() => handleNav(link.path)}
-                      className="w-full text-left px-4 py-3 text-base font-medium text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-50 rounded-lg transition-colors"
-                    >
-                      {link.label}
-                    </button>
-                  ))}
+                  {navLinks.map((link, i) => {
+                    const isActive = route === link.routeName;
+                    return (
+                      <motion.button
+                        key={link.path}
+                        onClick={() => handleNav(link.path)}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors flex items-center gap-3 ${
+                          isActive
+                            ? 'text-[#1E3A5F] bg-[#1E3A5F]/5'
+                            : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-50'
+                        }`}
+                      >
+                        {isActive && (
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+                        )}
+                        {link.label}
+                      </motion.button>
+                    );
+                  })}
 
                   <div className="my-3 border-t border-gray-100" />
 
@@ -232,6 +315,78 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Search Bar Dropdown */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-t border-gray-100 bg-white/95 backdrop-blur-xl"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+              <div className="relative max-w-xl mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('nav.searchPlaceholder')}
+                  className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 focus:border-[#1E3A5F] focus:ring-[#1E3A5F]/20"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Search Results Dropdown */}
+                <AnimatePresence>
+                  {searchResults.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50"
+                    >
+                      {searchResults.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => handleSearchSelect(product.slug)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                            {product.images?.[0] ? (
+                              <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: '#1E3A5F10', color: '#1E3A5F' }}>
+                                ODG
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate" style={{ color: '#1E3A5F' }}>
+                              {getProductName(product, language)}
+                            </p>
+                            {product.brand && (
+                              <p className="text-xs text-gray-400">{product.brand}</p>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }

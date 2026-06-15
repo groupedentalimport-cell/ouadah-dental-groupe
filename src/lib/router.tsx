@@ -6,6 +6,7 @@ export type RouteName =
   | 'home'
   | 'catalogue'
   | 'product'
+  | 'compare'
   | 'blog'
   | 'article'
   | 'about'
@@ -65,6 +66,7 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     '': 'home',
     catalogue: 'catalogue',
     product: 'product',
+    compare: 'compare',
     blog: 'blog',
     article: 'article',
     about: 'about',

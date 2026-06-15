@@ -118,6 +118,33 @@ const fr: Translations = {
   'products.description': 'Description',
   'products.availability': 'Disponibilité',
 
+  // --- COMPARE ---
+  'compare.title': 'Comparaison de produits',
+  'compare.add': 'Comparer',
+  'compare.added': 'Ajouté',
+  'compare.remove': 'Retirer',
+  'compare.clear': 'Vider la liste',
+  'compare.now': 'Comparer maintenant',
+  'compare.empty': 'Aucun produit à comparer',
+  'compare.maxReached': 'Maximum atteint (4)',
+  'compare.selectMin': 'Sélectionnez au moins 2 produits',
+  'compare.specs': 'Caractéristiques',
+  'compare.features': 'Points forts',
+  'compare.brand': 'Marque',
+  'compare.price': 'Prix',
+  'compare.stock': 'Disponibilité',
+  'compare.warranty': 'Garantie',
+  'compare.image': 'Image',
+  'compare.name': 'Nom',
+  'compare.origin': 'Origine',
+  'compare.ref': 'Référence',
+  'compare.category': 'Catégorie',
+  'compare.backToCatalogue': 'Retour au catalogue',
+  'compare.items': 'produit(s) sélectionné(s)',
+  'compare.highlightDiff': 'Différences',
+  'compare.noSpecs': 'Aucune spécification',
+  'compare.noFeatures': 'Aucun point fort',
+
   // --- BLOG ---
   'blog.title': 'Blog & Actualités',
   'blog.subtitle': 'Restez informé des dernières tendances en équipement dentaire',
@@ -281,6 +308,69 @@ const fr: Translations = {
   'common.or': 'ou',
   'common.and': 'et',
   'common.da': 'DA',
+
+  // --- ABOUT MILESTONES ---
+  'about.milestones.title': 'Nos Étapes Clés',
+  'about.milestones.2009': 'Création d\'ODG à Oran',
+  'about.milestones.2009.desc': 'Fondation de la société avec 3 employés et une vision claire.',
+  'about.milestones.2012': 'Partenariat Owandy',
+  'about.milestones.2012.desc': 'Premier partenariat exclusif avec une marque internationale.',
+  'about.milestones.2015': 'Couverture nationale',
+  'about.milestones.2015.desc': 'Expansion dans les 48 wilayas avec un réseau de techniciens.',
+  'about.milestones.2018': 'Centre de formation',
+  'about.milestones.2018.desc': 'Ouverture du centre de formation continue pour les praticiens.',
+  'about.milestones.2021': '15+ marques partenaires',
+  'about.milestones.2021.desc': 'Élargissement du portefeuille avec les leaders mondiaux.',
+  'about.milestones.2024': 'Nouveau show-room',
+  'about.milestones.2024.desc': 'Inauguration d\'un espace de démonstration de 500m².',
+
+  // --- ABOUT KEY FIGURES ---
+  'about.figures.title': 'ODG en Chiffres',
+
+  // --- ABOUT CERTIFICATIONS ---
+  'about.certifications.title': 'Certifications & Accréditations',
+  'about.certifications.iso': 'ISO 9001:2015',
+  'about.certifications.iso.desc': 'Système de management de la qualité certifié.',
+  'about.certifications.ce': 'Marquage CE',
+  'about.certifications.ce.desc': 'Conformité aux normes européennes.',
+  'about.certifications.fda': 'Enregistré FDA',
+  'about.certifications.fda.desc': 'Conformité aux réglementations américaines.',
+
+  // --- CONTACT FAQ ---
+  'contact.faq.title': 'Questions Fréquentes',
+  'contact.faq.q1': 'Quels sont vos délais de livraison ?',
+  'contact.faq.a1': 'Nos délais de livraison varient de 48h à 2 semaines selon le produit et la wilaya. Les produits en stock sont livrés sous 48h.',
+  'contact.faq.q2': 'Proposez-vous l\'installation des équipements ?',
+  'contact.faq.a2': 'Oui, l\'installation est incluse pour tous les équipements. Nos techniciens certifiés se déplacent dans tout le territoire.',
+  'contact.faq.q3': 'Comment demander un devis ?',
+  'contact.faq.a3': 'Vous pouvez demander un devis directement sur notre site via le formulaire de devis, par téléphone ou par email. Réponse sous 24h.',
+  'contact.faq.q4': 'Quelle est votre politique de garantie ?',
+  'contact.faq.a4': 'Tous nos équipements sont garantis minimum 2 ans, avec extension possible. Le SAV est assuré sur tout le territoire algérien.',
+  'contact.faq.q5': 'Proposez-vous des formations ?',
+  'contact.faq.a5': 'Oui, nous organisons des formations régulières dans notre centre à Oran et des sessions pratiques dans les cliniques.',
+  'contact.faq.q6': 'Quels modes de paiement acceptez-vous ?',
+  'contact.faq.a6': 'Nous acceptons les virements bancaires, chèques et facilités de paiement en 3 fois pour les professionnels.',
+
+  // --- BLOG ENHANCED ---
+  'blog.featured': 'Article à la une',
+  'blog.allCategories': 'Toutes les catégories',
+  'blog.readTimeBadge': 'min',
+  'blog.category': 'Catégorie',
+
+  // --- FOOTER ENHANCED ---
+  'footer.social': 'Suivez-nous',
+  'footer.newsletter.title': 'Newsletter',
+
+  // --- NAVBAR ENHANCED ---
+  'nav.searchPlaceholder': 'Rechercher un produit...',
+
+  // --- PRODUCT DETAIL ENHANCED ---
+  'products.share': 'Partager',
+  'products.linkCopied': 'Lien copié !',
+  'products.print': 'Imprimer',
+  'products.breadcrumb.home': 'Accueil',
+  'products.addToQuoteSticky': 'Ajouter au devis',
+  'products.downloadInfo': 'Télécharger',
 };
 
 // ============================================================
@@ -376,6 +466,33 @@ const ar: Translations = {
   'products.relatedProducts': 'منتجات مشابهة',
   'products.description': 'الوصف',
   'products.availability': 'التوفر',
+
+  // --- COMPARE ---
+  'compare.title': 'مقارنة المنتجات',
+  'compare.add': 'مقارنة',
+  'compare.added': 'تمت الإضافة',
+  'compare.remove': 'إزالة',
+  'compare.clear': 'تفريغ القائمة',
+  'compare.now': 'مقارنة الآن',
+  'compare.empty': 'لا توجد منتجات للمقارنة',
+  'compare.maxReached': 'الحد الأقصى (4)',
+  'compare.selectMin': 'اختر منتجين على الأقل',
+  'compare.specs': 'المواصفات',
+  'compare.features': 'نقاط القوة',
+  'compare.brand': 'العلامة التجارية',
+  'compare.price': 'السعر',
+  'compare.stock': 'التوفر',
+  'compare.warranty': 'الضمان',
+  'compare.image': 'الصورة',
+  'compare.name': 'الاسم',
+  'compare.origin': 'المنشأ',
+  'compare.ref': 'المرجع',
+  'compare.category': 'الفئة',
+  'compare.backToCatalogue': 'العودة إلى الكتالوج',
+  'compare.items': 'منتج(ات) محدد(ة)',
+  'compare.highlightDiff': 'الاختلافات',
+  'compare.noSpecs': 'لا توجد مواصفات',
+  'compare.noFeatures': 'لا توجد نقاط قوة',
 
   // --- BLOG ---
   'blog.title': 'المدونة والأخبار',
@@ -540,6 +657,69 @@ const ar: Translations = {
   'common.or': 'أو',
   'common.and': 'و',
   'common.da': 'د.ج',
+
+  // --- ABOUT MILESTONES ---
+  'about.milestones.title': 'محطاتنا الرئيسية',
+  'about.milestones.2009': 'إنشاء ODG في وهران',
+  'about.milestones.2009.desc': 'تأسيس الشركة بـ 3 موظفين ورؤية واضحة.',
+  'about.milestones.2012': 'شراكة مع Owandy',
+  'about.milestones.2012.desc': 'أول شراكة حصرية مع علامة تجارية دولية.',
+  'about.milestones.2015': 'تغطية وطنية',
+  'about.milestones.2015.desc': 'التوسع في 48 ولاية مع شبكة من الفنيين.',
+  'about.milestones.2018': 'مركز التكوين',
+  'about.milestones.2018.desc': 'افتتاح مركز التكوين المستمر للممارسين.',
+  'about.milestones.2021': '15+ علامة تجارية شريكة',
+  'about.milestones.2021.desc': 'توسيع المحفظة مع قادة السوق العالميين.',
+  'about.milestones.2024': 'صالة عرض جديدة',
+  'about.milestones.2024.desc': 'افتتاح مساحة عرض بمساحة 500م².',
+
+  // --- ABOUT KEY FIGURES ---
+  'about.figures.title': 'ODG بالأرقام',
+
+  // --- ABOUT CERTIFICATIONS ---
+  'about.certifications.title': 'الشهادات والاعتمادات',
+  'about.certifications.iso': 'ISO 9001:2015',
+  'about.certifications.iso.desc': 'نظام إدارة الجودة معتمد.',
+  'about.certifications.ce': 'علامة CE',
+  'about.certifications.ce.desc': ' conformity مع المعايير الأوروبية.',
+  'about.certifications.fda': 'مسجل FDA',
+  'about.certifications.fda.desc': 'الامتثال للوائح الأمريكية.',
+
+  // --- CONTACT FAQ ---
+  'contact.faq.title': 'الأسئلة المتكررة',
+  'contact.faq.q1': 'ما هي آجال التوصيل لديكم؟',
+  'contact.faq.a1': 'تختلف آجال التوصيل من 48 ساعة إلى أسبوعين حسب المنتج والولاية. المنتجات المتوفرة تُسلَّم خلال 48 ساعة.',
+  'contact.faq.q2': 'هل تقدمون تركيب المعدات؟',
+  'contact.faq.a2': 'نعم، التركيب مشمول لجميع المعدات. فنيونا المعتمدون يتنقلون في جميع أنحاء الوطن.',
+  'contact.faq.q3': 'كيف أطلب عرض سعر؟',
+  'contact.faq.a3': 'يمكنك طلب عرض سعر مباشرة على موقعنا عبر نموذج الطلب، بالهاتف أو بالبريد الإلكتروني. الرد خلال 24 ساعة.',
+  'contact.faq.q4': 'ما هي سياسة الضمان لديكم؟',
+  'contact.faq.a4': 'جميع معداتنا مضمونة لمدة سنتين كحد أدنى، مع إمكانية التمديد. ما بعد البيع مضمون في جميع أنحاء الجزائر.',
+  'contact.faq.q5': 'هل تقدمون دورات تكوينية؟',
+  'contact.faq.a5': 'نعم، ننظم دورات تكوينية منتظمة في مركزنا بوهران وجلسات عملية في العيادات.',
+  'contact.faq.q6': 'ما هي طرق الدفع المقبولة؟',
+  'contact.faq.a6': 'نقبل التحويلات المصرفية والشيكات وتسهيلات الدفع على 3 دفعات للمهنيين.',
+
+  // --- BLOG ENHANCED ---
+  'blog.featured': 'مقال مميز',
+  'blog.allCategories': 'جميع الفئات',
+  'blog.readTimeBadge': 'دقيقة',
+  'blog.category': 'الفئة',
+
+  // --- FOOTER ENHANCED ---
+  'footer.social': 'تابعنا',
+  'footer.newsletter.title': 'النشرة الإخبارية',
+
+  // --- NAVBAR ENHANCED ---
+  'nav.searchPlaceholder': 'ابحث عن منتج...',
+
+  // --- PRODUCT DETAIL ENHANCED ---
+  'products.share': 'مشاركة',
+  'products.linkCopied': 'تم نسخ الرابط!',
+  'products.print': 'طباعة',
+  'products.breadcrumb.home': 'الرئيسية',
+  'products.addToQuoteSticky': 'أضف إلى عرض السعر',
+  'products.downloadInfo': 'تحميل',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

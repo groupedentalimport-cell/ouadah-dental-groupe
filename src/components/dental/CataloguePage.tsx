@@ -12,6 +12,8 @@ import {
   X,
   RotateCcw,
   Stethoscope,
+  GitCompareArrows,
+  Check,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -21,7 +23,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { useCompare } from '@/hooks/useCompare';
 import type { Product } from '@/lib/data-service';
+import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
 
 type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
 
@@ -34,8 +38,9 @@ const categoryColors = [
 export default function CataloguePage() {
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
-  const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
+  const { categories, products, getCategoryName, getProductName, getProductShortDescription, loading } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
+  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -111,6 +116,7 @@ export default function CataloguePage() {
   };
 
   return (
+    <ContentWithLoading loading={loading} skeleton={<CataloguePageSkeleton />}>
     <div className="min-h-screen bg-gray-50 pt-20">
       {/* Header Banner */}
       <div
@@ -416,6 +422,10 @@ export default function CataloguePage() {
                     t={t}
                     navigate={navigate}
                     addItem={addItem}
+                    isInCompare={isInCompare}
+                    addCompareProduct={addCompareProduct}
+                    removeCompareProduct={removeCompareProduct}
+                    compareFull={productIds.length >= 4}
                   />
                 ))}
               </div>
@@ -424,6 +434,7 @@ export default function CataloguePage() {
         </div>
       </div>
     </div>
+    </ContentWithLoading>
   );
 }
 
@@ -437,6 +448,10 @@ function ProductCard({
   t,
   navigate,
   addItem,
+  isInCompare,
+  addCompareProduct,
+  removeCompareProduct,
+  compareFull,
 }: {
   product: Product;
   index: number;
@@ -447,6 +462,10 @@ function ProductCard({
   t: (k: string) => string;
   navigate: (p: string) => void;
   addItem: (item: any) => void;
+  isInCompare: (id: string) => boolean;
+  addCompareProduct: (id: string) => void;
+  removeCompareProduct: (id: string) => void;
+  compareFull: boolean;
 }) {
   const priceDisplay = formatPrice(product.price);
   const isOnQuote = !priceDisplay; // price is 0 or missing
@@ -565,36 +584,73 @@ function ProductCard({
 
           {/* Price + Action row */}
           <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-            {priceDisplay ? (
-              <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
-                {priceDisplay}
-              </span>
-            ) : (
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded"
-                style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+            <div className="flex-1 min-w-0">
+              {priceDisplay ? (
+                <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                  {priceDisplay}
+                </span>
+              ) : (
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded"
+                  style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+                >
+                  {t('products.priceOnQuote')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {/* Compare button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className={`text-xs h-8 w-8 p-0 border-gray-200 ${
+                  isInCompare(product.id)
+                    ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                    : 'text-gray-400 hover:text-amber-600 hover:border-amber-300'
+                }`}
+                disabled={!isInCompare(product.id) && compareFull}
+                title={
+                  isInCompare(product.id)
+                    ? t('compare.remove')
+                    : compareFull
+                    ? t('compare.maxReached')
+                    : t('compare.add')
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isInCompare(product.id)) {
+                    removeCompareProduct(product.id);
+                  } else {
+                    addCompareProduct(product.id);
+                  }
+                }}
               >
-                {t('products.priceOnQuote')}
-              </span>
-            )}
-            <Button
-              size="sm"
-              className="text-xs h-8 gap-1.5 shadow-sm"
-              style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                addItem({
-                  id: product.id,
-                  slug: product.slug,
-                  name: getProductName(product, language),
-                  price: product.price,
-                  image: product.images?.[0] || '',
-                });
-              }}
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              {t('products.addQuote')}
-            </Button>
+                {isInCompare(product.id) ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <GitCompareArrows className="w-3.5 h-3.5" />
+                )}
+              </Button>
+              {/* Add to Quote button */}
+              <Button
+                size="sm"
+                className="text-xs h-8 gap-1.5 shadow-sm"
+                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addItem({
+                    id: product.id,
+                    slug: product.slug,
+                    name: getProductName(product, language),
+                    price: product.price,
+                    image: product.images?.[0] || '',
+                  });
+                }}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                {t('products.addQuote')}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

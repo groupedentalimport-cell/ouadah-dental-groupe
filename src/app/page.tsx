@@ -10,6 +10,8 @@ import Navbar from '@/components/dental/Navbar';
 import Footer from '@/components/dental/Footer';
 import WhatsAppBubble from '@/components/dental/WhatsAppBubble';
 import ChatBubble from '@/components/dental/ChatBubble';
+import CompareView from '@/components/dental/CompareView';
+import CompareDrawer from '@/components/dental/CompareDrawer';
 import HomePage from '@/components/dental/HomePage';
 import CataloguePage from '@/components/dental/CataloguePage';
 import ProductDetailPage from '@/components/dental/ProductDetailPage';
@@ -39,6 +41,8 @@ function AppContent() {
         return <CataloguePage />;
       case 'product':
         return <ProductDetailPage />;
+      case 'compare':
+        return <CompareView />;
       case 'blog':
         return <BlogPage />;
       case 'article':
@@ -68,6 +72,7 @@ function AppContent() {
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <WhatsAppBubble />}
       {!isAdminRoute && <ChatBubble />}
+      {!isAdminRoute && <CompareDrawer />}
     </div>
   );
 }

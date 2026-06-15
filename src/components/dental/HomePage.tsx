@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
   Shield,
@@ -25,6 +25,10 @@ import {
   Star,
   Mail,
   CheckCircle,
+  Clock,
+  Sparkles,
+  ChevronRight,
+  Play,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -83,6 +87,18 @@ const categoryImages: Record<string, string> = {
   mobilier: '/categories/mobilier.jpg',
 };
 
+// Floating icon data for hero background decoration
+const floatingIcons = [
+  { icon: '🦷', x: '10%', y: '20%', delay: 0, duration: 6 },
+  { icon: '🔬', x: '85%', y: '15%', delay: 1.5, duration: 7 },
+  { icon: '⚕️', x: '75%', y: '70%', delay: 0.8, duration: 5.5 },
+  { icon: '🪥', x: '15%', y: '75%', delay: 2, duration: 8 },
+  { icon: '💊', x: '90%', y: '45%', delay: 1, duration: 6.5 },
+  { icon: '🩺', x: '5%', y: '50%', delay: 2.5, duration: 7.5 },
+  { icon: '✨', x: '50%', y: '10%', delay: 0.5, duration: 5 },
+  { icon: '✨', x: '35%', y: '80%', delay: 3, duration: 6 },
+];
+
 export default function HomePage() {
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
@@ -111,6 +127,8 @@ export default function HomePage() {
       desc: language === 'ar'
         ? 'ضمان من 2 إلى 5 سنوات حسب المنتج، مع خدمة ما بعد البيع سريعة'
         : 'Garantie de 2 à 5 ans selon le produit, avec service après-vente réactif',
+      accent: '#2A5F8F',
+      bgColor: 'rgba(42,95,143,0.08)',
     },
     {
       icon: <Wrench className="w-7 h-7" />,
@@ -118,6 +136,8 @@ export default function HomePage() {
       desc: language === 'ar'
         ? 'تركيب احترافي وتدريب مشمولان مع كل معدات'
         : 'Installation professionnelle et formation incluses avec chaque équipement',
+      accent: '#F0C05A',
+      bgColor: 'rgba(240,192,90,0.10)',
     },
     {
       icon: <Headphones className="w-7 h-7" />,
@@ -125,6 +145,8 @@ export default function HomePage() {
       desc: language === 'ar'
         ? 'خدمة ما بعد البيع السريعة تغطي 48 ولاية في أقل من 48 ساعة'
         : 'Service après-vente réactif couvrant 48 wilayas en moins de 48h',
+      accent: '#3B8C6E',
+      bgColor: 'rgba(59,140,110,0.08)',
     },
     {
       icon: <Truck className="w-7 h-7" />,
@@ -132,6 +154,8 @@ export default function HomePage() {
       desc: language === 'ar'
         ? 'توصيل في 58 ولاية جزائرية، مدة التسليم من 1 إلى 6 أسابيع'
         : 'Livraison dans les 58 wilayas algériennes, délai de 1 à 6 semaines',
+      accent: '#C0564F',
+      bgColor: 'rgba(192,86,79,0.08)',
     },
   ];
 
@@ -187,19 +211,19 @@ export default function HomePage() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.1 },
+      transition: { staggerChildren: 0.08 },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    hidden: { opacity: 0, y: 25 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
   };
 
   return (
     <div className="overflow-hidden">
       {/* ==================== HERO SECTION ==================== */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[82vh] flex items-center justify-center overflow-hidden">
         {/* Background image with overlay */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -207,19 +231,48 @@ export default function HomePage() {
             backgroundImage: `url('/images/hero-dental.jpg')`,
           }}
         />
-        <div
+        {/* Animated gradient overlay */}
+        <motion.div
           className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, rgba(30,58,95,0.92) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.90) 70%, rgba(15,43,71,0.95) 100%)`,
+          animate={{
+            background: [
+              'linear-gradient(135deg, rgba(30,58,95,0.94) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.92) 70%, rgba(15,43,71,0.96) 100%)',
+              'linear-gradient(135deg, rgba(15,43,71,0.96) 0%, rgba(30,58,95,0.90) 40%, rgba(45,90,142,0.88) 70%, rgba(30,58,95,0.94) 100%)',
+              'linear-gradient(135deg, rgba(30,58,95,0.94) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.92) 70%, rgba(15,43,71,0.96) 100%)',
+            ],
           }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
+        {/* Floating dental icons as background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {floatingIcons.map((item, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-3xl sm:text-4xl opacity-[0.07]"
+              style={{ left: item.x, top: item.y }}
+              animate={{
+                y: [0, -20, 0],
+                rotate: [0, 10, -10, 0],
+                opacity: [0.05, 0.1, 0.05],
+              }}
+              transition={{
+                duration: item.duration,
+                repeat: Infinity,
+                delay: item.delay,
+                ease: 'easeInOut',
+              }}
+            >
+              {item.icon}
+            </motion.div>
+          ))}
+        </div>
         {/* Decorative shapes */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
           <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
           <div className="absolute top-1/4 right-1/4 w-48 h-48 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
           {/* Grid pattern */}
-          <div className="absolute inset-0 opacity-5"
+          <div className="absolute inset-0 opacity-[0.04]"
             style={{
               backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
               backgroundSize: '40px 40px',
@@ -227,69 +280,97 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
           >
             <Badge
-              className="mb-6 text-sm font-medium px-4 py-1.5 border-0"
+              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5"
               style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
             >
+              <Sparkles className="w-3.5 h-3.5" />
               {t('hero.subtitle')}
             </Badge>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6"
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-5"
           >
             {t('hero.title')}
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-            className="text-lg sm:text-xl text-blue-200 max-w-2xl mx-auto mb-10 leading-relaxed"
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}
+            className="text-lg sm:text-xl text-blue-200/90 max-w-2xl mx-auto mb-8 leading-relaxed"
           >
             {t('hero.description')}
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.36 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            <Button
-              onClick={() => navigate('/catalogue')}
-              size="lg"
-              className="text-base font-semibold px-8 h-12 shadow-xl hover:shadow-2xl transition-all"
-              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-            >
-              {t('hero.cta.catalogue')}
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button
-              onClick={() => navigate('/devis')}
-              size="lg"
-              variant="outline"
-              className="text-base font-semibold px-8 h-12 border-2 border-white/50 text-white hover:bg-white/20 backdrop-blur-sm"
-            >
-              {t('hero.cta.quote')}
-            </Button>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={() => navigate('/catalogue')}
+                size="lg"
+                className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+              >
+                {t('hero.cta.catalogue')}
+                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={() => navigate('/devis')}
+                size="lg"
+                variant="outline"
+                className="text-base font-semibold px-8 h-13 border-2 border-white/40 text-white hover:bg-white/15 backdrop-blur-sm transition-all duration-300 gap-2"
+              >
+                {t('hero.cta.quote')}
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          {/* Trust badges */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.6 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-8"
+          >
+            {[
+              { icon: <Award className="w-4 h-4" />, text: language === 'ar' ? '15+ سنة خبرة' : '15+ ans d\'expérience' },
+              { icon: <Clock className="w-4 h-4" />, text: language === 'ar' ? 'خدمة 48 ساعة' : 'Service 48h' },
+              { icon: <Wrench className="w-4 h-4" />, text: language === 'ar' ? 'تركيب مشمول' : 'Installation incluse' },
+            ].map((badge, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 text-white/60 text-sm font-medium"
+              >
+                <span style={{ color: '#F0C05A' }}>{badge.icon}</span>
+                {badge.text}
+              </div>
+            ))}
           </motion.div>
         </div>
 
         {/* Bottom wave */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
-              d="M0,80 C360,120 720,40 1440,80 L1440,120 L0,120 Z"
+              d="M0,60 C360,100 720,20 1440,60 L1440,100 L0,100 Z"
               fill="#1E3A5F"
             />
           </svg>
@@ -297,42 +378,49 @@ export default function HomePage() {
       </section>
 
       {/* ==================== STATS SECTION ==================== */}
-      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+      <section className="py-12 sm:py-14 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+        {/* Animated gradient background */}
+        <motion.div
+          className="absolute inset-0 opacity-30"
+          animate={{
+            background: [
+              'radial-gradient(ellipse at 20% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+              'radial-gradient(ellipse at 80% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+              'radial-gradient(ellipse at 20% 50%, rgba(240,192,90,0.08) 0%, transparent 50%)',
+            ],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
         {/* Subtle background pattern */}
-        <div className="absolute inset-0 opacity-[0.04]"
+        <div className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
+            backgroundSize: '28px 28px',
           }}
         />
-        {/* Decorative circles */}
-        <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
-        <div className="absolute -bottom-12 -right-12 w-40 h-40 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-y lg:divide-y-0 divide-white/[0.08]">
             {stats.map((stat, i) => (
               <motion.div
                 key={i}
                 ref={stat.ref}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.5 }}
-                className="text-center group"
+                transition={{ delay: i * 0.1, duration: 0.4 }}
+                className="text-center group py-6 sm:py-8 px-4"
               >
-                <div className="bg-white/[0.08] backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/[0.08] hover:border-[#F0C05A]/30 transition-all duration-300 hover:bg-white/[0.12]">
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 transition-transform duration-300 group-hover:scale-110"
-                    style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
-                  >
-                    {stat.icon}
-                  </div>
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-1.5">
-                    {stat.value}<span style={{ color: '#F0C05A' }}>{stat.suffix}</span>
-                  </div>
-                  <div className="text-blue-200/70 text-sm font-medium">{stat.label}</div>
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 transition-transform duration-300 group-hover:scale-110"
+                  style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#F0C05A' }}
+                >
+                  {stat.icon}
                 </div>
+                <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1">
+                  {stat.value}<span style={{ color: '#F0C05A' }}>{stat.suffix}</span>
+                </div>
+                <div className="text-blue-200/60 text-xs sm:text-sm font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -340,9 +428,9 @@ export default function HomePage() {
 
         {/* Bottom wave transition */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+          <svg viewBox="0 0 1440 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             <path
-              d="M0,40 C480,80 960,0 1440,40 L1440,80 L0,80 Z"
+              d="M0,35 C480,70 960,0 1440,35 L1440,70 L0,70 Z"
               fill="#f9fafb"
             />
           </svg>
@@ -350,18 +438,28 @@ export default function HomePage() {
       </section>
 
       {/* ==================== CATEGORIES SECTION ==================== */}
-      <section className="py-16 sm:py-20 bg-gray-50">
+      <section className="py-12 sm:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            transition={{ duration: 0.5 }}
+            className="text-center mb-10"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block" style={{ color: '#1E3A5F' }}>
               {t('categories.title')}
+              {/* Gold underline */}
+              <motion.span
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 rounded-full"
+                style={{ backgroundColor: '#F0C05A' }}
+                initial={{ width: 0 }}
+                whileInView={{ width: '60%' }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              />
             </h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">
+            <p className="text-gray-500 text-base max-w-xl mx-auto mt-4">
               {t('categories.subtitle')}
             </p>
           </motion.div>
@@ -371,20 +469,25 @@ export default function HomePage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
           >
-            {categories.map((cat) => {
+            {categories.map((cat, idx) => {
               const imgSrc = categoryImages[cat.slug] || cat.image || '';
               return (
-                <motion.div key={cat.id} variants={itemVariants}>
+                <motion.div
+                  key={cat.id}
+                  variants={itemVariants}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <div
-                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-48 sm:h-56 shadow-md hover:shadow-2xl transition-all duration-500"
+                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-44 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500"
                     onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
                   >
                     {/* Background image */}
                     {imgSrc ? (
                       <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-115"
                         style={{ backgroundImage: `url('${imgSrc}')` }}
                       />
                     ) : (
@@ -395,12 +498,14 @@ export default function HomePage() {
                         {categoryIcons[cat.icon] || <Package className="w-12 h-12 text-white/30" />}
                       </div>
                     )}
-                    {/* Dark overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F]/90 via-[#1E3A5F]/50 to-transparent transition-opacity duration-500 group-hover:from-[#1E3A5F]/70 group-hover:via-[#1E3A5F]/30 group-hover:to-transparent" />
+                    {/* Dark overlay with dramatic hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F]/95 via-[#1E3A5F]/40 to-transparent transition-all duration-500 group-hover:from-[#1E3A5F]/80 group-hover:via-[#1E3A5F]/20 group-hover:to-transparent" />
+                    {/* Gold accent bottom border */}
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-500 group-hover:h-1" style={{ backgroundColor: '#F0C05A' }} />
                     {/* Content */}
                     <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: 'rgba(240,192,90,0.2)' }}>
                           {categoryIcons[cat.icon] || <Package className="w-4 h-4" />}
                         </div>
                         <h3 className="font-bold text-sm sm:text-base text-white">
@@ -412,8 +517,8 @@ export default function HomePage() {
                         {language === 'ar' ? 'منتجات' : 'produits'}
                       </p>
                       {/* Hover arrow */}
-                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 -translate-x-2">
-                        <ArrowRight className="w-4 h-4 text-white" />
+                      <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} w-8 h-8 rounded-full flex items-center justify-center bg-[#F0C05A]/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRTL ? '-translate-x-1 group-hover:translate-x-0' : 'translate-x-1 group-hover:translate-x-0'}`}>
+                        <ArrowRight className={`w-4 h-4 text-[#F0C05A] ${isRTL ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
                   </div>
@@ -425,42 +530,49 @@ export default function HomePage() {
       </section>
 
       {/* ==================== FEATURED PRODUCTS ==================== */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex items-center justify-between mb-10"
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-between mb-8"
           >
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#1E3A5F' }}>
-                {t('products.featured')}
-              </h2>
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+              <div>
+                <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#1E3A5F' }}>
+                  {t('products.featured')}
+                </h2>
+                <div className="h-0.5 w-16 mt-1 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+              </div>
             </div>
             <Button
               variant="outline"
               onClick={() => navigate('/catalogue')}
-              className="hidden sm:flex gap-2"
+              className="hidden sm:flex gap-2 group"
               style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
             >
               {t('common.seeAll')}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* Mobile: horizontal scroll, Desktop: grid */}
+          <div className="flex gap-4 overflow-x-auto pb-4 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-5 sm:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {featuredProducts.map((product, idx) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.08, duration: 0.5 }}
+                transition={{ delay: idx * 0.06, duration: 0.4 }}
+                className="min-w-[260px] sm:min-w-0"
               >
                 <Card className="group border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
                   <div
-                    className="h-52 flex items-center justify-center relative overflow-hidden"
+                    className="h-48 flex items-center justify-center relative overflow-hidden"
                     style={{ backgroundColor: '#f0f4f8' }}
                   >
                     {product.images && product.images.length > 0 ? (
@@ -471,52 +583,52 @@ export default function HomePage() {
                       />
                     ) : (
                       /* Dental-themed placeholder */
-                      <div className="flex flex-col items-center justify-center gap-3 text-gray-300">
-                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
-                          <Stethoscope className="w-10 h-10" style={{ color: '#1E3A5F', opacity: 0.25 }} />
+                      <div className="flex flex-col items-center justify-center gap-2 text-gray-300">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(30,58,95,0.06)' }}>
+                          <Stethoscope className="w-8 h-8" style={{ color: '#1E3A5F', opacity: 0.2 }} />
                         </div>
-                        <span className="text-xs font-medium" style={{ color: '#1E3A5F', opacity: 0.3 }}>
+                        <span className="text-[10px] font-medium" style={{ color: '#1E3A5F', opacity: 0.2 }}>
                           {product.brand || 'ODG'}
                         </span>
                       </div>
                     )}
                     {/* Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
                       {product.is_new && (
-                        <Badge className="text-[10px] px-2.5 py-0.5 font-semibold" style={{ backgroundColor: '#1E3A5F' }}>
+                        <Badge className="text-[10px] px-2 py-0.5 font-semibold border-0" style={{ backgroundColor: '#1E3A5F' }}>
                           {t('products.new')}
                         </Badge>
                       )}
                       {product.is_best_seller && (
-                        <Badge className="text-[10px] px-2.5 py-0.5 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+                        <Badge className="text-[10px] px-2 py-0.5 font-semibold border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
                           {t('products.bestSeller')}
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <CardContent className="p-5 flex flex-col flex-1">
-                    <p className="text-xs font-medium mb-1" style={{ color: '#F0C05A' }}>{product.brand}</p>
+                  <CardContent className="p-4 flex flex-col flex-1">
+                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#F0C05A' }}>{product.brand}</p>
                     <h3
-                      className="font-bold text-sm mb-1.5 line-clamp-1"
+                      className="font-bold text-sm mb-1 line-clamp-1"
                       style={{ color: '#1E3A5F' }}
                     >
                       {getProductName(product, language)}
                     </h3>
-                    <p className="text-xs text-gray-500 mb-4 line-clamp-2 flex-1">
+                    <p className="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">
                       {getProductShortDescription(product, language)}
                     </p>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 mt-auto">
                       <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
                         {(product.price ?? 0) === 0
                           ? (language === 'ar' ? 'عند الطلب' : 'Sur devis')
                           : `${(product.price ?? 0).toLocaleString('fr-DZ')} DA`
                         }
                       </span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-xs h-8 px-3"
+                          className="text-xs h-7 px-2"
                           style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -524,25 +636,26 @@ export default function HomePage() {
                           }}
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          {language === 'ar' ? 'عرض' : 'Voir'}
                         </Button>
-                        <Button
-                          size="sm"
-                          className="text-xs h-8 px-3"
-                          style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addItem({
-                              id: product.id,
-                              slug: product.slug,
-                              name: getProductName(product, language),
-                              price: product.price,
-                              image: product.images?.[0] || '',
-                            });
-                          }}
-                        >
-                          {t('products.addQuote')}
-                        </Button>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="text-xs h-7 px-2.5 border-0"
+                            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addItem({
+                                id: product.id,
+                                slug: product.slug,
+                                name: getProductName(product, language),
+                                price: product.price,
+                                image: product.images?.[0] || '',
+                              });
+                            }}
+                          >
+                            {t('products.addQuote')}
+                          </Button>
+                        </motion.div>
                       </div>
                     </div>
                   </CardContent>
@@ -551,29 +664,35 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-8 text-center sm:hidden">
+          <div className="mt-6 text-center sm:hidden">
             <Button
               variant="outline"
               onClick={() => navigate('/catalogue')}
-              className="gap-2"
+              className="gap-2 group"
               style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
             >
               {t('common.seeAll')}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </div>
         </div>
       </section>
 
       {/* ==================== WHY CHOOSE US ==================== */}
-      <section className="py-16 sm:py-20 relative overflow-hidden"
+      <section className="py-12 sm:py-16 relative overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}
       >
-        {/* Subtle decorative pattern */}
-        <div className="absolute inset-0 opacity-[0.03]"
+        {/* Subtle decorative pattern - larger dots */}
+        <div className="absolute inset-0 opacity-[0.025]"
           style={{
-            backgroundImage: 'radial-gradient(circle, #1E3A5F 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
+            backgroundImage: 'radial-gradient(circle, #1E3A5F 1.5px, transparent 1.5px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+        {/* Subtle diagonal lines pattern */}
+        <div className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(45deg, #1E3A5F 0, #1E3A5F 1px, transparent 1px, transparent 20px)',
           }}
         />
 
@@ -582,15 +701,16 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            transition={{ duration: 0.5 }}
+            className="text-center mb-10"
           >
-            <Badge className="mb-4 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
+            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
               {language === 'ar' ? 'مميزاتنا' : 'Nos atouts'}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'لماذا تختارنا؟' : 'Pourquoi nous choisir ?'}
             </h2>
-            <p className="text-gray-500 text-lg max-w-lg mx-auto">
+            <p className="text-gray-500 text-base max-w-lg mx-auto">
               {language === 'ar'
                 ? 'التزامنا بالجودة والخدمة يجعلنا الخيار الأول'
                 : 'Notre engagement qualité et service fait de nous le choix n°1'
@@ -603,20 +723,24 @@ export default function HomePage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
           >
             {whyChooseUs.map((item, i) => (
-              <motion.div key={i} variants={itemVariants}>
-                <div className="group bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full">
-                  <div className="flex items-start gap-4">
+              <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+                <div className="group bg-white rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full relative overflow-hidden">
+                  {/* Accent bar at top */}
+                  <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300" style={{ backgroundColor: item.accent, opacity: 0.6 }} />
+                  {/* Subtle bg glow on hover */}
+                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: item.bgColor, filter: 'blur(30px)' }} />
+                  <div className="relative flex items-start gap-4">
                     <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
-                      style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
+                      style={{ backgroundColor: item.bgColor, color: item.accent }}
                     >
                       {item.icon}
                     </div>
                     <div>
-                      <h3 className="font-bold text-base mb-2" style={{ color: '#1E3A5F' }}>
+                      <h3 className="font-bold text-base mb-1.5" style={{ color: '#1E3A5F' }}>
                         {item.title}
                       </h3>
                       <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
@@ -630,18 +754,26 @@ export default function HomePage() {
       </section>
 
       {/* ==================== TESTIMONIALS SECTION ==================== */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 bg-white relative">
+        {/* Subtle bg pattern */}
+        <div className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #1E3A5F 1px, transparent 1px)',
+            backgroundSize: '30px 30px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
           >
-            <Badge className="mb-4 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#1E3A5F' }}>
               {t('testimonials.subtitle')}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
               {t('testimonials.title')}
             </h2>
           </motion.div>
@@ -651,26 +783,30 @@ export default function HomePage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5"
           >
             {testimonials.map((testimonial, i) => (
-              <motion.div key={i} variants={itemVariants}>
-                <Card className="h-full border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 bg-white">
-                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
-                    <Quote className="w-10 h-10 mb-4 opacity-80" style={{ color: '#F0C05A' }} />
-                    <p className="text-gray-600 text-sm leading-relaxed flex-grow mb-6">
+              <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+                <Card className="h-full border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 bg-white relative overflow-hidden">
+                  {/* Decorative large quote mark */}
+                  <div className="absolute -top-2 -left-1 opacity-[0.06] pointer-events-none">
+                    <Quote className="w-24 h-24" style={{ color: '#F0C05A' }} />
+                  </div>
+                  <CardContent className="p-5 sm:p-6 flex flex-col h-full relative">
+                    {/* Star rating - prominent */}
+                    <div className="flex items-center gap-0.5 mb-4">
+                      {Array.from({ length: testimonial.stars }).map((_, idx) => (
+                        <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed flex-grow mb-4 relative z-10">
                       &ldquo;{testimonial.text}&rdquo;
                     </p>
-                    <div className="mt-auto">
-                      <div className="flex items-center gap-1 mb-3">
-                        {Array.from({ length: testimonial.stars }).map((_, idx) => (
-                          <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
-                        ))}
-                      </div>
+                    <div className="mt-auto pt-4 border-t border-gray-50">
                       <p className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
                         {testimonial.author}
                       </p>
-                      <p className="text-gray-400 text-xs mt-1">
+                      <p className="text-gray-400 text-xs mt-0.5">
                         {testimonial.clinic}
                       </p>
                     </div>
@@ -683,15 +819,16 @@ export default function HomePage() {
       </section>
 
       {/* ==================== PARTNERS / BRANDS SECTION ==================== */}
-      <section className="py-14 sm:py-16 bg-white border-y border-gray-100">
+      <section className="py-10 sm:py-12 bg-gray-50 border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-10"
+            transition={{ duration: 0.4 }}
+            className="text-center mb-8"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-1.5" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'علاماتنا الشريكة' : 'Nos Marques Partenaires'}
             </h2>
             <p className="text-gray-400 text-sm">
@@ -703,25 +840,27 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-wrap items-center justify-center gap-6 sm:gap-10"
+            transition={{ duration: 0.4 }}
+            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6"
           >
             {partnerBrands.map((brand, i) => (
               <motion.div
                 key={brand.name}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.06, duration: 0.3 }}
+                whileHover={{ y: -2 }}
                 className="group flex flex-col items-center justify-center"
               >
-                <div className="w-28 sm:w-32 h-16 sm:h-20 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-1 transition-all duration-300 group-hover:border-gray-200 group-hover:shadow-md grayscale hover:grayscale-0">
-                  <span className="text-sm sm:text-base font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
+                <div className="w-24 sm:w-28 h-14 sm:h-16 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-0.5 transition-all duration-300 group-hover:border-[#F0C05A]/30 group-hover:shadow-md grayscale hover:grayscale-0 group-hover:bg-white">
+                  <span className="text-xs sm:text-sm font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
                     {brand.name}
                   </span>
-                  <span className="text-[10px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
+                  <span className="text-[9px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
                     {brand.subtext}
                   </span>
                 </div>
@@ -733,36 +872,55 @@ export default function HomePage() {
 
       {/* ==================== NEWSLETTER SECTION ==================== */}
       <section
-        className="py-16 sm:py-20 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #0f2b47 50%, #1a3352 100%)' }}
+        className="py-12 sm:py-16 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #0f2b47 40%, #1a3352 70%, #0d2238 100%)' }}
       >
         {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
-          <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Mail icon pattern */}
+          <div className="absolute top-6 right-[10%] opacity-[0.04]">
+            <Mail className="w-32 h-32" style={{ color: '#F0C05A' }} />
+          </div>
+          <div className="absolute bottom-4 left-[8%] opacity-[0.03]">
+            <Mail className="w-20 h-20" style={{ color: '#F0C05A' }} />
+          </div>
+          {/* Dot pattern */}
           <div className="absolute inset-0 opacity-[0.02]"
             style={{
               backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
-              backgroundSize: '32px 32px',
+              backgroundSize: '24px 24px',
             }}
+          />
+          {/* Gradient orbs */}
+          <motion.div
+            className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10"
+            style={{ backgroundColor: '#F0C05A' }}
+            animate={{ scale: [1, 1.1, 1], opacity: [0.08, 0.12, 0.08] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-5"
+            style={{ backgroundColor: '#F0C05A' }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.04, 0.08, 0.04] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
           />
         </div>
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
               <Mail className="w-7 h-7" style={{ color: '#F0C05A' }} />
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
               {t('newsletter.title')}
             </h2>
-            <p className="text-blue-200/70 text-lg mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-blue-200/60 text-base mb-6 max-w-md mx-auto leading-relaxed">
               {t('newsletter.subtitle')}
             </p>
 
@@ -777,28 +935,30 @@ export default function HomePage() {
                 <span className="text-white font-medium text-sm">{t('newsletter.success')}</span>
               </motion.div>
             ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto">
                 <Input
                   type="email"
                   required
                   placeholder={t('newsletter.placeholder')}
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="flex-1 h-12 bg-white/10 border-white/20 text-white placeholder:text-blue-200/50 focus:border-[#F0C05A] focus:ring-[#F0C05A]/20"
+                  className="flex-1 h-12 bg-white/10 border-white/20 text-white placeholder:text-blue-200/40 focus:border-[#F0C05A] focus:ring-[#F0C05A]/20 text-base rounded-xl"
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
-                <Button
-                  type="submit"
-                  className="h-12 px-6 font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transition-all"
-                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                >
-                  {t('newsletter.subscribe')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="submit"
+                    className="h-12 px-6 font-semibold whitespace-nowrap shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl gap-2"
+                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                  >
+                    {t('newsletter.subscribe')}
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </motion.div>
               </form>
             )}
 
-            <p className="text-blue-200/40 text-xs mt-4 max-w-sm mx-auto">
+            <p className="text-blue-200/30 text-xs mt-4 max-w-sm mx-auto">
               {t('newsletter.privacy')}
             </p>
           </motion.div>
@@ -806,67 +966,81 @@ export default function HomePage() {
       </section>
 
       {/* ==================== CTA SECTION ==================== */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
-        {/* Decorative dental pattern */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10" style={{ backgroundColor: '#F0C05A' }} />
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-5" style={{ backgroundColor: '#F0C05A' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.03]"
-            style={{ backgroundColor: '#F0C05A' }}
-          />
-          {/* Subtle tooth/toothbrush pattern */}
-          <div className="absolute inset-0 opacity-[0.03]"
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
+        {/* Animated gradient background */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            background: [
+              'radial-gradient(ellipse at 30% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+              'radial-gradient(ellipse at 70% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+              'radial-gradient(ellipse at 30% 50%, rgba(240,192,90,0.06) 0%, transparent 60%)',
+            ],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-8" style={{ backgroundColor: '#F0C05A' }} />
+          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-[0.04]" style={{ backgroundColor: '#F0C05A' }} />
+          {/* Dot pattern */}
+          <div className="absolute inset-0 opacity-[0.02]"
             style={{
-              backgroundImage: 'radial-gradient(circle, #F0C05A 1.5px, transparent 1.5px)',
-              backgroundSize: '48px 48px',
+              backgroundImage: 'radial-gradient(circle, #F0C05A 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
             }}
           />
           {/* Top accent line */}
-          <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#F0C05A', opacity: 0.4 }} />
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: '#F0C05A', opacity: 0.5 }} />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
             {/* Decorative icon */}
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(240,192,90,0.15)' }}>
-              <Stethoscope className="w-8 h-8" style={{ color: '#F0C05A' }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(240,192,90,0.12)' }}>
+              <Stethoscope className="w-7 h-7" style={{ color: '#F0C05A' }} />
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
               {language === 'ar'
                 ? 'هل أنت مستعد لتجهيز عيادتك؟'
                 : 'Prêt à équiper votre cabinet ?'
               }
             </h2>
-            <p className="text-blue-200/70 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+            <p className="text-blue-200/60 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
               {language === 'ar'
                 ? 'احصل على عرض سعر مخصص في أقل من 24 ساعة. فريقنا متاح لمساعدتك.'
                 : 'Obtenez un devis personnalisé en moins de 24h. Notre équipe est à votre disposition.'
               }
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                onClick={() => navigate('/devis')}
-                size="lg"
-                className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all"
-                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-              >
-                {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-              <Button
-                onClick={() => navigate('/contact')}
-                size="lg"
-                variant="outline"
-                className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10"
-              >
-                {language === 'ar' ? 'اتصل بنا' : 'Nous contacter'}
-              </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={() => navigate('/devis')}
+                  size="lg"
+                  className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                >
+                  {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
+                  <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={() => navigate('/contact')}
+                  size="lg"
+                  variant="outline"
+                  className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10 transition-all duration-300 gap-2"
+                >
+                  {language === 'ar' ? 'اتصل بنا' : 'Nous contacter'}
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>
