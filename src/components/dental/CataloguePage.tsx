@@ -15,6 +15,7 @@ import {
   GitCompareArrows,
   Check,
   FileText,
+  Heart,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -27,6 +28,7 @@ import { Slider } from '@/components/ui/slider';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { useWishlist } from '@/hooks/useWishlist';
 import type { Product } from '@/lib/data-service';
 import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
 import QuickViewModal from '@/components/dental/QuickViewModal';
@@ -116,6 +118,7 @@ export default function CataloguePage() {
   const { categories, products, getCategoryName, getProductName, getProductShortDescription, loading } = useData();
   const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -420,9 +423,11 @@ export default function CataloguePage() {
                   const accentColor = categoryColors[idx % categoryColors.length];
 
                   return (
-                    <button
+                    <motion.button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.slug)}
+                      animate={{ scale: isActive ? 1.02 : 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 group relative overflow-hidden ${
                         isActive
                           ? 'font-medium shadow-sm'
@@ -442,16 +447,23 @@ export default function CataloguePage() {
                         style={{ backgroundColor: isActive ? '#F0C05A' : accentColor }}
                       />
                       <span className="pl-2 flex-1">{getCategoryName(cat, language)}</span>
-                      <Badge
-                        variant="secondary"
-                        className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
-                          isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
-                        }`}
-                        style={isActive ? { backgroundColor: accentColor } : {}}
+                      <motion.span
+                        key={`${cat.id}-${count}`}
+                        initial={{ scale: 1.3, opacity: 0.5 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
                       >
-                        {count}
-                      </Badge>
-                    </button>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
+                            isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                          }`}
+                          style={isActive ? { backgroundColor: accentColor } : {}}
+                        >
+                          {count}
+                        </Badge>
+                      </motion.span>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -678,6 +690,8 @@ export default function CataloguePage() {
                     addCompareProduct={addCompareProduct}
                     removeCompareProduct={removeCompareProduct}
                     compareFull={productIds.length >= 4}
+                    isInWishlist={isInWishlist}
+                    toggleWishlistItem={toggleWishlistItem}
                     onQuickView={() => {
                       setQuickViewProduct(product);
                       setQuickViewOpen(true);
@@ -715,6 +729,8 @@ function ProductCard({
   addCompareProduct,
   removeCompareProduct,
   compareFull,
+  isInWishlist,
+  toggleWishlistItem,
   onQuickView,
 }: {
   product: Product;
@@ -730,6 +746,8 @@ function ProductCard({
   addCompareProduct: (id: string) => void;
   removeCompareProduct: (id: string) => void;
   compareFull: boolean;
+  isInWishlist: (slug: string) => boolean;
+  toggleWishlistItem: (slug: string) => void;
   onQuickView: () => void;
 }) {
   const priceDisplay = formatPrice(product.price);
@@ -780,6 +798,27 @@ function ProductCard({
               </Badge>
             )}
           </div>
+
+          {/* Wishlist heart button - bottom-right of image */}
+          <motion.button
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.85 }}
+            className={`absolute bottom-3 right-3 z-[3] w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm ${
+              isInWishlist(product.slug)
+                ? 'bg-white/90 dark:bg-[#162236]/90 text-rose-500'
+                : 'bg-white/70 dark:bg-[#162236]/70 text-white/50 hover:text-rose-400'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlistItem(product.slug);
+            }}
+          >
+            <Heart
+              className="w-4 h-4"
+              fill={isInWishlist(product.slug) ? 'currentColor' : 'none'}
+              strokeWidth={isInWishlist(product.slug) ? 0 : 2}
+            />
+          </motion.button>
 
           {/* Top-left: Stock badge */}
           <div className="absolute top-3 left-3 z-[2]">
@@ -840,7 +879,7 @@ function ProductCard({
           {/* Brand tag */}
           {product.brand && (
             <span
-              className="text-[10px] font-semibold uppercase tracking-wider mb-1"
+              className="text-[10px] font-semibold uppercase tracking-wider mb-1 dark:text-[#F0C05A]"
               style={{ color: '#F0C05A' }}
             >
               {product.brand}
@@ -856,7 +895,7 @@ function ProductCard({
           </h3>
 
           {/* Short description */}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
+          <p className="text-xs text-gray-500 dark:text-gray-300 mb-3 line-clamp-2 flex-1">
             {getProductShortDescription(product, language)}
           </p>
 
@@ -869,7 +908,7 @@ function ProductCard({
                 </span>
               ) : (
                 <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded"
+                  className="text-xs font-semibold px-2 py-0.5 rounded dark:text-[#F0C05A]"
                   style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
                 >
                   {t('products.priceOnQuote')}

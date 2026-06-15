@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -27,6 +27,7 @@ import {
   Link2,
   ZoomIn,
   Maximize2,
+  Heart,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -42,6 +43,7 @@ import {
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { useWishlist } from '@/hooks/useWishlist';
 import type { Product } from '@/lib/data-service';
 import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
 import { toast } from 'sonner';
@@ -73,6 +75,22 @@ function sanitizeHtml(html: string): string {
   return sanitized;
 }
 
+// Scroll progress bar component
+function ScrollProgressBar() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-1 z-50 origin-left"
+      style={{
+        scaleX,
+        background: 'linear-gradient(90deg, #1E3A5F, #F0C05A)',
+      }}
+    />
+  );
+}
+
 export default function ProductDetailPage() {
   const { t, language, isRTL } = useTranslation();
   const { params, navigate, goBack } = useRouter();
@@ -80,6 +98,7 @@ export default function ProductDetailPage() {
   const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
   const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
+  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
 
   const product = useMemo(
     () => products.find((p) => p.slug === params.slug),
@@ -277,7 +296,9 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20 animate-in fade-in duration-500 relative">
+      {/* Scroll Progress Bar */}
+      <ScrollProgressBar />
       {/* Lightbox using Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={(open) => { setLightboxOpen(open); if (!open) setLightboxZoom(false); }}>
         <DialogContent
@@ -434,7 +455,7 @@ export default function ProductDetailPage() {
           >
             <div
               ref={imageRef}
-              className="aspect-square rounded-2xl overflow-hidden bg-white dark:bg-[#162236] shadow-sm cursor-crosshair relative group"
+              className="aspect-square rounded-2xl overflow-hidden bg-white dark:bg-[#162236] shadow-sm cursor-crosshair relative group transition-shadow duration-300 hover:shadow-[0_0_20px_rgba(240,192,90,0.3)] dark:hover:shadow-[0_0_20px_rgba(122,176,224,0.2)]"
               onMouseEnter={() => setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}
               onMouseMove={handleMouseMove}
@@ -504,6 +525,7 @@ export default function ProductDetailPage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="lg:sticky lg:top-24 lg:self-start"
           >
             {/* Status Badges */}
             <div className="flex flex-wrap gap-2 mb-4">
@@ -635,6 +657,30 @@ export default function ProductDetailPage() {
                   <ShoppingCart className="w-5 h-5" />
                   {t('products.addQuote')}
                 </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className={`h-12 px-4 font-semibold ${
+                      isInWishlist(product.slug)
+                        ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30'
+                        : 'border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-rose-400 dark:hover:border-rose-600 hover:text-rose-500 dark:hover:text-rose-400'
+                    }`}
+                    onClick={() => {
+                      toggleWishlistItem(product.slug);
+                      toast.success(
+                        isInWishlist(product.slug)
+                          ? t('wishlist.removed')
+                          : t('wishlist.added')
+                      );
+                    }}
+                  >
+                    <Heart
+                      className="w-5 h-5"
+                      fill={isInWishlist(product.slug) ? 'currentColor' : 'none'}
+                    />
+                  </Button>
+                </motion.div>
                 <Button
                   size="lg"
                   variant="outline"

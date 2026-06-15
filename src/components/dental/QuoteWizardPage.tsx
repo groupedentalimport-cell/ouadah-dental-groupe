@@ -12,6 +12,7 @@ import {
   Trash2,
   Send,
   Package,
+  Check,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -22,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const WILAYAS = [
@@ -125,21 +125,68 @@ export default function QuoteWizardPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto p-8"
+          className="text-center max-w-md mx-auto p-8 relative"
         >
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
-            {t('quote.success')}
-          </h2>
-          <Button
-            onClick={() => navigate('/')}
-            className="mt-6"
-            style={{ backgroundColor: '#1E3A5F' }}
+          {/* Confetti-like particles */}
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full"
+              style={{
+                backgroundColor: ['#F0C05A', '#1E3A5F', '#3B8C6E', '#C0564F', '#7AB0E0', '#F0C05A'][i % 6],
+                left: `${20 + Math.random() * 60}%`,
+                top: `${30 + Math.random() * 40}%`,
+              }}
+              initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
+              animate={{
+                scale: [0, 1, 0.5],
+                opacity: [0, 1, 0],
+                x: (Math.random() - 0.5) * 150,
+                y: (Math.random() - 0.5) * 150 - 50,
+                rotate: Math.random() * 360,
+              }}
+              transition={{ duration: 1.5, delay: i * 0.08, ease: 'easeOut' }}
+            />
+          ))}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
+            className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6"
           >
-            {t('nav.home')}
-          </Button>
+            <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-2xl font-bold mb-3 dark:text-[#7AB0E0]"
+            style={{ color: '#1E3A5F' }}
+          >
+            {t('quote.success')}
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="text-gray-500 dark:text-gray-300 mb-6"
+          >
+            {language === 'ar' ? 'شكراً لثقتكم بنا، سنتواصل معكم قريباً' : 'Merci pour votre confiance, nous vous recontacterons très bientôt'}
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+          >
+            <Button
+              onClick={() => navigate('/')}
+              className="gap-2"
+              style={{ backgroundColor: '#1E3A5F' }}
+            >
+              {t('nav.home')}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     );
@@ -157,14 +204,49 @@ export default function QuoteWizardPage() {
             <p className="text-blue-200 text-sm">{t('quote.subtitle')}</p>
           </motion.div>
 
-          {/* Progress */}
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-xs text-blue-200 mb-2">
-              <span className={step >= 1 ? 'text-white font-medium' : ''}>{t('quote.step1')}</span>
-              <span className={step >= 2 ? 'text-white font-medium' : ''}>{t('quote.step2')}</span>
-              <span className={step >= 3 ? 'text-white font-medium' : ''}>{t('quote.step3')}</span>
+          {/* Progress Stepper */}
+          <div className="mt-8">
+            <div className="flex items-center justify-center gap-0">
+              {[1, 2, 3].map((s, i) => (
+                <React.Fragment key={s}>
+                  {/* Step circle */}
+                  <div className="flex flex-col items-center">
+                    <motion.div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                        step >= s
+                          ? 'text-[#1E3A5F] shadow-lg'
+                          : 'bg-white/10 text-white/40 border border-white/20'
+                      }`
+                      }
+                      style={step >= s ? { backgroundColor: '#F0C05A' } : {}}
+                      animate={{ scale: step === s ? 1.1 : 1 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    >
+                      {step > s ? <Check className="w-4 h-4" /> : s}
+                    </motion.div>
+                    <span className={`text-[10px] mt-1.5 font-medium transition-colors duration-300 ${
+                      step >= s ? 'text-white' : 'text-white/30'
+                    }`}>
+                      {s === 1 ? t('quote.step1') : s === 2 ? t('quote.step2') : t('quote.step3')}
+                    </span>
+                  </div>
+                  {/* Connecting line */}
+                  {i < 2 && (
+                    <div className="flex-1 mx-3 mt-[-18px]">
+                      <div className="h-1 rounded-full overflow-hidden bg-white/10">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: '#F0C05A' }}
+                          initial={{ width: '0%' }}
+                          animate={{ width: step > s ? '100%' : '0%' }}
+                          transition={{ duration: 0.5, ease: 'easeInOut' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
             </div>
-            <Progress value={progress} className="h-2" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
           </div>
         </div>
       </div>
@@ -179,56 +261,56 @@ export default function QuoteWizardPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
             >
-              <Card className="border-0 shadow-sm">
+              <Card className="border-0 shadow-sm dark:bg-[#162236]">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-lg font-bold mb-6" style={{ color: '#1E3A5F' }}>
+                  <h2 className="text-lg font-bold mb-6 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                     {t('quote.step1')}
                   </h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                         {t('quote.fullName')} *
                       </label>
                       <Input
                         value={clientInfo.fullName}
                         onChange={(e) => setClientInfo({ ...clientInfo, fullName: e.target.value })}
-                        className={validationErrors.fullName ? 'border-red-400' : ''}
+                        className={`h-11 transition-all duration-200 focus:ring-2 focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:bg-white/5 dark:border-white/10 dark:text-white ${validationErrors.fullName ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                           {t('quote.email')} *
                         </label>
                         <Input
                           type="email"
                           value={clientInfo.email}
                           onChange={(e) => setClientInfo({ ...clientInfo, email: e.target.value })}
-                          className={validationErrors.email ? 'border-red-400' : ''}
+                          className={`h-11 transition-all duration-200 focus:ring-2 focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:bg-white/5 dark:border-white/10 dark:text-white ${validationErrors.email ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                           {t('quote.phone')} *
                         </label>
                         <Input
                           type="tel"
                           value={clientInfo.phone}
                           onChange={(e) => setClientInfo({ ...clientInfo, phone: e.target.value })}
-                          className={validationErrors.phone ? 'border-red-400' : ''}
+                          className={`h-11 transition-all duration-200 focus:ring-2 focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:bg-white/5 dark:border-white/10 dark:text-white ${validationErrors.phone ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                           {t('quote.wilaya')} *
                         </label>
                         <Select
                           value={clientInfo.wilaya}
                           onValueChange={(v) => setClientInfo({ ...clientInfo, wilaya: v })}
                         >
-                          <SelectTrigger className={validationErrors.wilaya ? 'border-red-400' : ''}>
+                          <SelectTrigger className={`h-11 dark:bg-white/5 dark:border-white/10 dark:text-white ${validationErrors.wilaya ? 'border-red-400 ring-1 ring-red-400' : ''}`}>
                             <SelectValue placeholder={t('quote.wilaya')} />
                           </SelectTrigger>
                           <SelectContent>
@@ -241,14 +323,14 @@ export default function QuoteWizardPage() {
                         </Select>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                           {t('quote.clientType')} *
                         </label>
                         <Select
                           value={clientInfo.clientType}
                           onValueChange={(v) => setClientInfo({ ...clientInfo, clientType: v })}
                         >
-                          <SelectTrigger className={validationErrors.clientType ? 'border-red-400' : ''}>
+                          <SelectTrigger className={`h-11 dark:bg-white/5 dark:border-white/10 dark:text-white ${validationErrors.clientType ? 'border-red-400 ring-1 ring-red-400' : ''}`}>
                             <SelectValue placeholder={t('quote.clientType')} />
                           </SelectTrigger>
                           <SelectContent>
@@ -260,13 +342,14 @@ export default function QuoteWizardPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5 block">
                         {t('quote.message')}
                       </label>
                       <Textarea
                         rows={3}
                         value={clientInfo.message}
                         onChange={(e) => setClientInfo({ ...clientInfo, message: e.target.value })}
+                        className="transition-all duration-200 focus:ring-2 focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:bg-white/5 dark:border-white/10 dark:text-white"
                       />
                     </div>
                   </div>
@@ -283,10 +366,10 @@ export default function QuoteWizardPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
             >
-              <Card className="border-0 shadow-sm">
+              <Card className="border-0 shadow-sm dark:bg-[#162236]">
                 <CardContent className="p-6 sm:p-8">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold" style={{ color: '#1E3A5F' }}>
+                    <h2 className="text-lg font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('quote.step2')}
                     </h2>
                     <Button
@@ -378,15 +461,15 @@ export default function QuoteWizardPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
             >
-              <Card className="border-0 shadow-sm">
+              <Card className="border-0 shadow-sm dark:bg-[#162236]">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-lg font-bold mb-6" style={{ color: '#1E3A5F' }}>
+                  <h2 className="text-lg font-bold mb-6 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                     {t('quote.step3')}
                   </h2>
 
                   {/* Client Info Summary */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-sm mb-3" style={{ color: '#1E3A5F' }}>
+                  <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4 mb-6">
+                    <h3 className="font-semibold text-sm mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('quote.step1')}
                     </h3>
                     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -410,8 +493,8 @@ export default function QuoteWizardPage() {
                   </div>
 
                   {/* Products Summary */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-sm mb-3" style={{ color: '#1E3A5F' }}>
+                  <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4 mb-6">
+                    <h3 className="font-semibold text-sm mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('quote.products')}
                     </h3>
                     {cart.items.length === 0 ? (

@@ -120,13 +120,22 @@ export default function Footer() {
       </div>
 
       {/* ==================== MAIN FOOTER ==================== */}
-      <div className="dark:bg-[#0f1d2e] bg-[#1E3A5F]">
+      <div className="dark:bg-[#0f1d2e] bg-[#1E3A5F] relative overflow-hidden">
+        {/* Decorative tooth watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+          <svg width="400" height="400" viewBox="0 0 512 512" fill="currentColor" className="text-white">
+            <path d="M256 0C167.6 0 96 71.6 96 160c0 52.7 25.8 99.4 65.5 128H144c-26.5 0-48 21.5-48 48v128c0 26.5 21.5 48 48 48h32c17.7 0 32-14.3 32-32V336h96v176c0 17.7 14.3 32 32 32h32c26.5 0 48-21.5 48-48V336c0-26.5-21.5-48-48-48h-17.5c39.7-28.6 65.5-75.3 65.5-128C416 71.6 344.4 0 256 0zm0 256c-53 0-96-43-96-96s43-96 96-96 96 43 96 96-43 96-96 96z"/>
+          </svg>
+        </div>
+        {/* Gradient background transition - slightly lighter navy at bottom */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, transparent 60%, rgba(255,255,255,0.03) 100%)' }} />
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16"
+          className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
             {/* Column 1: Brand & Social */}

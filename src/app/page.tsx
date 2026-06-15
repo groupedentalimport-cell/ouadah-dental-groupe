@@ -13,6 +13,7 @@ import WhatsAppBubble from '@/components/dental/WhatsAppBubble';
 import ChatBubble from '@/components/dental/ChatBubble';
 import CompareView from '@/components/dental/CompareView';
 import CompareDrawer from '@/components/dental/CompareDrawer';
+import WishlistDrawer from '@/components/dental/WishlistDrawer';
 import HomePage from '@/components/dental/HomePage';
 import CataloguePage from '@/components/dental/CataloguePage';
 import ProductDetailPage from '@/components/dental/ProductDetailPage';
@@ -94,6 +95,12 @@ function AppContent() {
   const { route } = useRouter();
   const { isRTL } = useTranslation();
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  }, []);
+
   const isAdminRoute = route.startsWith('admin');
 
   const renderPage = () => {
@@ -150,6 +157,7 @@ function AppContent() {
       {!isAdminRoute && <WhatsAppBubble />}
       {!isAdminRoute && <ChatBubble />}
       {!isAdminRoute && <CompareDrawer />}
+      {!isAdminRoute && <WishlistDrawer />}
       {!isAdminRoute && <ScrollToTop />}
     </div>
   );

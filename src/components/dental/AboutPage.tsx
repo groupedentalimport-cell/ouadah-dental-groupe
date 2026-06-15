@@ -176,11 +176,11 @@ export default function AboutPage() {
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1E3A5F' }}>
                   <Clock className="w-5 h-5 text-white" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+                <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('about.history')}
                 </h2>
               </div>
-              <div className="space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed">
+              <div className="space-y-4 text-gray-600 dark:text-gray-300 leading-relaxed">
                 <p>{t('about.history.p1')}</p>
                 <p>{t('about.history.p2')}</p>
               </div>
@@ -204,10 +204,10 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('about.mission')}
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed italic">
+            <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed italic">
               &ldquo;{t('about.mission.text')}&rdquo;
             </p>
           </div>
@@ -230,7 +230,7 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('about.milestones.title')}
             </h2>
           </div>
@@ -261,10 +261,10 @@ export default function AboutPage() {
                       <span className="inline-block px-3 py-1 rounded-full text-sm font-bold text-white mb-2" style={{ backgroundColor: '#1E3A5F' }}>
                         {milestone.year}
                       </span>
-                      <h3 className="font-bold text-base mb-1" style={{ color: '#1E3A5F' }}>
+                      <h3 className="font-bold text-base mb-1 dark:text-white" style={{ color: '#1E3A5F' }}>
                         {milestone.title}
                       </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed">
+                      <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">
                         {milestone.desc}
                       </p>
                     </motion.div>
@@ -291,7 +291,7 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('about.figures.title')}
             </h2>
           </div>
@@ -314,10 +314,10 @@ export default function AboutPage() {
                     >
                       {fig.icon}
                     </div>
-                    <div className="text-3xl sm:text-4xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
+                    <div className="text-3xl sm:text-4xl font-bold mb-1 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {fig.value}
                     </div>
-                    <div className="text-sm text-gray-500">{fig.label}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-300">{fig.label}</div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -342,7 +342,7 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('about.values')}
             </h2>
           </div>
@@ -362,10 +362,10 @@ export default function AboutPage() {
                       >
                         {value.icon}
                       </div>
-                      <h3 className="font-bold text-lg mb-2" style={{ color: '#1E3A5F' }}>
+                      <h3 className="font-bold text-lg mb-2 dark:text-white" style={{ color: '#1E3A5F' }}>
                         {value.title}
                       </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed">{value.desc}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">{value.desc}</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -428,7 +428,7 @@ export default function AboutPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('about.certifications.title')}
             </h2>
           </div>
@@ -449,10 +449,10 @@ export default function AboutPage() {
                       >
                         {cert.icon}
                       </div>
-                      <h3 className="font-bold text-base mb-2" style={{ color: '#1E3A5F' }}>
+                      <h3 className="font-bold text-base mb-2 dark:text-white" style={{ color: '#1E3A5F' }}>
                         {cert.name}
                       </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed">{cert.desc}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">{cert.desc}</p>
                     </CardContent>
                   </Card>
                 </motion.div>

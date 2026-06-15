@@ -147,6 +147,16 @@ const fr: Translations = {
   'compare.noSpecs': 'Aucune spécification',
   'compare.noFeatures': 'Aucun point fort',
 
+  // --- WISHLIST ---
+  'wishlist.title': 'Mes favoris',
+  'wishlist.empty': 'Aucun produit dans vos favoris',
+  'wishlist.added': 'Ajouté aux favoris',
+  'wishlist.removed': 'Retiré des favoris',
+  'wishlist.viewAll': 'Voir tout',
+  'wishlist.clearAll': 'Tout supprimer',
+  'products.addToWishlist': 'Ajouter aux favoris',
+  'products.removeFromWishlist': 'Retirer des favoris',
+
   // --- BLOG ---
   'blog.title': 'Blog & Actualités',
   'blog.subtitle': 'Restez informé des dernières tendances en équipement dentaire',
@@ -591,6 +601,16 @@ const ar: Translations = {
   'compare.highlightDiff': 'الاختلافات',
   'compare.noSpecs': 'لا توجد مواصفات',
   'compare.noFeatures': 'لا توجد نقاط قوة',
+
+  // --- WISHLIST ---
+  'wishlist.title': 'المفضلة',
+  'wishlist.empty': 'لا توجد منتجات في المفضلة',
+  'wishlist.added': 'تمت الإضافة إلى المفضلة',
+  'wishlist.removed': 'تمت الإزالة من المفضلة',
+  'wishlist.viewAll': 'عرض الكل',
+  'wishlist.clearAll': 'حذف الكل',
+  'products.addToWishlist': 'إضافة إلى المفضلة',
+  'products.removeFromWishlist': 'إزالة من المفضلة',
 
   // --- BLOG ---
   'blog.title': 'المدونة والأخبار',

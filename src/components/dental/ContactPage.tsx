@@ -39,7 +39,7 @@ function FAQItem({ question, answer, isOpen, onToggle }: { question: string; ans
         onClick={onToggle}
         className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 px-4 rounded-lg transition-colors"
       >
-        <span className="font-medium text-sm sm:text-base" style={{ color: '#1E3A5F' }}>
+        <span className="font-medium text-sm sm:text-base dark:text-gray-200" style={{ color: '#1E3A5F' }}>
           {question}
         </span>
         <motion.div
@@ -59,7 +59,7 @@ function FAQItem({ question, answer, isOpen, onToggle }: { question: string; ans
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <p className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            <p className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
               {answer}
             </p>
           </motion.div>
@@ -246,7 +246,7 @@ export default function ContactPage() {
                     >
                       {card.icon}
                     </div>
-                    <h3 className="font-bold text-sm mb-2 uppercase tracking-wide" style={{ color: '#1E3A5F' }}>
+                    <h3 className="font-bold text-sm mb-2 uppercase tracking-wide dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {card.title}
                     </h3>
                     {card.href ? (
@@ -305,17 +305,17 @@ export default function ContactPage() {
                   </motion.a>
                 </div>
 
-                <h2 className="text-xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+                <h2 className="text-xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('contact.form.message')}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                <p className="text-sm text-gray-500 dark:text-gray-300 mb-6">
                   {language === 'ar' ? 'سنقوم بالرد عليك في أقرب وقت ممكن' : 'Nous vous répondrons dans les plus brefs délais'}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
                         {t('contact.form.name')} <span className="text-red-400">*</span>
                       </label>
                       <Input
@@ -327,7 +327,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
                         {t('contact.form.email')} <span className="text-red-400">*</span>
                       </label>
                       <Input
@@ -342,7 +342,7 @@ export default function ContactPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
                         {t('contact.form.phone')}
                       </label>
                       <Input
@@ -354,7 +354,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
                         {t('contact.form.subject')} <span className="text-red-400">*</span>
                       </label>
                       <Input
@@ -367,7 +367,7 @@ export default function ContactPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
                       {t('contact.form.message')} <span className="text-red-400">*</span>
                     </label>
                     <Textarea
@@ -421,7 +421,7 @@ export default function ContactPage() {
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                    <h3 className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('contact.findUs')}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -469,7 +469,7 @@ export default function ContactPage() {
             <Card className="border-0 shadow-sm overflow-hidden">
               <div className="h-1" style={{ backgroundColor: '#F0C05A' }} />
               <CardContent className="p-6">
-                <h3 className="font-bold text-sm mb-4 uppercase tracking-wide" style={{ color: '#1E3A5F' }}>
+                <h3 className="font-bold text-sm mb-4 uppercase tracking-wide dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {language === 'ar' ? 'تابعنا على' : 'Suivez-nous'}
                 </h3>
                 <div className="flex gap-3">
@@ -546,7 +546,7 @@ export default function ContactPage() {
               className="h-1 mx-auto mb-6 rounded-full"
               style={{ backgroundColor: '#F0C05A' }}
             />
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('contact.faq.title')}
             </h2>
           </div>

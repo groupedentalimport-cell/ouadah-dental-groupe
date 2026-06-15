@@ -1,0 +1,20 @@
+{
+  "name": "ODG - Ouadah Dental Groupe",
+  "short_name": "ODG",
+  "description": "Équipements Dentaires Professionnels en Algérie",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1E3A5F",
+  "theme_color": "#1E3A5F",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "business"]
+}

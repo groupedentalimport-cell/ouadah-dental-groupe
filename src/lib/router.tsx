@@ -7,6 +7,7 @@ export type RouteName =
   | 'catalogue'
   | 'product'
   | 'compare'
+  | 'wishlist'
   | 'blog'
   | 'article'
   | 'about'
@@ -67,6 +68,7 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     catalogue: 'catalogue',
     product: 'product',
     compare: 'compare',
+    wishlist: 'wishlist',
     blog: 'blog',
     article: 'article',
     about: 'about',

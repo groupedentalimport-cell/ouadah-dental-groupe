@@ -362,11 +362,17 @@ export default function HomePage() {
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
             <Badge
-              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5"
+              className="mb-5 text-sm font-medium px-4 py-1.5 border-0 inline-flex items-center gap-1.5 relative overflow-hidden"
               style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              {t('hero.subtitle')}
+              <motion.div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)' }}
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+              />
+              <Sparkles className="w-3.5 h-3.5 relative z-10" />
+              <span className="relative z-10">{t('hero.subtitle')}</span>
             </Badge>
           </motion.div>
 
@@ -383,7 +389,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}
-            className="text-lg sm:text-xl text-blue-200/90 max-w-2xl mx-auto mb-8 leading-relaxed"
+            className="text-lg sm:text-xl text-blue-200/90 dark:text-blue-100/95 max-w-2xl mx-auto mb-8 leading-relaxed"
           >
             {t('hero.description')}
           </motion.p>
@@ -432,7 +438,7 @@ export default function HomePage() {
             ].map((badge, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2.5 text-white/70 text-sm font-medium bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10"
+                className="flex items-center gap-2.5 text-white/80 dark:text-white/90 text-sm font-medium bg-white/5 dark:bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10 dark:border-white/15"
               >
                 <span style={{ color: '#F0C05A' }}>{badge.icon}</span>
                 {badge.text}
@@ -458,9 +464,13 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <span className="text-white/80 text-sm font-medium">
+            <motion.span
+              className="text-white/80 dark:text-white/90 text-sm font-medium inline-block"
+              whileHover={{ scale: 1.08, y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            >
               {language === 'ar' ? '+500 عيادة تثق بنا' : '500+ cliniques nous font confiance'}
-            </span>
+            </motion.span>
           </motion.div>
         </div>
 
@@ -568,7 +578,7 @@ export default function HomePage() {
                   {stat.icon}
                 </div>
                 <AnimatedCounter end={stat.end} suffix={stat.suffix} />
-                <div className="text-blue-200/60 text-xs sm:text-sm font-medium">{stat.label}</div>
+                <div className="text-blue-200/80 text-xs sm:text-sm font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -596,7 +606,9 @@ export default function HomePage() {
             className="text-center mb-10"
           >
             <h2 className="text-3xl sm:text-4xl font-bold mb-2 relative inline-block" style={{ color: '#1E3A5F' }}>
+              <span className="dark:text-[#7AB0E0]">
               {t('categories.title')}
+              </span>
               {/* Gold underline */}
               <motion.span
                 className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 rounded-full"
@@ -705,7 +717,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
               <div>
-                <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#1E3A5F' }}>
+                <h2 className="text-3xl sm:text-4xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {t('products.featured')}
                 </h2>
                 <div className="h-0.5 w-16 mt-1 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
@@ -769,9 +781,9 @@ export default function HomePage() {
                     </div>
                   </div>
                   <CardContent className="p-4 flex flex-col flex-1">
-                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#F0C05A' }}>{product.brand}</p>
+                    <p className="text-xs font-semibold mb-0.5 dark:text-[#F0C05A]" style={{ color: '#F0C05A' }}>{product.brand}</p>
                     <h3
-                      className="font-bold text-sm mb-1 line-clamp-1"
+                      className="font-bold text-sm mb-1 line-clamp-1 dark:text-white"
                       style={{ color: '#1E3A5F' }}
                     >
                       {getProductName(product, language)}
@@ -781,11 +793,11 @@ export default function HomePage() {
                     </p>
                     <div className="flex items-center justify-between gap-2 mt-auto">
                       {(product.price ?? 0) === 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide dark:text-[#F0C05A]" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
                           {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
                         </span>
                       ) : (
-                        <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                        <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                           {(product.price ?? 0).toLocaleString('fr-DZ')} DA
                         </span>
                       )}
@@ -879,13 +891,13 @@ export default function HomePage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
+            <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0 dark:bg-[#7AB0E0]/10 dark:text-[#7AB0E0]" style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1E3A5F' }}>
               {language === 'ar' ? 'مميزاتنا' : 'Nos atouts'}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'لماذا تختارنا؟' : 'Pourquoi nous choisir ?'}
             </h2>
-            <p className="text-gray-500 text-base max-w-lg mx-auto">
+            <p className="text-gray-500 dark:text-gray-300 text-base max-w-lg mx-auto">
               {language === 'ar'
                 ? 'التزامنا بالجودة والخدمة يجعلنا الخيار الأول'
                 : 'Notre engagement qualité et service fait de nous le choix n°1'
@@ -917,10 +929,10 @@ export default function HomePage() {
                       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:animate-ping group-hover:opacity-30" style={{ backgroundColor: item.accent }} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-base mb-1.5" style={{ color: '#1E3A5F' }}>
+                      <h3 className="font-bold text-base mb-1.5 dark:text-white" style={{ color: '#1E3A5F' }}>
                         {item.title}
                       </h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                      <p className="text-gray-500 dark:text-gray-300 text-sm leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -957,7 +969,7 @@ export default function HomePage() {
             <Badge className="mb-3 text-xs font-medium px-3 py-1 border-0" style={{ backgroundColor: 'rgba(240,192,90,0.12)', color: '#1E3A5F' }}>
               {t('testimonials.subtitle')}
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {t('testimonials.title')}
             </h2>
           </motion.div>
@@ -975,7 +987,7 @@ export default function HomePage() {
               const initials = nameParts.map(n => n[0]).join('');
               const avatarColors = ['#2A5F8F', '#3B8C6E', '#C0564F'];
               return (
-                <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+                <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} style={{ transform: `translateY(${i * 8}px)` }}>
                   <Card className="h-full border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 bg-white dark:bg-[#162236] relative overflow-hidden">
                     {/* Colored top accent */}
                     <div className="h-1 w-full" style={{ backgroundColor: avatarColors[i % 3] }} />
@@ -1002,7 +1014,7 @@ export default function HomePage() {
                           {initials}
                         </div>
                         <div>
-                          <p className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                          <p className="font-bold text-sm dark:text-white" style={{ color: '#1E3A5F' }}>
                             {testimonial.author}
                           </p>
                           <p className="text-gray-400 text-xs mt-0.5">
@@ -1042,7 +1054,7 @@ export default function HomePage() {
             transition={{ duration: 0.4 }}
             className="text-center mb-8"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold mb-1.5" style={{ color: '#1E3A5F' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-1.5 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
               {language === 'ar' ? 'علاماتنا الشريكة' : 'Nos Marques Partenaires'}
             </h2>
             <p className="text-gray-400 text-sm">
