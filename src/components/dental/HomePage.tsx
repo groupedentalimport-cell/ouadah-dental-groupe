@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { motion, useInView, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowRight,
   Shield,
@@ -29,6 +29,8 @@ import {
   Sparkles,
   ChevronRight,
   Play,
+  Users,
+  ArrowUp,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -42,14 +44,17 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import QuickViewModal from '@/components/dental/QuickViewModal';
 import type { Product } from '@/lib/data-service';
 
-// Animated counter hook
+// Animated counter hook - shows end value, then animates from 0 when in view
 function useCounter(end: number, duration = 2000) {
   const [count, setCount] = useState(0);
+  const hasAnimatedRef = useRef(false);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
     if (!inView) return;
+    if (hasAnimatedRef.current) return;
+    hasAnimatedRef.current = true;
     let start = 0;
     const step = end / (duration / 16);
     const timer = setInterval(() => {
@@ -113,6 +118,12 @@ export default function HomePage() {
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  // Parallax scroll for hero background
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  const heroY = useTransform(scrollY, [0, 600], [0, 200]);
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0.3]);
 
   // Stats with icons
   const stat1 = useCounter(500);
@@ -247,12 +258,13 @@ export default function HomePage() {
   return (
     <div className="overflow-hidden">
       {/* ==================== HERO SECTION ==================== */}
-      <section className="relative min-h-[82vh] flex items-center justify-center overflow-hidden">
-        {/* Background image with overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
+      <section ref={heroRef} className="relative min-h-[82vh] flex items-center justify-center overflow-hidden">
+        {/* Background image with parallax effect */}
+        <motion.div
+          className="absolute inset-0 bg-cover bg-center -top-20 -bottom-20"
           style={{
             backgroundImage: `url('/images/hero-dental.jpg')`,
+            y: heroY,
           }}
         />
         {/* Animated gradient overlay */}
@@ -260,9 +272,9 @@ export default function HomePage() {
           className="absolute inset-0"
           animate={{
             background: [
-              'linear-gradient(135deg, rgba(30,58,95,0.94) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.92) 70%, rgba(15,43,71,0.96) 100%)',
-              'linear-gradient(135deg, rgba(15,43,71,0.96) 0%, rgba(30,58,95,0.90) 40%, rgba(45,90,142,0.88) 70%, rgba(30,58,95,0.94) 100%)',
-              'linear-gradient(135deg, rgba(30,58,95,0.94) 0%, rgba(45,90,142,0.88) 40%, rgba(26,74,110,0.92) 70%, rgba(15,43,71,0.96) 100%)',
+              'linear-gradient(135deg, rgba(30,58,95,0.82) 0%, rgba(45,90,142,0.72) 40%, rgba(26,74,110,0.78) 70%, rgba(15,43,71,0.85) 100%)',
+              'linear-gradient(135deg, rgba(15,43,71,0.85) 0%, rgba(30,58,95,0.75) 40%, rgba(45,90,142,0.72) 70%, rgba(30,58,95,0.82) 100%)',
+              'linear-gradient(135deg, rgba(30,58,95,0.82) 0%, rgba(45,90,142,0.72) 40%, rgba(26,74,110,0.78) 70%, rgba(15,43,71,0.85) 100%)',
             ],
           }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
@@ -388,6 +400,29 @@ export default function HomePage() {
               </div>
             ))}
           </motion.div>
+
+          {/* Floating "Trusted by" badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 1 }}
+            className="mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20"
+          >
+            <div className="flex -space-x-2">
+              {['KB', 'SM', 'AT'].map((initials, idx) => (
+                <div
+                  key={idx}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white/30"
+                  style={{ backgroundColor: idx === 0 ? '#2A5F8F' : idx === 1 ? '#3B8C6E' : '#C0564F', color: '#fff' }}
+                >
+                  {initials}
+                </div>
+              ))}
+            </div>
+            <span className="text-white/80 text-sm font-medium">
+              {language === 'ar' ? '+500 عيادة تثق بنا' : '500+ cliniques nous font confiance'}
+            </span>
+          </motion.div>
         </div>
 
         {/* Bottom wave */}
@@ -462,7 +497,7 @@ export default function HomePage() {
       </section>
 
       {/* ==================== CATEGORIES SECTION ==================== */}
-      <section className="py-12 sm:py-16 bg-gray-50">
+      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-[#0c1622]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -483,7 +518,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.3 }}
               />
             </h2>
-            <p className="text-gray-500 text-base max-w-xl mx-auto mt-4">
+            <p className="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto mt-4">
               {t('categories.subtitle')}
             </p>
           </motion.div>
@@ -553,8 +588,15 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Section divider: wave between Categories and Featured Products */}
+      <div className="bg-gray-50 dark:bg-[#0c1622]">
+        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+          <path d="M0,20 C360,50 720,0 1440,20 L1440,50 L0,50 Z" fill="var(--background)" />
+        </svg>
+      </div>
+
       {/* ==================== FEATURED PRODUCTS ==================== */}
-      <section className="py-12 sm:py-16 bg-white">
+      <section className="py-12 sm:py-16 bg-white dark:bg-[#0f1d2e]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -594,7 +636,7 @@ export default function HomePage() {
                 transition={{ delay: idx * 0.06, duration: 0.4 }}
                 className="min-w-[260px] sm:min-w-0"
               >
-                <Card className="group border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col">
                   <div
                     className="h-48 flex items-center justify-center relative overflow-hidden"
                     style={{ backgroundColor: '#f0f4f8' }}
@@ -638,7 +680,7 @@ export default function HomePage() {
                     >
                       {getProductName(product, language)}
                     </h3>
-                    <p className="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
                       {getProductShortDescription(product, language)}
                     </p>
                     <div className="flex items-center justify-between gap-2 mt-auto">
@@ -705,6 +747,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Section divider: wave between Featured Products and Why Choose Us */}
+      <div className="bg-white dark:bg-[#0f1d2e]">
+        <svg viewBox="0 0 1440 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+          <path d="M0,30 C240,50 480,10 720,30 C960,50 1200,10 1440,30 L1440,50 L0,50 Z" fill="var(--background)" />
+        </svg>
+      </div>
+
       {/* ==================== WHY CHOOSE US ==================== */}
       <section className="py-12 sm:py-16 relative overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}
@@ -754,23 +803,25 @@ export default function HomePage() {
           >
             {whyChooseUs.map((item, i) => (
               <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
-                <div className="group bg-white rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full relative overflow-hidden">
+                <div className="group bg-white dark:bg-[#162236] rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 border border-gray-100 dark:border-white/5 h-full relative overflow-hidden">
                   {/* Accent bar at top */}
                   <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300" style={{ backgroundColor: item.accent, opacity: 0.6 }} />
                   {/* Subtle bg glow on hover */}
                   <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: item.bgColor, filter: 'blur(30px)' }} />
                   <div className="relative flex items-start gap-4">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg relative"
                       style={{ backgroundColor: item.bgColor, color: item.accent }}
                     >
                       {item.icon}
+                      {/* Pulse ring on hover */}
+                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:animate-ping group-hover:opacity-30" style={{ backgroundColor: item.accent }} />
                     </div>
                     <div>
                       <h3 className="font-bold text-base mb-1.5" style={{ color: '#1E3A5F' }}>
                         {item.title}
                       </h3>
-                      <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -780,8 +831,15 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Section divider: wave between Why Choose Us and Testimonials */}
+      <div style={{ background: 'linear-gradient(180deg, #f9fafb 0%, #eef2f7 50%, #f9fafb 100%)' }}>
+        <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+          <path d="M0,25 C480,0 960,40 1440,15 L1440,40 L0,40 Z" fill="#ffffff" />
+        </svg>
+      </div>
+
       {/* ==================== TESTIMONIALS SECTION ==================== */}
-      <section className="py-12 sm:py-16 bg-white relative">
+      <section className="py-12 sm:py-16 bg-white dark:bg-[#0f1d2e] relative">
         {/* Subtle bg pattern */}
         <div className="absolute inset-0 opacity-[0.015]"
           style={{
@@ -812,41 +870,71 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5"
           >
-            {testimonials.map((testimonial, i) => (
-              <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
-                <Card className="h-full border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 bg-white relative overflow-hidden">
-                  {/* Decorative large quote mark */}
-                  <div className="absolute -top-2 -left-1 opacity-[0.06] pointer-events-none">
-                    <Quote className="w-24 h-24" style={{ color: '#F0C05A' }} />
-                  </div>
-                  <CardContent className="p-5 sm:p-6 flex flex-col h-full relative">
-                    {/* Star rating - prominent */}
-                    <div className="flex items-center gap-0.5 mb-4">
-                      {Array.from({ length: testimonial.stars }).map((_, idx) => (
-                        <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
-                      ))}
+            {testimonials.map((testimonial, i) => {
+              // Extract initials from author name
+              const nameParts = testimonial.author.replace('Dr. ', '').split(' ');
+              const initials = nameParts.map(n => n[0]).join('');
+              const avatarColors = ['#2A5F8F', '#3B8C6E', '#C0564F'];
+              return (
+                <motion.div key={i} variants={itemVariants} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+                  <Card className="h-full border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-lg dark:hover:shadow-black/20 transition-all duration-300 bg-white dark:bg-[#162236] relative overflow-hidden">
+                    {/* Colored top accent */}
+                    <div className="h-1 w-full" style={{ backgroundColor: avatarColors[i % 3] }} />
+                    {/* Decorative large quote mark */}
+                    <div className="absolute -top-2 -left-1 opacity-[0.06] pointer-events-none">
+                      <Quote className="w-24 h-24" style={{ color: '#F0C05A' }} />
                     </div>
-                    <p className="text-gray-600 text-sm leading-relaxed flex-grow mb-4 relative z-10">
-                      &ldquo;{testimonial.text}&rdquo;
-                    </p>
-                    <div className="mt-auto pt-4 border-t border-gray-50">
-                      <p className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
-                        {testimonial.author}
+                    <CardContent className="p-5 sm:p-6 flex flex-col h-full relative">
+                      {/* Star rating - prominent */}
+                      <div className="flex items-center gap-0.5 mb-4">
+                        {Array.from({ length: testimonial.stars }).map((_, idx) => (
+                          <Star key={idx} className="w-4 h-4 fill-current" style={{ color: '#F0C05A' }} />
+                        ))}
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed flex-grow mb-4 relative z-10 italic">
+                        &ldquo;{testimonial.text}&rdquo;
                       </p>
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {testimonial.clinic}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                      <div className="mt-auto pt-4 border-t border-gray-50 dark:border-white/5 flex items-center gap-3">
+                        {/* Avatar with initials */}
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                          style={{ backgroundColor: avatarColors[i % 3] }}
+                        >
+                          {initials}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                            {testimonial.author}
+                          </p>
+                          <p className="text-gray-400 text-xs mt-0.5">
+                            {testimonial.clinic}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
 
+      {/* Section divider: decorative line between Testimonials and Partners */}
+      <div className="bg-white dark:bg-[#0f1d2e]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#1E3A5F', opacity: 0.3 }} />
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+            <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+          </div>
+        </div>
+      </div>
+
       {/* ==================== PARTNERS / BRANDS SECTION ==================== */}
-      <section className="py-10 sm:py-12 bg-gray-50 border-y border-gray-100">
+      <section className="py-10 sm:py-12 bg-gray-50 dark:bg-[#0c1622] border-y border-gray-100 dark:border-white/5 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -865,37 +953,53 @@ export default function HomePage() {
               }
             </p>
           </motion.div>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6"
-          >
-            {partnerBrands.map((brand, i) => (
-              <motion.div
-                key={brand.name}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.3 }}
-                whileHover={{ y: -2 }}
-                className="group flex flex-col items-center justify-center"
-              >
-                <div className="w-24 sm:w-28 h-14 sm:h-16 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-0.5 transition-all duration-300 group-hover:border-[#F0C05A]/30 group-hover:shadow-md grayscale hover:grayscale-0 group-hover:bg-white">
-                  <span className="text-xs sm:text-sm font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
-                    {brand.name}
-                  </span>
-                  <span className="text-[9px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
-                    {brand.subtext}
-                  </span>
+        {/* Scrolling marquee - duplicates brands for seamless loop */}
+        <div className="relative">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #f9fafb, transparent)' }} />
+          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #f9fafb, transparent)' }} />
+
+          <div className="flex overflow-hidden">
+            <motion.div
+              className="flex shrink-0 items-center gap-6 sm:gap-8 pr-6 sm:pr-8"
+              animate={{ x: [0, -50 * partnerBrands.length] }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: 'loop',
+                  duration: partnerBrands.length * 3,
+                  ease: 'linear',
+                },
+              }}
+            >
+              {[...partnerBrands, ...partnerBrands].map((brand, i) => (
+                <div
+                  key={`${brand.name}-${i}`}
+                  className="group flex flex-col items-center justify-center shrink-0"
+                >
+                  <div className="w-28 sm:w-32 h-16 sm:h-18 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-0.5 transition-all duration-300 group-hover:border-[#F0C05A]/30 group-hover:shadow-md grayscale hover:grayscale-0 group-hover:bg-white px-3">
+                    <span className="text-xs sm:text-sm font-bold tracking-wider text-gray-400 group-hover:text-gray-700 transition-colors duration-300">
+                      {brand.name}
+                    </span>
+                    <span className="text-[9px] text-gray-300 group-hover:text-gray-400 transition-colors duration-300">
+                      {brand.subtext}
+                    </span>
+                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
+
+      {/* Section divider: wave between brands and newsletter */}
+      <div className="bg-gray-50 dark:bg-[#0c1622]">
+        <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+          <path d="M0,20 C360,40 720,0 1440,20 L1440,40 L0,40 Z" fill="#1E3A5F" />
+        </svg>
+      </div>
 
       {/* ==================== NEWSLETTER SECTION ==================== */}
       <section

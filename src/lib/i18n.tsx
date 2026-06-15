@@ -389,6 +389,62 @@ const fr: Translations = {
   'products.recentlyViewed': 'Produits récemment consultés',
   'products.recentlyViewed.empty': 'Aucun produit consulté récemment',
   'products.recentlyViewed.clear': 'Effacer l\'historique',
+
+  // --- ADMIN ENHANCED ---
+  'admin.export_csv': 'Exporter en CSV',
+  'admin.bulk_delete': 'Supprimer la sélection',
+  'admin.select_all': 'Tout sélectionner',
+  'admin.deselect_all': 'Tout désélectionner',
+  'admin.product_status': 'Statut du produit',
+  'admin.active': 'Actif',
+  'admin.inactive': 'Inactif',
+  'admin.preview': 'Aperçu',
+  'admin.business_hours': 'Horaires d\'ouverture',
+  'admin.notifications': 'Notifications',
+  'admin.no_notifications': 'Aucune notification',
+  'admin.recent_orders': 'Commandes récentes',
+  'admin.order_id': 'N° Commande',
+  'admin.client_name': 'Nom du client',
+  'admin.monthly_quotes': 'Devis mensuels',
+  'admin.quick_stats': 'Statistiques rapides',
+  'admin.logo_upload': 'Télécharger le logo',
+  'admin.social_links': 'Liens réseaux sociaux',
+  'admin.preview_changes': 'Aperçu des modifications',
+  'admin.whatsapp': 'WhatsApp',
+
+  // --- PRODUCT ENHANCED ---
+  'products.price_range': 'Gamme de prix',
+  'products.min_price': 'Prix minimum',
+  'products.max_price': 'Prix maximum',
+  'products.on_request': 'Sur demande',
+  'products.gallery': 'Galerie',
+  'products.zoom': 'Zoom',
+  'products.next_image': 'Image suivante',
+  'products.prev_image': 'Image précédente',
+  'products.close_gallery': 'Fermer la galerie',
+
+  // --- THEME ---
+  'theme.dark_mode': 'Mode sombre',
+  'theme.light_mode': 'Mode clair',
+  'theme.toggle': 'Changer de thème',
+
+  // --- GENERAL ---
+  'general.back_to_top': 'Retour en haut',
+  'general.certifications': 'Certifications',
+  'general.iso_certified': 'Certifié ISO',
+  'general.ce_marked': 'Marqué CE',
+
+  // --- PRICE RANGE FILTER ---
+  'products.priceRange': 'Fourchette de prix',
+  'products.priceRange.min': 'Min',
+  'products.priceRange.max': 'Max',
+  'products.priceRange.all': 'Tous les prix',
+  'products.priceRange.onQuote': 'Sur devis uniquement',
+  'products.priceRange.includeOnQuote': 'Inclure sur devis',
+
+  // --- DARK MODE NAV ---
+  'nav.darkMode': 'Mode sombre',
+  'nav.lightMode': 'Mode clair',
 };
 
 // ============================================================
@@ -756,6 +812,62 @@ const ar: Translations = {
   'products.recentlyViewed': 'منتجات شاهدها مؤخراً',
   'products.recentlyViewed.empty': 'لم يتم مشاهدة أي منتج مؤخراً',
   'products.recentlyViewed.clear': 'مسح السجل',
+
+  // --- ADMIN ENHANCED ---
+  'admin.export_csv': 'تصدير كـ CSV',
+  'admin.bulk_delete': 'حذف المحدد',
+  'admin.select_all': 'تحديد الكل',
+  'admin.deselect_all': 'إلغاء التحديد',
+  'admin.product_status': 'حالة المنتج',
+  'admin.active': 'نشط',
+  'admin.inactive': 'غير نشط',
+  'admin.preview': 'معاينة',
+  'admin.business_hours': 'ساعات العمل',
+  'admin.notifications': 'الإشعارات',
+  'admin.no_notifications': 'لا توجد إشعارات',
+  'admin.recent_orders': 'الطلبات الأخيرة',
+  'admin.order_id': 'رقم الطلب',
+  'admin.client_name': 'اسم العميل',
+  'admin.monthly_quotes': 'عروض الأسعار الشهرية',
+  'admin.quick_stats': 'إحصائيات سريعة',
+  'admin.logo_upload': 'تحميل الشعار',
+  'admin.social_links': 'روابط الشبكات الاجتماعية',
+  'admin.preview_changes': 'معاينة التعديلات',
+  'admin.whatsapp': 'واتساب',
+
+  // --- PRODUCT ENHANCED ---
+  'products.price_range': 'نطاق السعر',
+  'products.min_price': 'الحد الأدنى للسعر',
+  'products.max_price': 'الحد الأقصى للسعر',
+  'products.on_request': 'على الطلب',
+  'products.gallery': 'معرض الصور',
+  'products.zoom': 'تكبير',
+  'products.next_image': 'الصورة التالية',
+  'products.prev_image': 'الصورة السابقة',
+  'products.close_gallery': 'إغلاق المعرض',
+
+  // --- THEME ---
+  'theme.dark_mode': 'الوضع الداكن',
+  'theme.light_mode': 'الوضع الفاتح',
+  'theme.toggle': 'تبديل السمة',
+
+  // --- GENERAL ---
+  'general.back_to_top': 'العودة للأعلى',
+  'general.certifications': 'الشهادات',
+  'general.iso_certified': 'معتمد ISO',
+  'general.ce_marked': 'علامة CE',
+
+  // --- PRICE RANGE FILTER ---
+  'products.priceRange': 'نطاق السعر',
+  'products.priceRange.min': 'الحد الأدنى',
+  'products.priceRange.max': 'الحد الأقصى',
+  'products.priceRange.all': 'جميع الأسعار',
+  'products.priceRange.onQuote': 'على أساس التسعير فقط',
+  'products.priceRange.includeOnQuote': 'تضمين على أساس التسعير',
+
+  // --- DARK MODE NAV ---
+  'nav.darkMode': 'الوضع الداكن',
+  'nav.lightMode': 'الوضع الفاتح',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

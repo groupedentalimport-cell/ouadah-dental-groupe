@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   Stethoscope,
   GitCompareArrows,
   Check,
+  FileText,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
@@ -37,6 +39,77 @@ const categoryColors = [
   '#4A9D7C', '#6B5CE7', '#D94F7B',
 ];
 
+// Extracted PriceRangeFilter as a separate component to avoid render-time component creation
+function PriceRangeFilterSection({ t, priceRange, setPriceRange, priceMax, includeOnQuote, setIncludeOnQuote }: {
+  t: (key: string) => string;
+  priceRange: [number, number];
+  setPriceRange: (val: [number, number]) => void;
+  priceMax: number;
+  includeOnQuote: boolean;
+  setIncludeOnQuote: (val: boolean) => void;
+}) {
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+      <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+        {t('products.priceRange')}
+      </h4>
+      <div className="px-1">
+        <Slider
+          value={priceRange}
+          onValueChange={(val) => setPriceRange([val[0], val[1]])}
+          min={0}
+          max={priceMax || 10000000}
+          step={Math.max(1, Math.floor((priceMax || 10000000) / 100))}
+          className="mb-3"
+        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">{t('products.priceRange.min')}</label>
+            <Input
+              type="number"
+              value={priceRange[0]}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                setPriceRange([Math.min(val, priceRange[1]), priceRange[1]]);
+              }}
+              className="h-8 text-xs mt-0.5 dark:bg-white/5 dark:border-white/10 dark:text-white"
+              min={0}
+              max={priceRange[1]}
+            />
+          </div>
+          <span className="text-gray-300 dark:text-gray-600 mt-4">—</span>
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">{t('products.priceRange.max')}</label>
+            <Input
+              type="number"
+              value={priceRange[1]}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || priceMax;
+                setPriceRange([priceRange[0], Math.max(val, priceRange[0])]);
+              }}
+              className="h-8 text-xs mt-0.5 dark:bg-white/5 dark:border-white/10 dark:text-white"
+              min={priceRange[0]}
+              max={priceMax}
+            />
+          </div>
+        </div>
+        {/* Include "Sur devis" toggle */}
+        <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={includeOnQuote}
+            onChange={(e) => setIncludeOnQuote(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 dark:border-white/20 accent-[#1E3A5F]"
+          />
+          <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
+            {t('products.priceRange.includeOnQuote')}
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export default function CataloguePage() {
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
@@ -51,6 +124,13 @@ export default function CataloguePage() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
+
+  // Price range filter state
+  const pricesWithValues = useMemo(() => products.map(p => p.price).filter((p): p is number => !!p && p > 0), [products]);
+  const priceMin = useMemo(() => pricesWithValues.length > 0 ? Math.min(...pricesWithValues) : 0, [pricesWithValues]);
+  const priceMax = useMemo(() => pricesWithValues.length > 0 ? Math.max(...pricesWithValues) : 10000000, [pricesWithValues]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [includeOnQuote, setIncludeOnQuote] = useState(true);
 
   // Parse category from URL hash if present
   React.useEffect(() => {
@@ -84,6 +164,16 @@ export default function CataloguePage() {
       );
     }
 
+    // Filter by price range
+    result = result.filter((p) => {
+      const hasPrice = p.price && p.price > 0;
+      if (hasPrice) {
+        return p.price >= priceRange[0] && p.price <= priceRange[1];
+      }
+      // Products without price ("Sur devis") are included only if includeOnQuote is true
+      return includeOnQuote;
+    });
+
     // Sort
     switch (sort) {
       case 'newest':
@@ -105,24 +195,26 @@ export default function CataloguePage() {
     }
 
     return result;
-  }, [products, categories, selectedCategory, search, sort, language]);
+  }, [products, categories, selectedCategory, search, sort, language, priceRange, includeOnQuote]);
 
   const formatPrice = (price: number | undefined) => {
     if (price == null || isNaN(price) || price === 0) return null;
     return price.toLocaleString('fr-DZ') + ' DA';
   };
 
-  const isFiltering = selectedCategory !== 'all' || search.length > 0;
+  const isFiltering = selectedCategory !== 'all' || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote;
 
   const handleClearFilters = () => {
     setSearch('');
     setSelectedCategory('all');
     setSort('newest');
+    setPriceRange([0, priceMax]);
+    setIncludeOnQuote(true);
   };
 
   return (
     <ContentWithLoading loading={loading} skeleton={<CataloguePageSkeleton />}>
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Header Banner */}
       <div
         className="relative overflow-hidden"
@@ -167,19 +259,19 @@ export default function CataloguePage() {
             transition={{ delay: 0.15 }}
             className="max-w-2xl mx-auto"
           >
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 flex flex-col sm:flex-row gap-3">
+            <div className="bg-white/95 dark:bg-[#1a2d45]/95 backdrop-blur-sm rounded-xl shadow-lg p-3 flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder={t('nav.search')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 border-0 bg-gray-50 focus-visible:ring-1"
+                  className="pl-10 border-0 bg-gray-50 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-400 focus-visible:ring-1"
                 />
                 {search && (
                   <button
                     onClick={() => setSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -189,7 +281,7 @@ export default function CataloguePage() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortOption)}
-                  className="h-9 w-full sm:w-44 rounded-md border border-gray-200 bg-gray-50 px-3 pr-8 text-sm appearance-none cursor-pointer"
+                  className="h-9 w-full sm:w-44 rounded-md border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 dark:text-white px-3 pr-8 text-sm appearance-none cursor-pointer"
                 >
                   <option value="newest">{t('products.sort.newest')}</option>
                   <option value="priceAsc">{t('products.sort.priceAsc')}</option>
@@ -206,8 +298,8 @@ export default function CataloguePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Mobile filter button + results count */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-gray-500">
-            <span className="font-semibold" style={{ color: '#1E3A5F' }}>{filteredProducts.length}</span>{' '}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{filteredProducts.length}</span>{' '}
             {language === 'ar' ? 'منتج' : 'produit(s)'}
           </p>
           <div className="flex gap-2 items-center">
@@ -216,7 +308,7 @@ export default function CataloguePage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleClearFilters}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-xs dark:text-[#7AB0E0]"
                 style={{ color: '#1E3A5F' }}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -227,7 +319,7 @@ export default function CataloguePage() {
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden gap-2"
+              className="lg:hidden gap-2 dark:border-white/10 dark:text-gray-300"
             >
               <SlidersHorizontal className="w-4 h-4" />
               {t('products.filter')}
@@ -243,8 +335,8 @@ export default function CataloguePage() {
             transition={{ delay: 0.2 }}
             className="hidden lg:block w-60 shrink-0"
           >
-            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
-              <h3 className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: '#1E3A5F' }}>
+            <div className="bg-white dark:bg-[#162236] rounded-xl shadow-sm dark:shadow-none p-4 sticky top-24">
+              <h3 className="font-semibold text-sm mb-4 uppercase tracking-wider dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                 {t('nav.categories')}
               </h3>
               <div className="space-y-1">
@@ -254,7 +346,7 @@ export default function CataloguePage() {
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
                     selectedCategory === 'all'
                       ? 'font-semibold shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                   style={
                     selectedCategory === 'all'
@@ -269,14 +361,14 @@ export default function CataloguePage() {
                   <Badge
                     variant="secondary"
                     className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
-                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 text-gray-500'
+                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     {products.length}
                   </Badge>
                 </button>
 
-                <div className="my-2 border-t border-gray-100" />
+                <div className="my-2 border-t border-gray-100 dark:border-white/10" />
 
                 {categories.map((cat, idx) => {
                   const count = products.filter((p) => p.category_id === cat.id).length;
@@ -290,7 +382,7 @@ export default function CataloguePage() {
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 group relative overflow-hidden ${
                         isActive
                           ? 'font-medium shadow-sm'
-                          : 'text-gray-600 hover:bg-gray-50'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}
                       style={
                         isActive
@@ -309,7 +401,7 @@ export default function CataloguePage() {
                       <Badge
                         variant="secondary"
                         className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
-                          isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-500'
+                          isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
                         }`}
                         style={isActive ? { backgroundColor: accentColor } : {}}
                       >
@@ -319,6 +411,9 @@ export default function CataloguePage() {
                   );
                 })}
               </div>
+
+              {/* Price Range Filter in Sidebar */}
+              <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
             </div>
           </motion.div>
 
@@ -338,10 +433,10 @@ export default function CataloguePage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 100 }}
                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl p-5 max-h-[70vh] overflow-y-auto"
+                  className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#162236] rounded-t-2xl shadow-2xl p-5 max-h-[70vh] overflow-y-auto"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold" style={{ color: '#1E3A5F' }}>
+                    <h3 className="font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                       {t('nav.categories')}
                     </h3>
                     <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
@@ -354,7 +449,7 @@ export default function CataloguePage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                         selectedCategory === 'all'
                           ? 'text-white shadow-sm'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
                       }`}
                       style={selectedCategory === 'all' ? { backgroundColor: '#1E3A5F' } : {}}
                     >
@@ -369,7 +464,7 @@ export default function CataloguePage() {
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                             selectedCategory === cat.slug
                               ? 'text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
                           }`}
                           style={selectedCategory === cat.slug ? { backgroundColor: '#1E3A5F' } : {}}
                         >
@@ -378,6 +473,8 @@ export default function CataloguePage() {
                       );
                     })}
                   </div>
+                  {/* Price Range in mobile filter */}
+                  <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
                 </motion.div>
               </>
             )}
@@ -392,20 +489,20 @@ export default function CataloguePage() {
                 className="text-center py-20"
               >
                 <div
-                  className="w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center"
+                  className="w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center dark:bg-white/5"
                   style={{ backgroundColor: '#f0f4f8' }}
                 >
                   <Stethoscope className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
                 </div>
-                <p className="text-gray-500 text-lg font-medium mb-2">{t('products.noResults')}</p>
-                <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
+                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">{t('products.noResults')}</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm max-w-md mx-auto mb-6">
                   {t('products.noResultsTip')}
                 </p>
                 {isFiltering && (
                   <Button
                     variant="outline"
                     onClick={handleClearFilters}
-                    className="gap-2"
+                    className="gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
                     style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -495,7 +592,7 @@ function ProductCard({
       transition={{ delay: Math.min(index * 0.04, 0.3) }}
     >
       <Card
-        className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer"
+        className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer"
         onClick={() => navigate(`/product/${product.slug}`)}
       >
         {/* Image area */}
@@ -537,7 +634,7 @@ function ProductCard({
           {/* Top-right: Stock badge */}
           <div className="absolute top-3 right-3">
             {product.in_stock ? (
-              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-white/90 border-green-200 text-green-700 backdrop-blur-sm">
+              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-white/90 dark:bg-[#162236]/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 backdrop-blur-sm">
                 {t('products.inStock')}
               </Badge>
             ) : (
@@ -554,6 +651,7 @@ function ProductCard({
                 className="text-[10px] px-2.5 py-0.5 border-0 font-semibold shadow-sm"
                 style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
               >
+                <FileText className="w-3 h-3 mr-1" />
                 {t('products.priceOnQuote')}
               </Badge>
             </div>
@@ -561,7 +659,7 @@ function ProductCard({
 
           {/* Quick View button - visible on hover (desktop), always on mobile */}
           <button
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 dark:bg-[#162236]/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-[#1a2d45] hover:scale-110"
             onClick={(e) => {
               e.stopPropagation();
               onQuickView();
@@ -601,22 +699,22 @@ function ProductCard({
 
           {/* Product name */}
           <h3
-            className="font-semibold text-sm mb-1 line-clamp-2 leading-snug"
+            className="font-semibold text-sm mb-1 line-clamp-2 leading-snug dark:text-white"
             style={{ color: '#1E3A5F' }}
           >
             {getProductName(product, language)}
           </h3>
 
           {/* Short description */}
-          <p className="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 flex-1">
             {getProductShortDescription(product, language)}
           </p>
 
           {/* Price + Action row */}
-          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-white/10">
             <div className="flex-1 min-w-0">
               {priceDisplay ? (
-                <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
                   {priceDisplay}
                 </span>
               ) : (
@@ -633,10 +731,10 @@ function ProductCard({
               <Button
                 size="sm"
                 variant="outline"
-                className={`text-xs h-8 w-8 p-0 border-gray-200 ${
+                className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 ${
                   isInCompare(product.id)
-                    ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
-                    : 'text-gray-400 hover:text-amber-600 hover:border-amber-300'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
                 }`}
                 disabled={!isInCompare(product.id) && compareFull}
                 title={

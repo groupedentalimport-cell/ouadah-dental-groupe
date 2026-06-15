@@ -1,0 +1,828 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  ArrowLeft,
+     7→  ShoppingCart,
+     8→  CheckCircle2,
+     9→  Shield,
+    10→  Wrench,
+    11→  GraduationCap,
+    12→  Truck,
+    13→  ChevronLeft,
+    14→  ChevronRight,
+    15→  X,
+    16→  Package,
+    17→  FileText,
+    18→  Tag,
+    19→  Hash,
+    20→  CircleDot,
+    21→  GitCompareArrows,
+    22→  Check,
+    23→  Share2,
+    24→  Printer,
+    25→  Home,
+    26→  ChevronDown,
+    27→  Link2,
+    28→} from 'lucide-react';
+    29→import { useTranslation } from '@/lib/i18n';
+    30→import { useRouter } from '@/lib/router';
+    31→import { useData } from '@/lib/data-service';
+    32→import { Button } from '@/components/ui/button';
+    33→import { Card, CardContent } from '@/components/ui/card';
+    34→import { Badge } from '@/components/ui/badge';
+    35→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    36→import { useCompare } from '@/hooks/useCompare';
+    37→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    38→import type { Product } from '@/lib/data-service';
+    39→import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+    40→import { toast } from 'sonner';
+    41→
+    42→// Decode double-encoded HTML entities
+    43→function decodeHtmlEntities(text: string): string {
+    44→  if (!text) return '';
+    45→  let decoded = text;
+    46→  for (let i = 0; i < 3; i++) {
+    47→    const prev = decoded;
+    48→    decoded = decoded
+    49→      .replace(/&amp;/g, '&')
+    50→      .replace(/&lt;/g, '<')
+    51→      .replace(/&gt;/g, '>')
+    52→      .replace(/&quot;/g, '"')
+    53→      .replace(/&#39;/g, "'")
+    54→      .replace(/&nbsp;/g, ' ');
+    55→    if (decoded === prev) break;
+    56→  }
+    57→  return decoded;
+    58→}
+    59→
+    60→function sanitizeHtml(html: string): string {
+    61→  if (!html) return '';
+    62→  let sanitized = decodeHtmlEntities(html);
+    63→  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    64→  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    65→  sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, '');
+    66→  return sanitized;
+    67→}
+    68→
+    69→export default function ProductDetailPage() {
+    70→  const { t, language, isRTL } = useTranslation();
+    71→  const { params, navigate, goBack } = useRouter();
+    72→  const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
+    73→  const addItem = useQuoteCart((s) => s.addItem);
+    74→  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+    75→  const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
+    76→
+    77→  const product = useMemo(
+    78→    () => products.find((p) => p.slug === params.slug),
+    79→    [products, params.slug]
+    80→  );
+    81→
+    82→  const category = useMemo(
+    83→    () => categories.find((c) => c.id === product?.category_id),
+    84→    [categories, product]
+    85→  );
+    86→
+    87→  const relatedProducts = useMemo(
+    88→    () =>
+    89→      product
+    90→        ? products
+    91→            .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+    92→            .slice(0, 3)
+    93→        : [],
+    94→    [products, product]
+    95→  );
+    96→
+    97→  const [currentImage, setCurrentImage] = useState(0);
+    98→  const [lightboxOpen, setLightboxOpen] = useState(false);
+    99→  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+   100→
+   101→  // Image zoom state
+   102→  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+   103→  const [isZooming, setIsZooming] = useState(false);
+   104→  const imageRef = useRef<HTMLDivElement>(null);
+   105→
+   106→  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+   107→    if (!imageRef.current) return;
+   108→    const rect = imageRef.current.getBoundingClientRect();
+   109→    const x = ((e.clientX - rect.left) / rect.width) * 100;
+   110→    const y = ((e.clientY - rect.top) / rect.height) * 100;
+   111→    setZoomPosition({ x, y });
+   112→  }, []);
+   113→
+   114→  // Track recently viewed product
+   115→  useEffect(() => {
+   116→    if (product) {
+   117→      addRecentlyViewed(
+   118→        product.id,
+   119→        product.slug,
+   120→        getProductName(product, language),
+   121→        product.images?.[0] || '',
+   122→        product.price
+   123→      );
+   124→    }
+   125→  }, [product, addRecentlyViewed, getProductName, language]);
+   126→
+   127→  if (loading) {
+   128→    return <ProductDetailPageSkeleton />;
+   129→  }
+   130→
+   131→  if (!product) {
+   132→    return (
+   133→      <div className="min-h-screen flex items-center justify-center pt-20">
+   134→        <div className="text-center">
+   135→          <div
+   136→            className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center"
+   137→            style={{ backgroundColor: '#f0f4f8' }}
+   138→          >
+   139→            <Package className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+   140→          </div>
+   141→          <p className="text-gray-500 mb-4">{t('common.noResults')}</p>
+   142→          <Button onClick={() => navigate('/catalogue')} style={{ backgroundColor: '#1E3A5F' }}>
+   143→            {t('common.back')}
+   144→          </Button>
+   145→        </div>
+   146→      </div>
+   147→    );
+   148→  }
+   149→
+   150→  const images = product.images && product.images.length > 0 ? product.images : [];
+   151→  const features = language === 'ar' ? product.features_ar : product.features_fr;
+   152→  const specs = product.specs || [];
+   153→  const priceDisplay = product.price && product.price > 0
+   154→    ? product.price.toLocaleString('fr-DZ') + ' DA'
+   155→    : null;
+   156→  const isOnQuote = !priceDisplay;
+   157→
+   158→  const descriptionHtml = sanitizeHtml(getProductDescription(product, language));
+   159→
+   160→  const hasWarranty = product.warranty && product.warranty.length > 0 && product.warranty !== '-';
+   161→  const hasInstallation = product.installation_included === true;
+   162→  const hasTraining = product.training_included === true;
+   163→  const hasDelivery = (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr) &&
+   164→    (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr).length > 0;
+   165→
+   166→  const handleShare = async () => {
+   167→    const url = window.location.href;
+   168→    try {
+   169→      await navigator.clipboard.writeText(url);
+   170→      toast.success(t('products.linkCopied'), {
+   171→        icon: <Link2 className="w-4 h-4" />,
+   172→      });
+   173→    } catch {
+   174→      // Fallback
+   175→      const textArea = document.createElement('textarea');
+   176→      textArea.value = url;
+   177→      document.body.appendChild(textArea);
+   178→      textArea.select();
+   179→      document.execCommand('copy');
+   180→      document.body.removeChild(textArea);
+   181→      toast.success(t('products.linkCopied'), {
+   182→        icon: <Link2 className="w-4 h-4" />,
+   183→      });
+   184→    }
+   185→    setShareMenuOpen(false);
+   186→  };
+   187→
+   188→  const handlePrint = () => {
+   189→    window.print();
+   190→  };
+   191→
+   192→  return (
+   193→    <div className="min-h-screen bg-gray-50 pt-20 animate-in fade-in duration-500">
+   194→      {/* Lightbox */}
+   195→      <AnimatePresence>
+   196→        {lightboxOpen && images.length > 0 && (
+   197→          <motion.div
+   198→            initial={{ opacity: 0 }}
+   199→            animate={{ opacity: 1 }}
+   200→            exit={{ opacity: 0 }}
+   201→            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+   202→            onClick={() => setLightboxOpen(false)}
+   203→          >
+   204→            <button
+   205→              className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+   206→              onClick={() => setLightboxOpen(false)}
+   207→            >
+   208→              <X className="w-6 h-6" />
+   209→            </button>
+   210→            {images.length > 1 && (
+   211→              <>
+   212→                <button
+   213→                  className="absolute left-4 text-white p-3 hover:bg-white/10 rounded-full transition-colors"
+   214→                  onClick={(e) => {
+   215→                    e.stopPropagation();
+   216→                    setCurrentImage((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+   217→                  }}
+   218→                >
+   219→                  <ChevronLeft className="w-8 h-8" />
+   220→                </button>
+   221→                <button
+   222→                  className="absolute right-4 text-white p-3 hover:bg-white/10 rounded-full transition-colors"
+   223→                  onClick={(e) => {
+   224→                    e.stopPropagation();
+   225→                    setCurrentImage((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+   226→                  }}
+   227→                >
+   228→                  <ChevronRight className="w-8 h-8" />
+   229→                </button>
+   230→              </>
+   231→            )}
+   232→            <motion.img
+   233→              key={currentImage}
+   234→              initial={{ opacity: 0, scale: 0.9 }}
+   235→              animate={{ opacity: 1, scale: 1 }}
+   236→              src={images[currentImage]}
+   237→              alt={getProductName(product, language)}
+   238→              className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
+   239→              onClick={(e) => e.stopPropagation()}
+   240→            />
+   241→          </motion.div>
+   242→        )}
+   243→      </AnimatePresence>
+   244→
+   245→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   246→        {/* Breadcrumbs */}
+   247→        <motion.div
+   248→          initial={{ opacity: 0, x: -10 }}
+   249→          animate={{ opacity: 1, x: 0 }}
+   250→          className="flex items-center gap-2 text-sm text-gray-400 mb-6 flex-wrap"
+   251→        >
+   252→          <button onClick={() => navigate('/')} className="hover:text-[#1E3A5F] transition-colors flex items-center gap-1">
+   253→            <Home className="w-3.5 h-3.5" />
+   254→            {t('products.breadcrumb.home')}
+   255→          </button>
+   256→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+   257→          <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] transition-colors">
+   258→            {t('products.title')}
+   259→          </button>
+   260→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+   261→          {category && (
+   262→            <>
+   263→              <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] transition-colors">
+   264→                {getCategoryName(category, language)}
+   265→              </button>
+   266→              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300" />
+   267→            </>
+   268→          )}
+   269→          <span className="text-gray-500 font-medium truncate max-w-[200px]">
+   270→            {getProductName(product, language)}
+   271→          </span>
+   272→        </motion.div>
+   273→
+   274→        {/* Back Button */}
+   275→        <motion.div
+   276→          initial={{ opacity: 0, x: -10 }}
+   277→          animate={{ opacity: 1, x: 0 }}
+   278→        >
+   279→          <Button
+   280→            variant="outline"
+   281→            onClick={goBack}
+   282→            className="mb-6 gap-2 shadow-sm"
+   283→            style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   284→          >
+   285→            <ArrowLeft className="w-4 h-4" />
+   286→            {t('common.back')}
+   287→          </Button>
+   288→        </motion.div>
+   289→
+   290→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+   291→          {/* Image Gallery with Zoom */}
+   292→          <motion.div
+   293→            initial={{ opacity: 0, x: -20 }}
+   294→            animate={{ opacity: 1, x: 0 }}
+   295→          >
+   296→            <div
+   297→              ref={imageRef}
+   298→              className="aspect-square rounded-2xl overflow-hidden bg-white shadow-sm cursor-crosshair relative"
+   299→              onMouseEnter={() => setIsZooming(true)}
+   300→              onMouseLeave={() => setIsZooming(false)}
+   301→              onMouseMove={handleMouseMove}
+   302→              onClick={() => images.length > 0 && setLightboxOpen(true)}
+   303→            >
+   304→              {images.length > 0 ? (
+   305→                <img
+   306→                  src={images[currentImage]}
+   307→                  alt={getProductName(product, language)}
+   308→                  className="w-full h-full object-cover transition-transform duration-200"
+   309→                  style={{
+   310→                    transform: isZooming ? 'scale(1.5)' : 'scale(1)',
+   311→                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+   312→                  }}
+   313→                />
+   314→              ) : (
+   315→                <div
+   316→                  className="w-full h-full flex items-center justify-center"
+   317→                  style={{
+   318→                    background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   319→                  }}
+   320→                >
+   321→                  <div className="text-center">
+   322→                    <Package className="w-24 h-24 text-white/30 mx-auto mb-3" />
+   323→                    <p className="text-white/25 text-sm font-medium tracking-wider uppercase">
+   324→                      {language === 'ar' ? 'صورة غير متوفرة' : 'Image non disponible'}
+   325→                    </p>
+   326→                  </div>
+   327→                </div>
+   328→              )}
+   329→              {/* Zoom indicator */}
+   330→              {isZooming && images.length > 0 && (
+   331→                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/50 text-white text-xs flex items-center gap-1 pointer-events-none">
+   332→                  <Share2 className="w-3 h-3 rotate-90" />
+   333→                  {language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir'}
+   334→                </div>
+   335→              )}
+   336→            </div>
+   337→            {images.length > 1 && (
+   338→              <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+   339→                {images.map((img, i) => (
+   340→                  <button
+   341→                    key={i}
+   342→                    onClick={() => setCurrentImage(i)}
+   343→                    className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 ${
+   344→                      i === currentImage ? 'border-[#1E3A5F] shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+   345→                    }`}
+   346→                  >
+   347→                    <img src={img} alt="" className="w-full h-full object-cover" />
+   348→                  </button>
+   349→                ))}
+   350→              </div>
+   351→            )}
+   352→          </motion.div>
+   353→
+   354→          {/* Product Info */}
+   355→          <motion.div
+   356→            initial={{ opacity: 0, x: 20 }}
+   357→            animate={{ opacity: 1, x: 0 }}
+   358→          >
+   359→            {/* Status Badges */}
+   360→            <div className="flex flex-wrap gap-2 mb-4">
+   361→              {product.is_new && (
+   362→                <Badge className="border-0" style={{ backgroundColor: '#1E3A5F' }}>
+   363→                  {t('products.new')}
+   364→                </Badge>
+   365→              )}
+   366→              {product.is_best_seller && (
+   367→                <Badge className="border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   368→                  {t('products.bestSeller')}
+   369→                </Badge>
+   370→              )}
+   371→            </div>
+   372→
+   373→            {/* Product Name */}
+   374→            <h1 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+   375→              {getProductName(product, language)}
+   376→            </h1>
+   377→
+   378→            {/* Brand & Reference Badges */}
+   379→            <div className="flex flex-wrap gap-2 mb-5">
+   380→              {product.brand && (
+   381→                <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full text-xs font-medium" style={{ color: '#1E3A5F' }}>
+   382→                  <Tag className="w-3.5 h-3.5" />
+   383→                  {product.brand}
+   384→                </div>
+   385→              )}
+   386→              {product.ref && (
+   387→                <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full text-xs font-medium" style={{ color: '#1E3A5F' }}>
+   388→                  <Hash className="w-3.5 h-3.5" />
+   389→                  {product.ref}
+   390→                </div>
+   391→              )}
+   392→              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+   393→                product.in_stock
+   394→                  ? 'bg-green-50 text-green-700'
+   395→                  : 'bg-red-50 text-red-700'
+   396→              }`}>
+   397→                <CircleDot className="w-3.5 h-3.5" />
+   398→                {product.in_stock ? t('products.inStock') : t('products.outOfStock')}
+   399→              </div>
+   400→            </div>
+   401→
+   402→            {/* Price Display */}
+   403→            <div className="mb-6">
+   404→              {priceDisplay ? (
+   405→                <div className="flex items-baseline gap-2">
+   406→                  <span className="text-2xl sm:text-3xl font-bold" style={{ color: '#1E3A5F' }}>
+   407→                    {priceDisplay}
+   408→                  </span>
+   409→                </div>
+   410→              ) : (
+   411→                <div
+   412→                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg"
+   413→                  style={{ backgroundColor: '#F0C05A20' }}
+   414→                >
+   415→                  <FileText className="w-5 h-5" style={{ color: '#F0C05A' }} />
+   416→                  <span className="text-lg font-semibold" style={{ color: '#1E3A5F' }}>
+   417→                    {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+   418→                  </span>
+   419→                </div>
+   420→              )}
+   421→            </div>
+   422→
+   423→            {/* Meta Info Grid */}
+   424→            <div className="grid grid-cols-2 gap-3 mb-6">
+   425→              {product.origin && (
+   426→                <div className="bg-gray-50 rounded-lg p-3">
+   427→                  <p className="text-xs text-gray-400 mb-0.5">{t('products.origin')}</p>
+   428→                  <p className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{product.origin}</p>
+   429→                </div>
+   430→              )}
+   431→              {hasWarranty && (
+   432→                <div className="bg-gray-50 rounded-lg p-3">
+   433→                  <p className="text-xs text-gray-400 mb-0.5">{t('products.warranty')}</p>
+   434→                  <p className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
+   435→                </div>
+   436→              )}
+   437→            </div>
+   438→
+   439→            {/* Service Badges */}
+   440→            {(hasWarranty || hasInstallation || hasTraining || hasDelivery) && (
+   441→              <div className="flex flex-wrap gap-2 mb-6">
+   442→                {hasWarranty && (
+   443→                  <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium">
+   444→                    <Shield className="w-3.5 h-3.5" />
+   445→                    {product.warranty}
+   446→                  </div>
+   447→                )}
+   448→                {hasInstallation && (
+   449→                  <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full text-xs font-medium">
+   450→                    <Wrench className="w-3.5 h-3.5" />
+   451→                    {t('products.installation')}
+   452→                  </div>
+   453→                )}
+   454→                {hasTraining && (
+   455→                  <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
+   456→                    <GraduationCap className="w-3.5 h-3.5" />
+   457→                    {t('products.training')}
+   458→                  </div>
+   459→                )}
+   460→                {hasDelivery && (
+   461→                  <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs font-medium">
+   462→                    <Truck className="w-3.5 h-3.5" />
+   463→                    {language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr}
+   464→                  </div>
+   465→                )}
+   466→              </div>
+   467→            )}
+   468→
+   469→            {/* Action Buttons */}
+   470→            <div className="space-y-3">
+   471→              <div className="flex gap-2">
+   472→                <Button
+   473→                  size="lg"
+   474→                  className="flex-1 h-12 text-base font-semibold shadow-lg"
+   475→                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   476→                  onClick={() => {
+   477→                    addItem({
+   478→                      id: product.id,
+   479→                      slug: product.slug,
+   480→                      name: getProductName(product, language),
+   481→                      price: product.price,
+   482→                      image: product.images?.[0] || '',
+   483→                    });
+   484→                  }}
+   485→                >
+   486→                  <ShoppingCart className="w-5 h-5" />
+   487→                  {t('products.addQuote')}
+   488→                </Button>
+   489→                <Button
+   490→                  size="lg"
+   491→                  variant="outline"
+   492→                  className={`h-12 px-4 font-semibold ${
+   493→                    isInCompare(product.id)
+   494→                      ? 'bg-amber-50 border-amber-400 text-amber-700 hover:bg-amber-100'
+   495→                      : 'border-gray-300 text-gray-500 hover:border-amber-400 hover:text-amber-600'
+   496→                  }`}
+   497→                  disabled={!isInCompare(product.id) && productIds.length >= 4}
+   498→                  title={
+   499→                    isInCompare(product.id)
+   500→                      ? t('compare.remove')
+   501→                      : productIds.length >= 4
+   502→                      ? t('compare.maxReached')
+   503→                      : t('compare.add')
+   504→                  }
+   505→                  onClick={() => {
+   506→                    if (isInCompare(product.id)) {
+   507→                      removeCompareProduct(product.id);
+   508→                    } else {
+   509→                      addCompareProduct(product.id);
+   510→                    }
+   511→                  }}
+   512→                >
+   513→                  {isInCompare(product.id) ? (
+   514→                    <Check className="w-5 h-5" />
+   515→                  ) : (
+   516→                    <GitCompareArrows className="w-5 h-5" />
+   517→                  )}
+   518→                </Button>
+   519→              </div>
+   520→
+   521→              {/* Share & Print Buttons */}
+   522→              <div className="flex gap-2">
+   523→                <Button
+   524→                  variant="outline"
+   525→                  size="sm"
+   526→                  className="flex-1 gap-2 text-gray-600"
+   527→                  onClick={handleShare}
+   528→                >
+   529→                  <Share2 className="w-4 h-4" />
+   530→                  {t('products.share')}
+   531→                </Button>
+   532→                <Button
+   533→                  variant="outline"
+   534→                  size="sm"
+   535→                  className="flex-1 gap-2 text-gray-600"
+   536→                  onClick={handlePrint}
+   537→                >
+   538→                  <Printer className="w-4 h-4" />
+   539→                  {t('products.print')}
+   540→                </Button>
+   541→              </div>
+   542→
+   543→              {isOnQuote && (
+   544→                <Button
+   545→                  size="lg"
+   546→                  variant="outline"
+   547→                  className="w-full h-12 text-base font-semibold"
+   548→                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   549→                  onClick={() => navigate('/devis')}
+   550→                >
+   551→                  <FileText className="w-5 h-5" />
+   552→                  {t('products.requestQuote')}
+   553→                </Button>
+   554→              )}
+   555→            </div>
+   556→          </motion.div>
+   557→        </div>
+   558→
+   559→        {/* Features */}
+   560→        {features && features.length > 0 && (
+   561→          <motion.div
+   562→            initial={{ opacity: 0, y: 20 }}
+   563→            whileInView={{ opacity: 1, y: 0 }}
+   564→            viewport={{ once: true }}
+   565→            className="mt-12"
+   566→          >
+   567→            <Card className="border-0 shadow-sm overflow-hidden">
+   568→              <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
+   569→              <CardContent className="p-6">
+   570→                <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+   571→                  {t('products.features')}
+   572→                </h2>
+   573→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   574→                  {features.map((feat, i) => (
+   575→                    <div key={i} className="flex items-start gap-2">
+   576→                      <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#1E3A5F' }} />
+   577→                      <span className="text-sm text-gray-700">{feat}</span>
+   578→                    </div>
+   579→                  ))}
+   580→                </div>
+   581→              </CardContent>
+   582→            </Card>
+   583→          </motion.div>
+   584→        )}
+   585→
+   586→        {/* Specs */}
+   587→        {specs.length > 0 && (
+   588→          <motion.div
+   589→            initial={{ opacity: 0, y: 20 }}
+   590→            whileInView={{ opacity: 1, y: 0 }}
+   591→            viewport={{ once: true }}
+   592→            className="mt-8"
+   593→          >
+   594→            <Card className="border-0 shadow-sm overflow-hidden">
+   595→              <div className="h-1" style={{ backgroundColor: '#2A5F8F' }} />
+   596→              <CardContent className="p-6">
+   597→                <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+   598→                  {t('products.specs')}
+   599→                </h2>
+   600→                <div className="divide-y">
+   601→                  {specs.map((spec, i) => (
+   602→                    <div key={i} className="flex justify-between py-3">
+   603→                      <span className="text-sm text-gray-500">
+   604→                        {language === 'ar' ? spec.label_ar : spec.label_fr}
+   605→                      </span>
+   606→                      <span className="text-sm font-medium" style={{ color: '#1E3A5F' }}>
+   607→                        {spec.value}
+   608→                      </span>
+   609→                    </div>
+   610→                  ))}
+   611→                </div>
+   612→              </CardContent>
+   613→            </Card>
+   614→          </motion.div>
+   615→        )}
+   616→
+   617→        {/* Description */}
+   618→        {descriptionHtml && (
+   619→          <motion.div
+   620→            initial={{ opacity: 0, y: 20 }}
+   621→            whileInView={{ opacity: 1, y: 0 }}
+   622→            viewport={{ once: true }}
+   623→            className="mt-8"
+   624→          >
+   625→            <Card className="border-0 shadow-sm overflow-hidden">
+   626→              <div className="h-1" style={{ backgroundColor: '#3A7CB8' }} />
+   627→              <CardContent className="p-6">
+   628→                <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+   629→                  {t('products.description')}
+   630→                </h2>
+   631→                <div
+   632→                  className="prose prose-sm max-w-none text-gray-700
+   633→                    prose-headings:font-bold prose-headings:text-[#1E3A5F]
+   634→                    prose-a:text-[#2A5F8F] prose-a:no-underline hover:prose-a:underline
+   635→                    prose-ul:list-disc prose-ol:list-decimal
+   636→                    prose-li:marker:text-[#F0C05A]
+   637→                    prose-strong:text-[#1E3A5F]
+   638→                    prose-table:border-collapse
+   639→                    prose-th:bg-gray-50 prose-th:p-2 prose-th:border prose-th:border-gray-200
+   640→                    prose-td:p-2 prose-td:border prose-td:border-gray-200"
+   641→                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+   642→                />
+   643→              </CardContent>
+   644→            </Card>
+   645→          </motion.div>
+   646→        )}
+   647→
+   648→        {/* Related Products - Prominent heading */}
+   649→        {relatedProducts.length > 0 && (
+   650→          <motion.div
+   651→            initial={{ opacity: 0, y: 20 }}
+   652→            whileInView={{ opacity: 1, y: 0 }}
+   653→            viewport={{ once: true }}
+   654→            className="mt-12"
+   655→          >
+   656→            <div className="flex items-center gap-3 mb-6">
+   657→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   658→              <h2 className="text-xl font-bold" style={{ color: '#1E3A5F' }}>
+   659→                {t('products.relatedProducts')}
+   660→              </h2>
+   661→            </div>
+   662→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   663→              {relatedProducts.map((rp) => (
+   664→                <Card
+   665→                  key={rp.id}
+   666→                  className="group border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+   667→                  onClick={() => {
+   668→                    setCurrentImage(0);
+   669→                    navigate(`/product/${rp.slug}`);
+   670→                  }}
+   671→                >
+   672→                  <div className="h-36 overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
+   673→                    {rp.images?.[0] ? (
+   674→                      <img
+   675→                        src={rp.images[0]}
+   676→                        alt={getProductName(rp, language)}
+   677→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+   678→                      />
+   679→                    ) : (
+   680→                      <div
+   681→                        className="w-full h-full flex items-center justify-center"
+   682→                        style={{
+   683→                          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   684→                        }}
+   685→                      >
+   686→                        <Package className="w-10 h-10 text-white/30" />
+   687→                      </div>
+   688→                    )}
+   689→                  </div>
+   690→                  <CardContent className="p-3">
+   691→                    {rp.brand && (
+   692→                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+   693→                        {rp.brand}
+   694→                      </span>
+   695→                    )}
+   696→                    <h3 className="font-semibold text-sm line-clamp-1 mt-0.5" style={{ color: '#1E3A5F' }}>
+   697→                      {getProductName(rp, language)}
+   698→                    </h3>
+   699→                  </CardContent>
+   700→                </Card>
+   701→              ))}
+   702→            </div>
+   703→          </motion.div>
+   704→        )}
+   705→      </div>
+   706→
+   707→      {/* Recently Viewed Products Section */}
+   708→      {recentlyViewedItems.length > 0 && (
+   709→        <motion.div
+   710→          initial={{ opacity: 0, y: 20 }}
+   711→          whileInView={{ opacity: 1, y: 0 }}
+   712→          viewport={{ once: true }}
+   713→          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+   714→        >
+   715→          <div className="flex items-center justify-between mb-4">
+   716→            <div className="flex items-center gap-3">
+   717→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   718→              <h2 className="text-xl font-bold" style={{ color: '#1E3A5F' }}>
+   719→                {t('products.recentlyViewed')}
+   720→              </h2>
+   721→            </div>
+   722→            <Button
+   723→              variant="ghost"
+   724→              size="sm"
+   725→              className="text-xs text-gray-400 hover:text-red-500"
+   726→              onClick={clearRecentlyViewed}
+   727→            >
+   728→              {t('products.recentlyViewed.clear')}
+   729→            </Button>
+   730→          </div>
+   731→          <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   732→            {recentlyViewedItems
+   733→              .filter((rv) => rv.id !== product.id)
+   734→              .map((rv) => {
+   735→                const rvProduct = products.find((p) => p.id === rv.id);
+   736→                return (
+   737→                  <motion.div
+   738→                    key={rv.id}
+   739→                    whileHover={{ y: -4 }}
+   740→                    className="min-w-[160px] sm:min-w-[180px] shrink-0"
+   741→                  >
+   742→                    <Card
+   743→                      className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+   744→                      onClick={() => navigate(`/product/${rv.slug}`)}
+   745→                    >
+   746→                      <div className="h-28 overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
+   747→                        {rv.image ? (
+   748→                          <img
+   749→                            src={rv.image}
+   750→                            alt={rv.name}
+   751→                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+   752→                          />
+   753→                        ) : (
+   754→                          <div
+   755→                            className="w-full h-full flex items-center justify-center"
+   756→                            style={{
+   757→                              background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   758→                            }}
+   759→                          >
+   760→                            <Package className="w-8 h-8 text-white/30" />
+   761→                          </div>
+   762→                        )}
+   763→                      </div>
+   764→                      <CardContent className="p-2.5">
+   765→                        {rvProduct?.brand && (
+   766→                          <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+   767→                            {rvProduct.brand}
+   768→                          </span>
+   769→                        )}
+   770→                        <h3 className="font-semibold text-xs line-clamp-1 mt-0.5" style={{ color: '#1E3A5F' }}>
+   771→                          {rv.name}
+   772→                        </h3>
+   773→                        <p className="text-[10px] font-medium mt-1" style={{ color: '#1E3A5F' }}>
+   774→                          {rv.price && rv.price > 0
+   775→                            ? `${rv.price.toLocaleString('fr-DZ')} DA`
+   776→                            : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+   777→                          }
+   778→                        </p>
+   779→                      </CardContent>
+   780→                    </Card>
+   781→                  </motion.div>
+   782→                );
+   783→              })}
+   784→          </div>
+   785→        </motion.div>
+   786→      )}
+   787→
+   788→      {/* Sticky Add-to-Quote Bar on Mobile */}
+   789→      <motion.div
+   790→        initial={{ y: 100 }}
+   791→        animate={{ y: 0 }}
+   792→        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+   793→      >
+   794→        <div className="px-4 py-3 flex items-center gap-3">
+   795→          <div className="flex-1 min-w-0">
+   796→            <p className="text-sm font-bold truncate" style={{ color: '#1E3A5F' }}>
+   797→              {getProductName(product, language)}
+   798→            </p>
+   799→            {priceDisplay ? (
+   800→              <p className="text-xs font-semibold" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
+   801→            ) : (
+   802→              <p className="text-xs font-medium" style={{ color: '#F0C05A' }}>
+   803→                {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+   804→              </p>
+   805→            )}
+   806→          </div>
+   807→          <Button
+   808→            className="h-10 px-5 font-semibold shadow-md shrink-0"
+   809→            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   810→            onClick={() => {
+   811→              addItem({
+   812→                id: product.id,
+   813→                slug: product.slug,
+   814→                name: getProductName(product, language),
+   815→                price: product.price,
+   816→                image: product.images?.[0] || '',
+   817→              });
+   818→            }}
+   819→          >
+   820→            <ShoppingCart className="w-4 h-4 mr-1.5" />
+   821→            {t('products.addToQuoteSticky')}
+   822→          </Button>
+   823→        </div>
+   824→      </motion.div>
+   825→    </div>
+   826→  );
+   827→}
+   828→

@@ -1,0 +1,690 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Search,
+     7→  SlidersHorizontal,
+     8→  Package,
+     9→  ShoppingCart,
+    10→  Eye,
+    11→  ChevronDown,
+    12→  X,
+    13→  RotateCcw,
+    14→  Stethoscope,
+    15→  GitCompareArrows,
+    16→  Check,
+    17→} from 'lucide-react';
+    18→import { useTranslation } from '@/lib/i18n';
+    19→import { useRouter } from '@/lib/router';
+    20→import { useData } from '@/lib/data-service';
+    21→import { Button } from '@/components/ui/button';
+    22→import { Card, CardContent } from '@/components/ui/card';
+    23→import { Badge } from '@/components/ui/badge';
+    24→import { Input } from '@/components/ui/input';
+    25→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    26→import { useCompare } from '@/hooks/useCompare';
+    27→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    28→import type { Product } from '@/lib/data-service';
+    29→import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+    30→import QuickViewModal from '@/components/dental/QuickViewModal';
+    31→
+    32→type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
+    33→
+    34→// Category accent colors for left borders
+    35→const categoryColors = [
+    36→  '#1E3A5F', '#2A5F8F', '#3A7CB8', '#F0C05A', '#E8963E',
+    37→  '#4A9D7C', '#6B5CE7', '#D94F7B',
+    38→];
+    39→
+    40→export default function CataloguePage() {
+    41→  const { t, language, isRTL } = useTranslation();
+    42→  const { navigate } = useRouter();
+    43→  const { categories, products, getCategoryName, getProductName, getProductShortDescription, loading } = useData();
+    44→  const addItem = useQuoteCart((s) => s.addItem);
+    45→  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+    46→
+    47→  const [search, setSearch] = useState('');
+    48→  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    49→  const [sort, setSort] = useState<SortOption>('newest');
+    50→  const [showFilters, setShowFilters] = useState(false);
+    51→  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+    52→  const [quickViewOpen, setQuickViewOpen] = useState(false);
+    53→  const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
+    54→
+    55→  // Parse category from URL hash if present
+    56→  React.useEffect(() => {
+    57→    const hash = window.location.hash;
+    58→    const parts = hash.split('?');
+    59→    if (parts.length > 1) {
+    60→      const params = new URLSearchParams(parts[1]);
+    61→      const cat = params.get('category');
+    62→      if (cat) setSelectedCategory(cat);
+    63→    }
+    64→  }, []);
+    65→
+    66→  const filteredProducts = useMemo(() => {
+    67→    let result = [...products];
+    68→
+    69→    // Filter by category
+    70→    if (selectedCategory !== 'all') {
+    71→      const cat = categories.find((c) => c.slug === selectedCategory);
+    72→      if (cat) result = result.filter((p) => p.category_id === cat.id);
+    73→    }
+    74→
+    75→    // Filter by search
+    76→    if (search) {
+    77→      const q = search.toLowerCase();
+    78→      result = result.filter(
+    79→        (p) =>
+    80→          p.name_fr.toLowerCase().includes(q) ||
+    81→          p.name_ar.includes(q) ||
+    82→          p.brand.toLowerCase().includes(q) ||
+    83→          p.ref.toLowerCase().includes(q)
+    84→      );
+    85→    }
+    86→
+    87→    // Sort
+    88→    switch (sort) {
+    89→      case 'newest':
+    90→        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    91→        break;
+    92→      case 'priceAsc':
+    93→        result.sort((a, b) => (a.price || 0) - (b.price || 0));
+    94→        break;
+    95→      case 'priceDesc':
+    96→        result.sort((a, b) => (b.price || 0) - (a.price || 0));
+    97→        break;
+    98→      case 'name':
+    99→        result.sort((a, b) =>
+   100→          language === 'ar'
+   101→            ? a.name_ar.localeCompare(b.name_ar)
+   102→            : a.name_fr.localeCompare(b.name_fr)
+   103→        );
+   104→        break;
+   105→    }
+   106→
+   107→    return result;
+   108→  }, [products, categories, selectedCategory, search, sort, language]);
+   109→
+   110→  const formatPrice = (price: number | undefined) => {
+   111→    if (price == null || isNaN(price) || price === 0) return null;
+   112→    return price.toLocaleString('fr-DZ') + ' DA';
+   113→  };
+   114→
+   115→  const isFiltering = selectedCategory !== 'all' || search.length > 0;
+   116→
+   117→  const handleClearFilters = () => {
+   118→    setSearch('');
+   119→    setSelectedCategory('all');
+   120→    setSort('newest');
+   121→  };
+   122→
+   123→  return (
+   124→    <ContentWithLoading loading={loading} skeleton={<CataloguePageSkeleton />}>
+   125→    <div className="min-h-screen bg-gray-50 pt-20">
+   126→      {/* Header Banner */}
+   127→      <div
+   128→        className="relative overflow-hidden"
+   129→        style={{
+   130→          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 50%, #1E3A5F 100%)',
+   131→        }}
+   132→      >
+   133→        {/* Decorative shapes */}
+   134→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   135→          <div
+   136→            className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-10"
+   137→            style={{ backgroundColor: '#F0C05A' }}
+   138→          />
+   139→          <div
+   140→            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10"
+   141→            style={{ backgroundColor: '#F0C05A' }}
+   142→          />
+   143→          <div
+   144→            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-5"
+   145→            style={{ backgroundColor: '#F0C05A' }}
+   146→          />
+   147→        </div>
+   148→
+   149→        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+   150→          <motion.div
+   151→            initial={{ opacity: 0, y: 20 }}
+   152→            animate={{ opacity: 1, y: 0 }}
+   153→            className="text-center mb-8"
+   154→          >
+   155→            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+   156→              {t('products.title')}
+   157→            </h1>
+   158→            <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
+   159→              {t('products.subtitle')}
+   160→            </p>
+   161→          </motion.div>
+   162→
+   163→          {/* Search & Sort inside the header */}
+   164→          <motion.div
+   165→            initial={{ opacity: 0, y: 10 }}
+   166→            animate={{ opacity: 1, y: 0 }}
+   167→            transition={{ delay: 0.15 }}
+   168→            className="max-w-2xl mx-auto"
+   169→          >
+   170→            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 flex flex-col sm:flex-row gap-3">
+   171→              <div className="relative flex-1">
+   172→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   173→                <Input
+   174→                  placeholder={t('nav.search')}
+   175→                  value={search}
+   176→                  onChange={(e) => setSearch(e.target.value)}
+   177→                  className="pl-10 border-0 bg-gray-50 focus-visible:ring-1"
+   178→                />
+   179→                {search && (
+   180→                  <button
+   181→                    onClick={() => setSearch('')}
+   182→                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+   183→                  >
+   184→                    <X className="w-4 h-4" />
+   185→                  </button>
+   186→                )}
+   187→              </div>
+   188→              <div className="relative">
+   189→                <select
+   190→                  value={sort}
+   191→                  onChange={(e) => setSort(e.target.value as SortOption)}
+   192→                  className="h-9 w-full sm:w-44 rounded-md border border-gray-200 bg-gray-50 px-3 pr-8 text-sm appearance-none cursor-pointer"
+   193→                >
+   194→                  <option value="newest">{t('products.sort.newest')}</option>
+   195→                  <option value="priceAsc">{t('products.sort.priceAsc')}</option>
+   196→                  <option value="priceDesc">{t('products.sort.priceDesc')}</option>
+   197→                  <option value="name">{t('products.sort.name')}</option>
+   198→                </select>
+   199→                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+   200→              </div>
+   201→            </div>
+   202→          </motion.div>
+   203→        </div>
+   204→      </div>
+   205→
+   206→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   207→        {/* Mobile filter button + results count */}
+   208→        <div className="flex items-center justify-between mb-6">
+   209→          <p className="text-sm text-gray-500">
+   210→            <span className="font-semibold" style={{ color: '#1E3A5F' }}>{filteredProducts.length}</span>{' '}
+   211→            {language === 'ar' ? 'منتج' : 'produit(s)'}
+   212→          </p>
+   213→          <div className="flex gap-2 items-center">
+   214→            {isFiltering && (
+   215→              <Button
+   216→                variant="ghost"
+   217→                size="sm"
+   218→                onClick={handleClearFilters}
+   219→                className="gap-1.5 text-xs"
+   220→                style={{ color: '#1E3A5F' }}
+   221→              >
+   222→                <RotateCcw className="w-3.5 h-3.5" />
+   223→                {t('products.clearFilters')}
+   224→              </Button>
+   225→            )}
+   226→            <Button
+   227→              variant="outline"
+   228→              size="sm"
+   229→              onClick={() => setShowFilters(!showFilters)}
+   230→              className="lg:hidden gap-2"
+   231→            >
+   232→              <SlidersHorizontal className="w-4 h-4" />
+   233→              {t('products.filter')}
+   234→            </Button>
+   235→          </div>
+   236→        </div>
+   237→
+   238→        <div className="flex gap-6">
+   239→          {/* Category Sidebar - Desktop */}
+   240→          <motion.div
+   241→            initial={{ opacity: 0, x: -20 }}
+   242→            animate={{ opacity: 1, x: 0 }}
+   243→            transition={{ delay: 0.2 }}
+   244→            className="hidden lg:block w-60 shrink-0"
+   245→          >
+   246→            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+   247→              <h3 className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: '#1E3A5F' }}>
+   248→                {t('nav.categories')}
+   249→              </h3>
+   250→              <div className="space-y-1">
+   251→                {/* "Tous" - prominent option */}
+   252→                <button
+   253→                  onClick={() => setSelectedCategory('all')}
+   254→                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+   255→                    selectedCategory === 'all'
+   256→                      ? 'font-semibold shadow-sm'
+   257→                      : 'text-gray-600 hover:bg-gray-50'
+   258→                  }`}
+   259→                  style={
+   260→                    selectedCategory === 'all'
+   261→                      ? { backgroundColor: '#1E3A5F', color: '#fff' }
+   262→                      : {}
+   263→                  }
+   264→                >
+   265→                  <span className="flex items-center gap-2">
+   266→                    <Package className="w-4 h-4" />
+   267→                    {t('products.all')}
+   268→                  </span>
+   269→                  <Badge
+   270→                    variant="secondary"
+   271→                    className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
+   272→                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 text-gray-500'
+   273→                    }`}
+   274→                  >
+   275→                    {products.length}
+   276→                  </Badge>
+   277→                </button>
+   278→
+   279→                <div className="my-2 border-t border-gray-100" />
+   280→
+   281→                {categories.map((cat, idx) => {
+   282→                  const count = products.filter((p) => p.category_id === cat.id).length;
+   283→                  const isActive = selectedCategory === cat.slug;
+   284→                  const accentColor = categoryColors[idx % categoryColors.length];
+   285→
+   286→                  return (
+   287→                    <button
+   288→                      key={cat.id}
+   289→                      onClick={() => setSelectedCategory(cat.slug)}
+   290→                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 group relative overflow-hidden ${
+   291→                        isActive
+   292→                          ? 'font-medium shadow-sm'
+   293→                          : 'text-gray-600 hover:bg-gray-50'
+   294→                      }`}
+   295→                      style={
+   296→                        isActive
+   297→                          ? { backgroundColor: `${accentColor}15`, color: accentColor }
+   298→                          : {}
+   299→                      }
+   300→                    >
+   301→                      {/* Colored left border */}
+   302→                      <div
+   303→                        className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r transition-all duration-200 ${
+   304→                          isActive ? 'h-6' : 'h-0 group-hover:h-3'
+   305→                        }`}
+   306→                        style={{ backgroundColor: isActive ? '#F0C05A' : accentColor }}
+   307→                      />
+   308→                      <span className="pl-2 flex-1">{getCategoryName(cat, language)}</span>
+   309→                      <Badge
+   310→                        variant="secondary"
+   311→                        className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
+   312→                          isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-500'
+   313→                        }`}
+   314→                        style={isActive ? { backgroundColor: accentColor } : {}}
+   315→                      >
+   316→                        {count}
+   317→                      </Badge>
+   318→                    </button>
+   319→                  );
+   320→                })}
+   321→              </div>
+   322→            </div>
+   323→          </motion.div>
+   324→
+   325→          {/* Mobile Filter Sheet */}
+   326→          <AnimatePresence>
+   327→            {showFilters && (
+   328→              <>
+   329→                <motion.div
+   330→                  initial={{ opacity: 0 }}
+   331→                  animate={{ opacity: 1 }}
+   332→                  exit={{ opacity: 0 }}
+   333→                  className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+   334→                  onClick={() => setShowFilters(false)}
+   335→                />
+   336→                <motion.div
+   337→                  initial={{ opacity: 0, y: 100 }}
+   338→                  animate={{ opacity: 1, y: 0 }}
+   339→                  exit={{ opacity: 0, y: 100 }}
+   340→                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+   341→                  className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl p-5 max-h-[70vh] overflow-y-auto"
+   342→                >
+   343→                  <div className="flex items-center justify-between mb-4">
+   344→                    <h3 className="font-semibold" style={{ color: '#1E3A5F' }}>
+   345→                      {t('nav.categories')}
+   346→                    </h3>
+   347→                    <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
+   348→                      <X className="w-5 h-5" />
+   349→                    </Button>
+   350→                  </div>
+   351→                  <div className="flex flex-wrap gap-2">
+   352→                    <button
+   353→                      onClick={() => { setSelectedCategory('all'); setShowFilters(false); }}
+   354→                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+   355→                        selectedCategory === 'all'
+   356→                          ? 'text-white shadow-sm'
+   357→                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+   358→                      }`}
+   359→                      style={selectedCategory === 'all' ? { backgroundColor: '#1E3A5F' } : {}}
+   360→                    >
+   361→                      {t('products.all')} ({products.length})
+   362→                    </button>
+   363→                    {categories.map((cat) => {
+   364→                      const count = products.filter((p) => p.category_id === cat.id).length;
+   365→                      return (
+   366→                        <button
+   367→                          key={cat.id}
+   368→                          onClick={() => { setSelectedCategory(cat.slug); setShowFilters(false); }}
+   369→                          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+   370→                            selectedCategory === cat.slug
+   371→                              ? 'text-white shadow-sm'
+   372→                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+   373→                          }`}
+   374→                          style={selectedCategory === cat.slug ? { backgroundColor: '#1E3A5F' } : {}}
+   375→                        >
+   376→                          {getCategoryName(cat, language)} ({count})
+   377→                        </button>
+   378→                      );
+   379→                    })}
+   380→                  </div>
+   381→                </motion.div>
+   382→              </>
+   383→            )}
+   384→          </AnimatePresence>
+   385→
+   386→          {/* Product Grid */}
+   387→          <div className="flex-1 min-w-0">
+   388→            {filteredProducts.length === 0 ? (
+   389→              <motion.div
+   390→                initial={{ opacity: 0, y: 20 }}
+   391→                animate={{ opacity: 1, y: 0 }}
+   392→                className="text-center py-20"
+   393→              >
+   394→                <div
+   395→                  className="w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center"
+   396→                  style={{ backgroundColor: '#f0f4f8' }}
+   397→                >
+   398→                  <Stethoscope className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+   399→                </div>
+   400→                <p className="text-gray-500 text-lg font-medium mb-2">{t('products.noResults')}</p>
+   401→                <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
+   402→                  {t('products.noResultsTip')}
+   403→                </p>
+   404→                {isFiltering && (
+   405→                  <Button
+   406→                    variant="outline"
+   407→                    onClick={handleClearFilters}
+   408→                    className="gap-2"
+   409→                    style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   410→                  >
+   411→                    <RotateCcw className="w-4 h-4" />
+   412→                    {t('products.clearFilters')}
+   413→                  </Button>
+   414→                )}
+   415→              </motion.div>
+   416→            ) : (
+   417→              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+   418→                {filteredProducts.map((product, i) => (
+   419→                  <ProductCard
+   420→                    key={product.id}
+   421→                    product={product}
+   422→                    index={i}
+   423→                    language={language}
+   424→                    getProductName={getProductName}
+   425→                    getProductShortDescription={getProductShortDescription}
+   426→                    formatPrice={formatPrice}
+   427→                    t={t}
+   428→                    navigate={navigate}
+   429→                    addItem={addItem}
+   430→                    isInCompare={isInCompare}
+   431→                    addCompareProduct={addCompareProduct}
+   432→                    removeCompareProduct={removeCompareProduct}
+   433→                    compareFull={productIds.length >= 4}
+   434→                    onQuickView={() => {
+   435→                      setQuickViewProduct(product);
+   436→                      setQuickViewOpen(true);
+   437→                      addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
+   438→                    }}
+   439→                  />
+   440→                ))}
+   441→              </div>
+   442→            )}
+   443→          </div>
+   444→        </div>
+   445→      </div>
+   446→      {/* Quick View Modal */}
+   447→      <QuickViewModal
+   448→        product={quickViewProduct}
+   449→        open={quickViewOpen}
+   450→        onClose={() => setQuickViewOpen(false)}
+   451→      />
+   452→    </div>
+   453→    </ContentWithLoading>
+   454→  );
+   455→}
+   456→
+   457→function ProductCard({
+   458→  product,
+   459→  index,
+   460→  language,
+   461→  getProductName,
+   462→  getProductShortDescription,
+   463→  formatPrice,
+   464→  t,
+   465→  navigate,
+   466→  addItem,
+   467→  isInCompare,
+   468→  addCompareProduct,
+   469→  removeCompareProduct,
+   470→  compareFull,
+   471→  onQuickView,
+   472→}: {
+   473→  product: Product;
+   474→  index: number;
+   475→  language: string;
+   476→  getProductName: (p: Product, lang: any) => string;
+   477→  getProductShortDescription: (p: Product, lang: any) => string;
+   478→  formatPrice: (p: number | undefined) => string | null;
+   479→  t: (k: string) => string;
+   480→  navigate: (p: string) => void;
+   481→  addItem: (item: any) => void;
+   482→  isInCompare: (id: string) => boolean;
+   483→  addCompareProduct: (id: string) => void;
+   484→  removeCompareProduct: (id: string) => void;
+   485→  compareFull: boolean;
+   486→  onQuickView: () => void;
+   487→}) {
+   488→  const priceDisplay = formatPrice(product.price);
+   489→  const isOnQuote = !priceDisplay; // price is 0 or missing
+   490→
+   491→  return (
+   492→    <motion.div
+   493→      initial={{ opacity: 0, y: 20 }}
+   494→      animate={{ opacity: 1, y: 0 }}
+   495→      transition={{ delay: Math.min(index * 0.04, 0.3) }}
+   496→    >
+   497→      <Card
+   498→        className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer"
+   499→        onClick={() => navigate(`/product/${product.slug}`)}
+   500→      >
+   501→        {/* Image area */}
+   502→        <div className="h-48 relative overflow-hidden">
+   503→          {product.images && product.images.length > 0 ? (
+   504→            <img
+   505→              src={product.images[0]}
+   506→              alt={getProductName(product, language)}
+   507→              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+   508→            />
+   509→          ) : (
+   510→            <div
+   511→              className="w-full h-full flex items-center justify-center"
+   512→              style={{
+   513→                background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   514→              }}
+   515→            >
+   516→              <div className="text-center">
+   517→                <Package className="w-14 h-14 text-white/40 mx-auto mb-1" />
+   518→                <p className="text-white/30 text-xs font-medium tracking-wider uppercase">ODG</p>
+   519→              </div>
+   520→            </div>
+   521→          )}
+   522→
+   523→          {/* Top-left badges */}
+   524→          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+   525→            {product.is_new && (
+   526→              <Badge className="text-[10px] px-2 py-0.5 border-0" style={{ backgroundColor: '#1E3A5F' }}>
+   527→                {t('products.new')}
+   528→              </Badge>
+   529→            )}
+   530→            {product.is_best_seller && (
+   531→              <Badge className="text-[10px] px-2 py-0.5 border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   532→                {t('products.bestSeller')}
+   533→              </Badge>
+   534→            )}
+   535→          </div>
+   536→
+   537→          {/* Top-right: Stock badge */}
+   538→          <div className="absolute top-3 right-3">
+   539→            {product.in_stock ? (
+   540→              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-white/90 border-green-200 text-green-700 backdrop-blur-sm">
+   541→                {t('products.inStock')}
+   542→              </Badge>
+   543→            ) : (
+   544→              <Badge variant="destructive" className="text-[10px] px-2 py-0.5">
+   545→                {t('products.outOfStock')}
+   546→              </Badge>
+   547→            )}
+   548→          </div>
+   549→
+   550→          {/* "Sur devis" badge when no price */}
+   551→          {isOnQuote && (
+   552→            <div className="absolute bottom-3 left-3">
+   553→              <Badge
+   554→                className="text-[10px] px-2.5 py-0.5 border-0 font-semibold shadow-sm"
+   555→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   556→              >
+   557→                {t('products.priceOnQuote')}
+   558→              </Badge>
+   559→            </div>
+   560→          )}
+   561→
+   562→          {/* Quick View button - visible on hover (desktop), always on mobile */}
+   563→          <button
+   564→            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110"
+   565→            onClick={(e) => {
+   566→              e.stopPropagation();
+   567→              onQuickView();
+   568→            }}
+   569→            title={t('products.quickView')}
+   570→          >
+   571→            <Eye className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+   572→          </button>
+   573→
+   574→          {/* Hover overlay with "Voir détails" button */}
+   575→          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+   576→            <Button
+   577→              size="sm"
+   578→              className="opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg translate-y-2 group-hover:translate-y-0"
+   579→              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   580→              onClick={(e) => {
+   581→                e.stopPropagation();
+   582→                navigate(`/product/${product.slug}`);
+   583→              }}
+   584→            >
+   585→              <Eye className="w-4 h-4 mr-1.5" />
+   586→              {t('products.viewDetails')}
+   587→            </Button>
+   588→          </div>
+   589→        </div>
+   590→
+   591→        <CardContent className="p-4 flex flex-col flex-1">
+   592→          {/* Brand tag */}
+   593→          {product.brand && (
+   594→            <span
+   595→              className="text-[10px] font-semibold uppercase tracking-wider mb-1"
+   596→              style={{ color: '#F0C05A' }}
+   597→            >
+   598→              {product.brand}
+   599→            </span>
+   600→          )}
+   601→
+   602→          {/* Product name */}
+   603→          <h3
+   604→            className="font-semibold text-sm mb-1 line-clamp-2 leading-snug"
+   605→            style={{ color: '#1E3A5F' }}
+   606→          >
+   607→            {getProductName(product, language)}
+   608→          </h3>
+   609→
+   610→          {/* Short description */}
+   611→          <p className="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">
+   612→            {getProductShortDescription(product, language)}
+   613→          </p>
+   614→
+   615→          {/* Price + Action row */}
+   616→          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+   617→            <div className="flex-1 min-w-0">
+   618→              {priceDisplay ? (
+   619→                <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+   620→                  {priceDisplay}
+   621→                </span>
+   622→              ) : (
+   623→                <span
+   624→                  className="text-xs font-semibold px-2 py-0.5 rounded"
+   625→                  style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+   626→                >
+   627→                  {t('products.priceOnQuote')}
+   628→                </span>
+   629→              )}
+   630→            </div>
+   631→            <div className="flex items-center gap-1.5">
+   632→              {/* Compare button */}
+   633→              <Button
+   634→                size="sm"
+   635→                variant="outline"
+   636→                className={`text-xs h-8 w-8 p-0 border-gray-200 ${
+   637→                  isInCompare(product.id)
+   638→                    ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+   639→                    : 'text-gray-400 hover:text-amber-600 hover:border-amber-300'
+   640→                }`}
+   641→                disabled={!isInCompare(product.id) && compareFull}
+   642→                title={
+   643→                  isInCompare(product.id)
+   644→                    ? t('compare.remove')
+   645→                    : compareFull
+   646→                    ? t('compare.maxReached')
+   647→                    : t('compare.add')
+   648→                }
+   649→                onClick={(e) => {
+   650→                  e.stopPropagation();
+   651→                  if (isInCompare(product.id)) {
+   652→                    removeCompareProduct(product.id);
+   653→                  } else {
+   654→                    addCompareProduct(product.id);
+   655→                  }
+   656→                }}
+   657→              >
+   658→                {isInCompare(product.id) ? (
+   659→                  <Check className="w-3.5 h-3.5" />
+   660→                ) : (
+   661→                  <GitCompareArrows className="w-3.5 h-3.5" />
+   662→                )}
+   663→              </Button>
+   664→              {/* Add to Quote button */}
+   665→              <Button
+   666→                size="sm"
+   667→                className="text-xs h-8 gap-1.5 shadow-sm"
+   668→                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+   669→                onClick={(e) => {
+   670→                  e.stopPropagation();
+   671→                  addItem({
+   672→                    id: product.id,
+   673→                    slug: product.slug,
+   674→                    name: getProductName(product, language),
+   675→                    price: product.price,
+   676→                    image: product.images?.[0] || '',
+   677→                  });
+   678→                }}
+   679→              >
+   680→                <ShoppingCart className="w-3.5 h-3.5" />
+   681→                {t('products.addQuote')}
+   682→              </Button>
+   683→            </div>
+   684→          </div>
+   685→        </CardContent>
+   686→      </Card>
+   687→    </motion.div>
+   688→  );
+   689→}
+   690→

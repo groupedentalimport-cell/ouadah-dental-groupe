@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useSyncExterna
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
+  login: (email: string, password: string) => boolean;
   logout: () => void;
   loading: boolean;
 }
@@ -16,7 +16,8 @@ const AdminAuthContext = createContext<AdminAuthContextType>({
   loading: true,
 });
 
-// Simple admin password — in production, this would be validated against a backend
+// Simple admin credentials — in production, this would be validated against a backend
+const ADMIN_EMAIL = 'admin@odg.dz';
 const ADMIN_PASSWORD = 'odg2024';
 const AUTH_KEY = 'odg_admin_auth';
 
@@ -42,8 +43,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [localAuth, setLocalAuth] = useState(false);
   const isAuthenticated = isAuthenticatedFromStorage || localAuth;
 
-  const login = useCallback((password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
+  const login = useCallback((email: string, password: string): boolean => {
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       setLocalAuth(true);
       try {
         localStorage.setItem(AUTH_KEY, 'true');

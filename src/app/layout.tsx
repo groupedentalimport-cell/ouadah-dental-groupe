@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Cairo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -63,8 +64,15 @@ export default function RootLayout({
         className={`${dmSans.variable} ${cairo.variable} antialiased bg-background text-foreground`}
         style={{ fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif" }}
       >
-        {children}
-        <Toaster position="top-right" richColors closeButton />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange={false}
+        >
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </ThemeProvider>
       </body>
     </html>
   );

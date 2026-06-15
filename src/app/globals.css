@@ -81,37 +81,39 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --dental-primary: #4A7FB5;
+  --dental-accent: #F0C05A;
+  --background: oklch(0.16 0.02 250);
+  --foreground: oklch(0.95 0.01 250);
+  --card: oklch(0.2 0.02 250);
+  --card-foreground: oklch(0.95 0.01 250);
+  --popover: oklch(0.2 0.02 250);
+  --popover-foreground: oklch(0.95 0.01 250);
+  --primary: oklch(0.65 0.12 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.25 0.02 250);
+  --secondary-foreground: oklch(0.95 0.01 250);
+  --muted: oklch(0.25 0.02 250);
+  --muted-foreground: oklch(0.7 0.02 250);
+  --accent: oklch(0.25 0.03 80);
+  --accent-foreground: oklch(0.95 0.01 250);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.65 0.12 250);
+  --chart-1: oklch(0.65 0.12 250);
+  --chart-2: oklch(0.75 0.15 80);
+  --chart-3: oklch(0.55 0.1 160);
+  --chart-4: oklch(0.7 0.1 300);
+  --chart-5: oklch(0.65 0.2 20);
+  --sidebar: oklch(0.18 0.02 250);
+  --sidebar-foreground: oklch(0.95 0.01 250);
+  --sidebar-primary: oklch(0.65 0.12 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.25 0.02 250);
+  --sidebar-accent-foreground: oklch(0.95 0.01 250);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.65 0.12 250);
 }
 
 @layer base {
@@ -156,6 +158,12 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3a4f6a;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4a6080;
 }
 
 /* Prose styles for blog content */
@@ -229,10 +237,20 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+.dark .glass {
+  background: rgba(30, 58, 95, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark .gradient-text {
+  background: linear-gradient(135deg, #4A7FB5 0%, #7AB0E0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -242,6 +260,9 @@
 ::selection {
   background-color: rgba(240,192,90,0.3);
   color: #1E3A5F;
+}
+.dark ::selection {
+  color: #e2e8f0;
 }
 
 /* Focus ring styling */
@@ -254,4 +275,26 @@
 /* Smooth image loading */
 img {
   transition: opacity 0.3s ease;
+}
+
+/* Dark mode smooth transition */
+html.dark {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode dental-specific utility classes */
+.dark .dental-bg-gray-50 {
+  background-color: #0f1d2e;
+}
+.dark .dental-bg-white {
+  background-color: #162236;
+}
+.dark .dental-text-navy {
+  color: #7AB0E0;
+}
+.dark .dental-border-light {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.dark .dental-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }

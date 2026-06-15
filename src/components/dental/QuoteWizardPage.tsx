@@ -121,7 +121,7 @@ export default function QuoteWizardPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -146,7 +146,7 @@ export default function QuoteWizardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Header */}
       <div style={{ backgroundColor: '#1E3A5F' }} className="py-10 sm:py-12">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">

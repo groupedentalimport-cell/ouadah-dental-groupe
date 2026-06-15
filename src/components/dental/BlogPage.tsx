@@ -52,7 +52,7 @@ export default function BlogPage() {
 
   return (
     <ContentWithLoading loading={loading} skeleton={<BlogPageSkeleton />}>
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Gradient Header Banner */}
       <div
         className="relative overflow-hidden"
@@ -113,7 +113,7 @@ export default function BlogPage() {
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                 selectedCategory === cat
                   ? 'text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 shadow-sm'
+                  : 'bg-white dark:bg-[#162236] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 shadow-sm'
               }`}
               style={selectedCategory === cat ? { backgroundColor: '#1E3A5F' } : {}}
             >
@@ -136,7 +136,7 @@ export default function BlogPage() {
               </span>
             </div>
             <Card
-              className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer"
+              className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer"
               onClick={() => navigate(`/article/${featuredPost.slug}`)}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -177,7 +177,7 @@ export default function BlogPage() {
                   >
                     {language === 'ar' ? featuredPost.title_ar : featuredPost.title_fr}
                   </h2>
-                  <p className="text-gray-500 mb-6 line-clamp-3 leading-relaxed">
+                  <p className="text-gray-500 dark:text-gray-400 mb-6 line-clamp-3 leading-relaxed">
                     {language === 'ar' ? featuredPost.excerpt_ar : featuredPost.excerpt_fr}
                   </p>
                   <Button
@@ -215,7 +215,7 @@ export default function BlogPage() {
               >
                 <motion.div whileHover={{ y: -5 }} className="h-full">
                   <Card
-                    className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col"
+                    className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col"
                     onClick={() => navigate(`/article/${post.slug}`)}
                   >
                     <div className="h-48 overflow-hidden relative" style={{ backgroundColor: '#f0f4f8' }}>
@@ -259,10 +259,10 @@ export default function BlogPage() {
                       >
                         {language === 'ar' ? post.title_ar : post.title_fr}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-4 line-clamp-3 flex-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-3 flex-1">
                         {language === 'ar' ? post.excerpt_ar : post.excerpt_fr}
                       </p>
-                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100 dark:border-white/5">
                         <span className="text-xs text-gray-400">{formatDate(post.date)}</span>
                         <span className="text-xs font-medium flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color: '#1E3A5F' }}>
                           {t('blog.readMore')}

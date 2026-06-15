@@ -101,7 +101,7 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Gradient Header Banner */}
       <div
         className="relative overflow-hidden"
@@ -180,7 +180,7 @@ export default function AboutPage() {
                   {t('about.history')}
                 </h2>
               </div>
-              <div className="space-y-4 text-gray-600 leading-relaxed">
+              <div className="space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed">
                 <p>{t('about.history.p1')}</p>
                 <p>{t('about.history.p2')}</p>
               </div>
@@ -207,7 +207,7 @@ export default function AboutPage() {
             <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
               {t('about.mission')}
             </h2>
-            <p className="text-lg text-gray-600 leading-relaxed italic">
+            <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed italic">
               &ldquo;{t('about.mission.text')}&rdquo;
             </p>
           </div>
@@ -256,7 +256,7 @@ export default function AboutPage() {
                   <div className={`ml-12 sm:ml-0 sm:w-1/2 ${i % 2 === 0 ? 'sm:pr-12 sm:text-right' : 'sm:pl-12 sm:text-left'}`}>
                     <motion.div
                       whileHover={{ y: -3 }}
-                      className="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-shadow duration-300"
+                      className="bg-white dark:bg-[#162236] rounded-xl p-5 shadow-sm dark:shadow-none hover:shadow-lg dark:hover:shadow-black/20 transition-shadow duration-300"
                     >
                       <span className="inline-block px-3 py-1 rounded-full text-sm font-bold text-white mb-2" style={{ backgroundColor: '#1E3A5F' }}>
                         {milestone.year}

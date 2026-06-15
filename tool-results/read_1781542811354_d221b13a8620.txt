@@ -1,0 +1,1528 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Lock,
+     7→  LayoutDashboard,
+     8→  Package,
+     9→  FileText,
+    10→  ClipboardList,
+    11→  Settings,
+    12→  LogOut,
+    13→  Plus,
+    14→  Pencil,
+    15→  Trash2,
+    16→  Save,
+    17→  X,
+    18→  Eye,
+    19→  Menu,
+    20→  TrendingUp,
+    21→  TrendingDown,
+    22→  ShoppingBag,
+    23→  MessageSquare,
+    24→  BookOpen,
+    25→  Search,
+    26→  Filter,
+    27→  ArrowUpRight,
+    28→  ArrowDownRight,
+    29→  Clock,
+    30→  CheckCircle2,
+    31→  AlertCircle,
+    32→  Users,
+    33→  Phone,
+    34→  Mail,
+    35→  MapPin,
+    36→  Globe,
+    37→  ExternalLink,
+    38→  ChevronRight,
+    39→  Activity,
+    40→  Star,
+    41→  Calendar,
+    42→  Hash,
+    43→  Image as ImageIcon,
+    44→  Tag,
+    45→  DollarSign,
+    46→  BarChart3,
+    47→  FileCheck,
+    48→  Loader2,
+    49→} from 'lucide-react';
+    50→import { toast } from 'sonner';
+    51→import { useTranslation } from '@/lib/i18n';
+    52→import { useRouter } from '@/lib/router';
+    53→import { useData } from '@/lib/data-service';
+    54→import { useAdminAuth } from '@/lib/admin-auth';
+    55→import { Button } from '@/components/ui/button';
+    56→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    57→import { Input } from '@/components/ui/input';
+    58→import { Textarea } from '@/components/ui/textarea';
+    59→import { Badge } from '@/components/ui/badge';
+    60→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+    61→import {
+    62→  Dialog,
+    63→  DialogContent,
+    64→  DialogHeader,
+    65→  DialogTitle,
+    66→  DialogFooter,
+    67→  DialogDescription,
+    68→} from '@/components/ui/dialog';
+    69→import { Separator } from '@/components/ui/separator';
+    70→import { Skeleton } from '@/components/ui/skeleton';
+    71→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+    72→import { ScrollArea } from '@/components/ui/scroll-area';
+    73→import {
+    74→  AlertDialog,
+    75→  AlertDialogAction,
+    76→  AlertDialogCancel,
+    77→  AlertDialogContent,
+    78→  AlertDialogDescription,
+    79→  AlertDialogFooter,
+    80→  AlertDialogHeader,
+    81→  AlertDialogTitle,
+    82→} from '@/components/ui/alert-dialog';
+    83→
+    84→type AdminTab = 'dashboard' | 'products' | 'blog' | 'quotes' | 'settings';
+    85→
+    86→const NAVY = '#1E3A5F';
+    87→const GOLD = '#F0C05A';
+    88→const SUCCESS = '#3B8C6E';
+    89→const WARNING = '#E8963E';
+    90→const DANGER = '#C0564F';
+    91→const BG = '#f8fafc';
+    92→
+    93→const tabVariants = {
+    94→  hidden: { opacity: 0, y: 12 },
+    95→  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+    96→  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+    97→};
+    98→
+    99→export default function AdminPanel() {
+   100→  const { t, language, isRTL } = useTranslation();
+   101→  const { navigate, params } = useRouter();
+   102→  const { isAuthenticated, login, logout, loading: authLoading } = useAdminAuth();
+   103→  const { products, blogPosts, categories, getProductName, refresh } = useData();
+   104→
+   105→  function getInitialTab(): AdminTab {
+   106→    if (typeof window === 'undefined') return 'dashboard';
+   107→    const hash = window.location.hash.slice(1);
+   108→    if (hash.includes('admin-products')) return 'products';
+   109→    if (hash.includes('admin-blog')) return 'blog';
+   110→    if (hash.includes('admin-quotes')) return 'quotes';
+   111→    if (hash.includes('admin-settings')) return 'settings';
+   112→    return 'dashboard';
+   113→  }
+   114→
+   115→  const [activeTab, setActiveTab] = useState<AdminTab>(getInitialTab);
+   116→  const [sidebarOpen, setSidebarOpen] = useState(false);
+   117→
+   118→  // Auth loading
+   119→  if (authLoading) {
+   120→    return (
+   121→      <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+   122→        <div className="flex flex-col items-center gap-4">
+   123→          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl" style={{ background: `linear-gradient(135deg, ${NAVY}, #2A5F8F)` }}>
+   124→            ODG
+   125→          </div>
+   126→          <div className="flex items-center gap-2">
+   127→            <Loader2 className="w-5 h-5 animate-spin" style={{ color: NAVY }} />
+   128→            <span className="text-sm text-gray-500">Chargement...</span>
+   129→          </div>
+   130→        </div>
+   131→      </div>
+   132→    );
+   133→  }
+   134→
+   135→  if (!isAuthenticated) {
+   136→    return <AdminLogin onLogin={login} t={t} />;
+   137→  }
+   138→
+   139→  const tabs = [
+   140→    { id: 'dashboard' as AdminTab, icon: LayoutDashboard, label: t('nav.dashboard'), path: '/admin-dashboard' },
+   141→    { id: 'products' as AdminTab, icon: Package, label: t('nav.products'), path: '/admin-products' },
+   142→    { id: 'blog' as AdminTab, icon: FileText, label: t('nav.blogPosts'), path: '/admin-blog' },
+   143→    { id: 'quotes' as AdminTab, icon: ClipboardList, label: t('nav.quotes'), path: '/admin-quotes' },
+   144→    { id: 'settings' as AdminTab, icon: Settings, label: t('nav.settings'), path: '/admin-settings' },
+   145→  ];
+   146→
+   147→  return (
+   148→    <div className="min-h-screen flex" style={{ background: BG }}>
+   149→      {/* Sidebar */}
+   150→      <aside
+   151→        className={`fixed lg:static inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-40 w-64 transform transition-transform duration-300 lg:translate-x-0 ${
+   152→          sidebarOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')
+   153→        } flex flex-col`}
+   154→        style={{ background: `linear-gradient(180deg, ${NAVY} 0%, #0F2440 100%)` }}
+   155→      >
+   156→        {/* Sidebar Header */}
+   157→        <div className="p-5 flex items-center gap-3 border-b border-white/10">
+   158→          <div
+   159→            className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
+   160→            style={{ background: `linear-gradient(135deg, ${GOLD}, #D4A84A)` }}
+   161→          >
+   162→            ODG
+   163→          </div>
+   164→          <div className="flex-1 min-w-0">
+   165→            <h2 className="text-white font-bold text-sm">ODG Admin</h2>
+   166→            <p className="text-blue-300/60 text-xs truncate">OUADAH Dental Groupe</p>
+   167→          </div>
+   168→          <Button
+   169→            variant="ghost"
+   170→            size="icon"
+   171→            className="lg:hidden text-white/70 hover:text-white hover:bg-white/10 h-8 w-8"
+   172→            onClick={() => setSidebarOpen(false)}
+   173→          >
+   174→            <X className="w-4 h-4" />
+   175→          </Button>
+   176→        </div>
+   177→
+   178→        {/* Sidebar Navigation */}
+   179→        <ScrollArea className="flex-1 px-3 py-4">
+   180→          <nav className="space-y-1">
+   181→            {tabs.map((tab) => {
+   182→              const Icon = tab.icon;
+   183→              const isActive = activeTab === tab.id;
+   184→              return (
+   185→                <button
+   186→                  key={tab.id}
+   187→                  onClick={() => {
+   188→                    setActiveTab(tab.id);
+   189→                    navigate(tab.path);
+   190→                    setSidebarOpen(false);
+   191→                  }}
+   192→                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group ${
+   193→                    isActive
+   194→                      ? 'text-white'
+   195→                      : 'text-blue-200/70 hover:bg-white/5 hover:text-white'
+   196→                  }`}
+   197→                  style={isActive ? {
+   198→                    background: 'linear-gradient(135deg, rgba(240,192,90,0.2) 0%, rgba(240,192,90,0.05) 100%)',
+   199→                    borderLeft: `3px solid ${GOLD}`,
+   200→                  } : { borderLeft: '3px solid transparent' }}
+   201→                >
+   202→                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-[#F0C05A]' : ''}`} />
+   203→                  <span className="flex-1 text-left">{tab.label}</span>
+   204→                  {isActive && (
+   205→                    <ChevronRight className="w-3.5 h-3.5 text-[#F0C05A]/60" />
+   206→                  )}
+   207→                </button>
+   208→              );
+   209→            })}
+   210→          </nav>
+   211→        </ScrollArea>
+   212→
+   213→        {/* Sidebar Footer */}
+   214→        <div className="p-4 border-t border-white/10 space-y-2">
+   215→          <button
+   216→            onClick={() => navigate('/')}
+   217→            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-blue-200/70 hover:bg-white/5 hover:text-white transition-all duration-200"
+   218→          >
+   219→            <ExternalLink className="w-[18px] h-[18px]" />
+   220→            <span>Visiter le site</span>
+   221→          </button>
+   222→          <button
+   223→            onClick={() => {
+   224→              logout();
+   225→              navigate('/');
+   226→            }}
+   227→            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-red-300/80 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200"
+   228→          >
+   229→            <LogOut className="w-[18px] h-[18px]" />
+   230→            <span>{t('nav.logout')}</span>
+   231→          </button>
+   232→          <div className="flex items-center gap-3 pt-3 mt-2 border-t border-white/10">
+   233→            <Avatar className="w-8 h-8" style={{ backgroundColor: GOLD }}>
+   234→              <AvatarFallback className="text-xs font-bold" style={{ color: NAVY }}>A</AvatarFallback>
+   235→            </Avatar>
+   236→            <div className="flex-1 min-w-0">
+   237→              <p className="text-white text-xs font-medium truncate">Administrateur</p>
+   238→              <p className="text-blue-300/50 text-[10px] truncate">admin@odg.dz</p>
+   239→            </div>
+   240→          </div>
+   241→        </div>
+   242→      </aside>
+   243→
+   244→      {/* Overlay */}
+   245→      <AnimatePresence>
+   246→        {sidebarOpen && (
+   247→          <motion.div
+   248→            initial={{ opacity: 0 }}
+   249→            animate={{ opacity: 1 }}
+   250→            exit={{ opacity: 0 }}
+   251→            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+   252→            onClick={() => setSidebarOpen(false)}
+   253→          />
+   254→        )}
+   255→      </AnimatePresence>
+   256→
+   257→      {/* Main Content */}
+   258→      <div className="flex-1 min-h-screen flex flex-col">
+   259→        {/* Top Bar */}
+   260→        <header
+   261→          className="px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20 border-b"
+   262→          style={{ backgroundColor: 'white', borderColor: '#e2e8f0' }}
+   263→        >
+   264→          <div className="flex items-center gap-3">
+   265→            <Button
+   266→              variant="ghost"
+   267→              size="icon"
+   268→              className="lg:hidden h-9 w-9"
+   269→              onClick={() => setSidebarOpen(true)}
+   270→            >
+   271→              <Menu className="w-5 h-5" />
+   272→            </Button>
+   273→            <div>
+   274→              <h1 className="font-bold text-lg" style={{ color: NAVY }}>
+   275→                {tabs.find((tb) => tb.id === activeTab)?.label}
+   276→              </h1>
+   277→              <p className="text-[11px] text-gray-400 -mt-0.5 hidden sm:block">
+   278→                {activeTab === 'dashboard' && 'Vue d\'ensemble de votre activité'}
+   279→                {activeTab === 'products' && 'Gérez votre catalogue de produits'}
+   280→                {activeTab === 'blog' && 'Rédigez et gérez vos articles'}
+   281→                {activeTab === 'quotes' && 'Suivez les demandes de devis'}
+   282→                {activeTab === 'settings' && 'Configurez votre site'}
+   283→              </p>
+   284→            </div>
+   285→          </div>
+   286→          <div className="flex items-center gap-2">
+   287→            <Button
+   288→              variant="outline"
+   289→              size="sm"
+   290→              onClick={() => navigate('/')}
+   291→              className="gap-1.5 text-xs h-8 hover:bg-[#1E3A5F] hover:text-white hover:border-[#1E3A5F] transition-colors"
+   292→            >
+   293→              <Eye className="w-3.5 h-3.5" />
+   294→              <span className="hidden sm:inline">Visiter</span>
+   295→            </Button>
+   296→          </div>
+   297→        </header>
+   298→
+   299→        <main className="flex-1 p-4 sm:p-6">
+   300→          <AnimatePresence mode="wait">
+   301→            {activeTab === 'dashboard' && (
+   302→              <motion.div key="dashboard" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+   303→                <DashboardTab products={products} blogPosts={blogPosts} t={t} navigate={navigate} />
+   304→              </motion.div>
+   305→            )}
+   306→            {activeTab === 'products' && (
+   307→              <motion.div key="products" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+   308→                <ProductsTab products={products} categories={categories} getProductName={getProductName} language={language} t={t} refresh={refresh} />
+   309→              </motion.div>
+   310→            )}
+   311→            {activeTab === 'blog' && (
+   312→              <motion.div key="blog" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+   313→                <BlogTab blogPosts={blogPosts} language={language} t={t} refresh={refresh} />
+   314→              </motion.div>
+   315→            )}
+   316→            {activeTab === 'quotes' && (
+   317→              <motion.div key="quotes" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+   318→                <QuotesTab t={t} refresh={refresh} />
+   319→              </motion.div>
+   320→            )}
+   321→            {activeTab === 'settings' && (
+   322→              <motion.div key="settings" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+   323→                <SettingsTab t={t} />
+   324→              </motion.div>
+   325→            )}
+   326→          </AnimatePresence>
+   327→        </main>
+   328→      </div>
+   329→    </div>
+   330→  );
+   331→}
+   332→
+   333→// ============ Login Screen ============
+   334→function AdminLogin({ onLogin, t }: { onLogin: (email: string, password: string) => boolean; t: (k: string) => string }) {
+   335→  const [email, setEmail] = useState('');
+   336→  const [password, setPassword] = useState('');
+   337→  const [error, setError] = useState(false);
+   338→  const [showError, setShowError] = useState(false);
+   339→  const [showPassword, setShowPassword] = useState(false);
+   340→
+   341→  const handleSubmit = (e: React.FormEvent) => {
+   342→    e.preventDefault();
+   343→    if (!email.trim() || !password.trim()) {
+   344→      setShowError(true);
+   345→      return;
+   346→    }
+   347→    if (!onLogin(email, password)) {
+   348→      setError(true);
+   349→      setPassword('');
+   350→      setShowError(true);
+   351→    }
+   352→  };
+   353→
+   354→  return (
+   355→    <div
+   356→      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+   357→      style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0F2440 50%, #1a3a5f 100%)` }}
+   358→    >
+   359→      {/* Dental-themed background pattern */}
+   360→      <div className="absolute inset-0 opacity-[0.03]">
+   361→        <svg width="100%" height="100%">
+   362→          <defs>
+   363→            <pattern id="dental-pattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+   364→              <text x="10" y="30" fontSize="20" fill="white">🦷</text>
+   365→              <text x="50" y="70" fontSize="16" fill="white">⚙</text>
+   366→              <text x="35" y="45" fontSize="14" fill="white">✦</text>
+   367→            </pattern>
+   368→          </defs>
+   369→          <rect width="100%" height="100%" fill="url(#dental-pattern)" />
+   370→        </svg>
+   371→      </div>
+   372→
+   373→      {/* Decorative floating elements */}
+   374→      <div className="absolute top-20 left-20 w-32 h-32 rounded-full opacity-10" style={{ background: GOLD, filter: 'blur(60px)' }} />
+   375→      <div className="absolute bottom-20 right-20 w-40 h-40 rounded-full opacity-10" style={{ background: '#3B8C6E', filter: 'blur(60px)' }} />
+   376→
+   377→      <motion.div
+   378→        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+   379→        animate={{ opacity: 1, y: 0, scale: 1 }}
+   380→        transition={{ duration: 0.5, ease: 'easeOut' }}
+   381→        className="w-full max-w-md relative z-10"
+   382→      >
+   383→        <Card className="border-0 shadow-2xl overflow-hidden rounded-2xl">
+   384→          {/* Gold accent line at top */}
+   385→          <div className="h-1" style={{ background: `linear-gradient(90deg, ${GOLD}, #D4A84A, ${GOLD})` }} />
+   386→          <CardContent className="p-8 sm:p-10">
+   387→            {/* Logo */}
+   388→            <div className="flex flex-col items-center mb-8">
+   389→              <motion.div
+   390→                initial={{ scale: 0.8 }}
+   391→                animate={{ scale: 1 }}
+   392→                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+   393→                className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg mb-4"
+   394→                style={{ background: `linear-gradient(135deg, ${NAVY}, #2A5F8F)` }}
+   395→              >
+   396→                ODG
+   397→              </motion.div>
+   398→              <h1 className="text-2xl font-bold" style={{ color: NAVY }}>
+   399→                {t('admin.login.title')}
+   400→              </h1>
+   401→              <p className="text-gray-400 text-sm mt-1">OUADAH Dental Groupe</p>
+   402→            </div>
+   403→
+   404→            {/* Form */}
+   405→            <form onSubmit={handleSubmit} className="space-y-4">
+   406→              <div className="space-y-1.5">
+   407→                <label className="text-sm font-medium" style={{ color: NAVY }}>
+   408→                  Adresse e-mail
+   409→                </label>
+   410→                <div className="relative">
+   411→                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   412→                  <Input
+   413→                    type="email"
+   414→                    placeholder="admin@odg.dz"
+   415→                    value={email}
+   416→                    onChange={(e) => {
+   417→                      setEmail(e.target.value);
+   418→                      setError(false);
+   419→                      setShowError(false);
+   420→                    }}
+   421→                    className="pl-10 h-11 rounded-xl border-gray-200 focus:border-[#1E3A5F] focus:ring-[#1E3A5F]/20 transition-all"
+   422→                    autoFocus
+   423→                  />
+   424→                </div>
+   425→              </div>
+   426→              <div className="space-y-1.5">
+   427→                <label className="text-sm font-medium" style={{ color: NAVY }}>
+   428→                  {t('admin.login.password')}
+   429→                </label>
+   430→                <div className="relative">
+   431→                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   432→                  <Input
+   433→                    type={showPassword ? 'text' : 'password'}
+   434→                    placeholder="••••••••"
+   435→                    value={password}
+   436→                    onChange={(e) => {
+   437→                      setPassword(e.target.value);
+   438→                      setError(false);
+   439→                      setShowError(false);
+   440→                    }}
+   441→                    className="pl-10 pr-10 h-11 rounded-xl border-gray-200 focus:border-[#1E3A5F] focus:ring-[#1E3A5F]/20 transition-all"
+   442→                  />
+   443→                  <button
+   444→                    type="button"
+   445→                    onClick={() => setShowPassword(!showPassword)}
+   446→                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+   447→                  >
+   448→                    {showPassword ? <Eye className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+   449→                  </button>
+   450→                </div>
+   451→              </div>
+   452→
+   453→              <AnimatePresence>
+   454→                {(error || showError) && (
+   455→                  <motion.div
+   456→                    initial={{ opacity: 0, height: 0 }}
+   457→                    animate={{ opacity: 1, height: 'auto' }}
+   458→                    exit={{ opacity: 0, height: 0 }}
+   459→                  >
+   460→                    <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ backgroundColor: '#FEF2F2', color: DANGER }}>
+   461→                      <AlertCircle className="w-4 h-4 shrink-0" />
+   462→                      {error ? 'Identifiants incorrects. Veuillez réessayer.' : 'Veuillez remplir tous les champs'}
+   463→                    </div>
+   464→                  </motion.div>
+   465→                )}
+   466→              </AnimatePresence>
+   467→
+   468→              <Button
+   469→                type="submit"
+   470→                className="w-full h-11 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+   471→                style={{ background: `linear-gradient(135deg, ${NAVY}, #2A5F8F)` }}
+   472→              >
+   473→                <Lock className="w-4 h-4 mr-2" />
+   474→                {t('admin.login.submit')}
+   475→              </Button>
+   476→            </form>
+   477→
+   478→            {/* Forgot password link */}
+   479→            <div className="mt-5 text-center">
+   480→              <button className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors hover:underline">
+   481→                Mot de passe oublié ?
+   482→              </button>
+   483→            </div>
+   484→          </CardContent>
+   485→        </Card>
+   486→      </motion.div>
+   487→    </div>
+   488→  );
+   489→}
+   490→
+   491→// ============ Dashboard ============
+   492→function DashboardTab({ products, blogPosts, t, navigate }: { products: any[]; blogPosts: any[]; t: (k: string) => string; navigate: (path: string) => void }) {
+   493→  const stats = [
+   494→    { icon: Package, label: t('admin.dashboard.totalProducts'), value: products.length, trend: '+2', trendUp: true, color: NAVY, bg: '#EEF2F7' },
+   495→    { icon: ClipboardList, label: t('admin.dashboard.totalQuotes'), value: 12, trend: '+5', trendUp: true, color: SUCCESS, bg: '#ECFDF5' },
+   496→    { icon: TrendingUp, label: t('admin.dashboard.newQuotes'), value: 3, trend: '+1', trendUp: true, color: GOLD, bg: '#FFFBEB' },
+   497→    { icon: BookOpen, label: t('admin.dashboard.totalBlog'), value: blogPosts.length, trend: '0', trendUp: true, color: WARNING, bg: '#FFF7ED' },
+   498→  ];
+   499→
+   500→  const quickActions = [
+   501→    { icon: Plus, label: 'Ajouter produit', color: NAVY, onClick: () => navigate('/admin-products') },
+   502→    { icon: FileText, label: 'Nouvel article', color: SUCCESS, onClick: () => navigate('/admin-blog') },
+   503→    { icon: ClipboardList, label: 'Voir les devis', color: WARNING, onClick: () => navigate('/admin-quotes') },
+   504→    { icon: Settings, label: 'Paramètres', color: '#6B7280', onClick: () => navigate('/admin-settings') },
+   505→  ];
+   506→
+   507→  const recentActivity = [
+   508→    { icon: Package, text: 'Nouveau produit ajouté', time: 'Il y a 2h', color: NAVY },
+   509→    { icon: MessageSquare, text: 'Nouvelle demande de devis', time: 'Il y a 5h', color: GOLD },
+   510→    { icon: FileText, label: 'Article publié', text: 'Article de blog publié', time: 'Hier', color: SUCCESS },
+   511→    { icon: Users, text: 'Nouveau client enregistré', time: 'Il y a 2 jours', color: WARNING },
+   512→  ];
+   513→
+   514→  return (
+   515→    <div className="space-y-6">
+   516→      {/* Stats Cards */}
+   517→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   518→        {stats.map((stat, i) => {
+   519→          const Icon = stat.icon;
+   520→          return (
+   521→            <motion.div
+   522→              key={i}
+   523→              initial={{ opacity: 0, y: 20 }}
+   524→              animate={{ opacity: 1, y: 0 }}
+   525→              transition={{ delay: i * 0.08 }}
+   526→            >
+   527→              <Card className="border-0 shadow-sm rounded-xl hover:shadow-md transition-shadow duration-300">
+   528→                <CardContent className="p-5">
+   529→                  <div className="flex items-start justify-between">
+   530→                    <div
+   531→                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+   532→                      style={{ backgroundColor: stat.bg }}
+   533→                    >
+   534→                      <Icon className="w-5 h-5" style={{ color: stat.color }} />
+   535→                    </div>
+   536→                    {stat.trend !== '0' && (
+   537→                      <Badge
+   538→                        className="text-[10px] px-1.5 py-0.5 font-medium border-0"
+   539→                        style={{
+   540→                          backgroundColor: stat.trendUp ? '#ECFDF5' : '#FEF2F2',
+   541→                          color: stat.trendUp ? SUCCESS : DANGER,
+   542→                        }}
+   543→                      >
+   544→                        {stat.trendUp ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
+   545→                        {stat.trend}
+   546→                      </Badge>
+   547→                    )}
+   548→                  </div>
+   549→                  <div className="mt-4">
+   550→                    <p className="text-2xl font-bold" style={{ color: NAVY }}>{stat.value}</p>
+   551→                    <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+   552→                  </div>
+   553→                </CardContent>
+   554→              </Card>
+   555→            </motion.div>
+   556→          );
+   557→        })}
+   558→      </div>
+   559→
+   560→      {/* Two column: Recent Quotes Table + Activity */}
+   561→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   562→        {/* Recent Quotes Table */}
+   563→        <Card className="lg:col-span-2 border-0 shadow-sm rounded-xl">
+   564→          <CardHeader className="pb-3 pt-5 px-5">
+   565→            <div className="flex items-center justify-between">
+   566→              <CardTitle className="text-sm font-semibold" style={{ color: NAVY }}>
+   567→                Derniers devis
+   568→              </CardTitle>
+   569→              <Badge variant="outline" className="text-[10px] px-2 py-0.5" style={{ borderColor: GOLD, color: NAVY }}>
+   570→                3 nouveaux
+   571→              </Badge>
+   572→            </div>
+   573→            <div className="h-0.5 w-12 rounded-full mt-2" style={{ backgroundColor: GOLD }} />
+   574→          </CardHeader>
+   575→          <CardContent className="px-5 pb-5">
+   576→            <div className="overflow-x-auto">
+   577→              <table className="w-full text-sm">
+   578→                <thead>
+   579→                  <tr className="border-b border-gray-100">
+   580→                    <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Client</th>
+   581→                    <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Date</th>
+   582→                    <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Total</th>
+   583→                    <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Statut</th>
+   584→                  </tr>
+   585→                </thead>
+   586→                <tbody>
+   587→                  {[
+   588→                    { name: 'Dr. Benali', date: '15/06/2026', total: 'Sur devis', status: 'pending' },
+   589→                    { name: 'Clinique El Amel', date: '14/06/2026', total: 'Sur devis', status: 'contacted' },
+   590→                    { name: 'Dr. Mansouri', date: '13/06/2026', total: 'Sur devis', status: 'completed' },
+   591→                  ].map((row, i) => (
+   592→                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+   593→                      <td className="py-3 px-3 font-medium" style={{ color: NAVY }}>{row.name}</td>
+   594→                      <td className="py-3 px-3 text-gray-500 text-xs">{row.date}</td>
+   595→                      <td className="py-3 px-3 text-gray-600 text-xs">{row.total}</td>
+   596→                      <td className="py-3 px-3">
+   597→                        <Badge
+   598→                          className="text-[10px] px-2 py-0.5 border-0 font-medium"
+   599→                          style={{
+   600→                            backgroundColor: row.status === 'pending' ? '#FEF3C7' : row.status === 'contacted' ? '#DBEAFE' : '#D1FAE5',
+   601→                            color: row.status === 'pending' ? WARNING : row.status === 'contacted' ? '#2563EB' : SUCCESS,
+   602→                          }}
+   603→                        >
+   604→                          {row.status === 'pending' ? 'En attente' : row.status === 'contacted' ? 'Contacté' : 'Traité'}
+   605→                        </Badge>
+   606→                      </td>
+   607→                    </tr>
+   608→                  ))}
+   609→                </tbody>
+   610→              </table>
+   611→            </div>
+   612→          </CardContent>
+   613→        </Card>
+   614→
+   615→        {/* Activity Feed */}
+   616→        <Card className="border-0 shadow-sm rounded-xl">
+   617→          <CardHeader className="pb-3 pt-5 px-5">
+   618→            <CardTitle className="text-sm font-semibold" style={{ color: NAVY }}>
+   619→              Activité récente
+   620→            </CardTitle>
+   621→            <div className="h-0.5 w-12 rounded-full mt-2" style={{ backgroundColor: GOLD }} />
+   622→          </CardHeader>
+   623→          <CardContent className="px-5 pb-5">
+   624→            <div className="space-y-4">
+   625→              {recentActivity.map((item, i) => {
+   626→                const Icon = item.icon;
+   627→                return (
+   628→                  <motion.div
+   629→                    key={i}
+   630→                    initial={{ opacity: 0, x: -10 }}
+   631→                    animate={{ opacity: 1, x: 0 }}
+   632→                    transition={{ delay: 0.1 + i * 0.08 }}
+   633→                    className="flex items-start gap-3"
+   634→                  >
+   635→                    <div
+   636→                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+   637→                      style={{ backgroundColor: `${item.color}15` }}
+   638→                    >
+   639→                      <Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
+   640→                    </div>
+   641→                    <div className="flex-1 min-w-0">
+   642→                      <p className="text-xs font-medium text-gray-700 truncate">{item.text}</p>
+   643→                      <p className="text-[10px] text-gray-400 mt-0.5">{item.time}</p>
+   644→                    </div>
+   645→                  </motion.div>
+   646→                );
+   647→              })}
+   648→            </div>
+   649→          </CardContent>
+   650→        </Card>
+   651→      </div>
+   652→
+   653→      {/* Quick Actions */}
+   654→      <Card className="border-0 shadow-sm rounded-xl">
+   655→        <CardHeader className="pb-3 pt-5 px-5">
+   656→          <CardTitle className="text-sm font-semibold" style={{ color: NAVY }}>
+   657→            Actions rapides
+   658→          </CardTitle>
+   659→          <div className="h-0.5 w-12 rounded-full mt-2" style={{ backgroundColor: GOLD }} />
+   660→        </CardHeader>
+   661→        <CardContent className="px-5 pb-5">
+   662→          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+   663→            {quickActions.map((action, i) => {
+   664→              const Icon = action.icon;
+   665→              return (
+   666→                <motion.button
+   667→                  key={i}
+   668→                  whileHover={{ y: -2 }}
+   669→                  whileTap={{ scale: 0.97 }}
+   670→                  onClick={action.onClick}
+   671→                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200 bg-white"
+   672→                >
+   673→                  <div
+   674→                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+   675→                    style={{ backgroundColor: `${action.color}12` }}
+   676→                  >
+   677→                    <Icon className="w-5 h-5" style={{ color: action.color }} />
+   678→                  </div>
+   679→                  <span className="text-xs font-medium text-gray-600">{action.label}</span>
+   680→                </motion.button>
+   681→              );
+   682→            })}
+   683→          </div>
+   684→        </CardContent>
+   685→      </Card>
+   686→    </div>
+   687→  );
+   688→}
+   689→
+   690→// ============ Products Tab ============
+   691→function ProductsTab({ products, categories, getProductName, language, t, refresh }: any) {
+   692→  const [showForm, setShowForm] = useState(false);
+   693→  const [editProduct, setEditProduct] = useState<any>(null);
+   694→  const [searchQuery, setSearchQuery] = useState('');
+   695→  const [filterCategory, setFilterCategory] = useState('all');
+   696→  const [saving, setSaving] = useState(false);
+   697→  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+   698→  const [form, setForm] = useState({
+   699→    name_fr: '',
+   700→    name_ar: '',
+   701→    price: '',
+   702→    category_id: '',
+   703→    description_fr: '',
+   704→    brand: '',
+   705→    ref: '',
+   706→  });
+   707→
+   708→  const filteredProducts = useMemo(() => {
+   709→    return products.filter((p: any) => {
+   710→      const name = getProductName(p, language).toLowerCase();
+   711→      const matchesSearch = !searchQuery || name.includes(searchQuery.toLowerCase()) || (p.brand || '').toLowerCase().includes(searchQuery.toLowerCase());
+   712→      const matchesCategory = filterCategory === 'all' || p.category_id === filterCategory;
+   713→      return matchesSearch && matchesCategory;
+   714→    });
+   715→  }, [products, searchQuery, filterCategory, language, getProductName]);
+   716→
+   717→  const getCategoryName = (catId: string) => {
+   718→    const cat = categories.find((c: any) => c.id === catId);
+   719→    return cat ? cat.name_fr : '';
+   720→  };
+   721→
+   722→  const startEdit = (product: any) => {
+   723→    setEditProduct(product);
+   724→    setForm({
+   725→      name_fr: product.name_fr,
+   726→      name_ar: product.name_ar,
+   727→      price: String(product.price),
+   728→      category_id: product.category_id,
+   729→      description_fr: product.description_fr || '',
+   730→      brand: product.brand || '',
+   731→      ref: product.ref || '',
+   732→    });
+   733→    setShowForm(true);
+   734→  };
+   735→
+   736→  const resetForm = () => {
+   737→    setForm({ name_fr: '', name_ar: '', price: '', category_id: '', description_fr: '', brand: '', ref: '' });
+   738→    setEditProduct(null);
+   739→    setShowForm(false);
+   740→  };
+   741→
+   742→  const handleSave = async () => {
+   743→    if (!form.name_fr.trim()) {
+   744→      toast.error('Le nom du produit est requis');
+   745→      return;
+   746→    }
+   747→    setSaving(true);
+   748→    try {
+   749→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   750→      if (!isSupabaseConfigured || !supabase) {
+   751→        toast.error('Supabase non configuré');
+   752→        resetForm();
+   753→        setSaving(false);
+   754→        return;
+   755→      }
+   756→
+   757→      const data = {
+   758→        name_fr: form.name_fr,
+   759→        name_ar: form.name_ar,
+   760→        price: Number(form.price),
+   761→        category_id: form.category_id,
+   762→        description_fr: form.description_fr,
+   763→        brand: form.brand,
+   764→        ref: form.ref,
+   765→      };
+   766→
+   767→      if (editProduct) {
+   768→        await supabase.from('products').update(data).eq('id', editProduct.id);
+   769→        toast.success('Produit mis à jour avec succès');
+   770→      } else {
+   771→        await supabase.from('products').insert([{ ...data, slug: form.name_fr.toLowerCase().replace(/\s+/g, '-') }]);
+   772→        toast.success('Produit ajouté avec succès');
+   773→      }
+   774→      refresh();
+   775→      resetForm();
+   776→    } catch {
+   777→      toast.error('Erreur lors de la sauvegarde');
+   778→    }
+   779→    setSaving(false);
+   780→  };
+   781→
+   782→  const handleDelete = async (id: string) => {
+   783→    try {
+   784→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+   785→      if (!isSupabaseConfigured || !supabase) return;
+   786→      await supabase.from('products').delete().eq('id', id);
+   787→      refresh();
+   788→      toast.success('Produit supprimé');
+   789→    } catch {
+   790→      toast.error('Erreur lors de la suppression');
+   791→    }
+   792→    setDeleteConfirm(null);
+   793→  };
+   794→
+   795→  const formatPrice = (price: number | undefined) => {
+   796→    if (price == null || isNaN(price) || price === 0) return 'Sur devis';
+   797→    return price.toLocaleString('fr-DZ') + ' DA';
+   798→  };
+   799→
+   800→  return (
+   801→    <div className="space-y-5">
+   802→      {/* Header */}
+   803→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+   804→        <div>
+   805→          <h2 className="font-bold text-lg" style={{ color: NAVY }}>
+   806→            {t('admin.products.title')}
+   807→          </h2>
+   808→          <div className="h-0.5 w-12 rounded-full mt-1" style={{ backgroundColor: GOLD }} />
+   809→        </div>
+   810→        <Button
+   811→          onClick={() => { resetForm(); setShowForm(true); }}
+   812→          className="gap-2 rounded-xl shadow-sm h-9"
+   813→          style={{ backgroundColor: NAVY }}
+   814→        >
+   815→          <Plus className="w-4 h-4" />
+   816→          {t('admin.products.add')}
+   817→        </Button>
+   818→      </div>
+   819→
+   820→      {/* Search & Filter Bar */}
+   821→      <Card className="border-0 shadow-sm rounded-xl">
+   822→        <CardContent className="p-4">
+   823→          <div className="flex flex-col sm:flex-row gap-3">
+   824→            <div className="relative flex-1">
+   825→              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   826→              <Input
+   827→                placeholder="Rechercher un produit..."
+   828→                value={searchQuery}
+   829→                onChange={(e) => setSearchQuery(e.target.value)}
+   830→                className="pl-9 h-9 rounded-lg border-gray-200 text-sm"
+   831→              />
+   832→            </div>
+   833→            <Select value={filterCategory} onValueChange={setFilterCategory}>
+   834→              <SelectTrigger className="w-full sm:w-48 h-9 rounded-lg text-sm">
+   835→                <Filter className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+   836→                <SelectValue placeholder="Catégorie" />
+   837→              </SelectTrigger>
+   838→              <SelectContent>
+   839→                <SelectItem value="all">Toutes les catégories</SelectItem>
+   840→                {categories.map((cat: any) => (
+   841→                  <SelectItem key={cat.id} value={cat.id}>{cat.name_fr}</SelectItem>
+   842→                ))}
+   843→              </SelectContent>
+   844→            </Select>
+   845→          </div>
+   846→        </CardContent>
+   847→      </Card>
+   848→
+   849→      {/* Product Form Modal */}
+   850→      <Dialog open={showForm} onOpenChange={(open) => { if (!open) resetForm(); }}>
+   851→        <DialogContent className="sm:max-w-2xl rounded-xl p-0 overflow-hidden">
+   852→          <div className="h-1" style={{ background: `linear-gradient(90deg, ${NAVY}, ${GOLD})` }} />
+   853→          <DialogHeader className="px-6 pt-5">
+   854→            <DialogTitle style={{ color: NAVY }}>
+   855→              {editProduct ? t('admin.products.edit') : t('admin.products.add')}
+   856→            </DialogTitle>
+   857→            <DialogDescription className="text-gray-400 text-xs">
+   858→              {editProduct ? 'Modifier les informations du produit' : 'Remplissez les informations du nouveau produit'}
+   859→            </DialogDescription>
+   860→          </DialogHeader>
+   861→          <div className="px-6 space-y-4 max-h-[60vh] overflow-y-auto py-4">
+   862→            {/* Two column: Names */}
+   863→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   864→              <div className="space-y-1.5">
+   865→                <label className="text-xs font-medium text-gray-600">{t('admin.products.name')} (FR) *</label>
+   866→                <Input value={form.name_fr} onChange={(e) => setForm({ ...form, name_fr: e.target.value })} className="h-9 rounded-lg text-sm" />
+   867→              </div>
+   868→              <div className="space-y-1.5">
+   869→                <label className="text-xs font-medium text-gray-600">{t('admin.products.name')} (AR)</label>
+   870→                <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} dir="rtl" className="h-9 rounded-lg text-sm" />
+   871→              </div>
+   872→            </div>
+   873→            {/* Two column: Price + Category */}
+   874→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   875→              <div className="space-y-1.5">
+   876→                <label className="text-xs font-medium text-gray-600">{t('admin.products.price')} (DA)</label>
+   877→                <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="h-9 rounded-lg text-sm" placeholder="0 = Sur devis" />
+   878→              </div>
+   879→              <div className="space-y-1.5">
+   880→                <label className="text-xs font-medium text-gray-600">{t('admin.products.category')}</label>
+   881→                <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+   882→                  <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+   883→                  <SelectContent>
+   884→                    {categories.map((cat: any) => (
+   885→                      <SelectItem key={cat.id} value={cat.id}>{cat.name_fr}</SelectItem>
+   886→                    ))}
+   887→                  </SelectContent>
+   888→                </Select>
+   889→              </div>
+   890→            </div>
+   891→            {/* Two column: Brand + Ref */}
+   892→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   893→              <div className="space-y-1.5">
+   894→                <label className="text-xs font-medium text-gray-600">{t('products.brand')}</label>
+   895→                <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-9 rounded-lg text-sm" />
+   896→              </div>
+   897→              <div className="space-y-1.5">
+   898→                <label className="text-xs font-medium text-gray-600">{t('products.ref')}</label>
+   899→                <Input value={form.ref} onChange={(e) => setForm({ ...form, ref: e.target.value })} className="h-9 rounded-lg text-sm" />
+   900→              </div>
+   901→            </div>
+   902→            {/* Description */}
+   903→            <div className="space-y-1.5">
+   904→              <label className="text-xs font-medium text-gray-600">{t('admin.products.description')}</label>
+   905→              <Textarea rows={3} value={form.description_fr} onChange={(e) => setForm({ ...form, description_fr: e.target.value })} className="rounded-lg text-sm resize-none" />
+   906→            </div>
+   907→          </div>
+   908→          <DialogFooter className="px-6 pb-5 pt-2 gap-2">
+   909→            <Button variant="outline" onClick={resetForm} className="rounded-lg h-9 text-sm">
+   910→              {t('admin.products.cancel')}
+   911→            </Button>
+   912→            <Button onClick={handleSave} disabled={saving} className="gap-2 rounded-lg h-9 text-sm" style={{ backgroundColor: NAVY }}>
+   913→              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+   914→              {saving ? 'Enregistrement...' : t('admin.products.save')}
+   915→            </Button>
+   916→          </DialogFooter>
+   917→        </DialogContent>
+   918→      </Dialog>
+   919→
+   920→      {/* Delete Confirmation */}
+   921→      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+   922→        <AlertDialogContent className="rounded-xl">
+   923→          <AlertDialogHeader>
+   924→            <AlertDialogTitle style={{ color: NAVY }}>Confirmer la suppression</AlertDialogTitle>
+   925→            <AlertDialogDescription className="text-gray-500">
+   926→              Cette action est irréversible. Êtes-vous sûr de vouloir supprimer ce produit ?
+   927→            </AlertDialogDescription>
+   928→          </AlertDialogHeader>
+   929→          <AlertDialogFooter>
+   930→            <AlertDialogCancel className="rounded-lg">Annuler</AlertDialogCancel>
+   931→            <AlertDialogAction onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="rounded-lg text-white" style={{ backgroundColor: DANGER }}>
+   932→              Supprimer
+   933→            </AlertDialogAction>
+   934→          </AlertDialogFooter>
+   935→        </AlertDialogContent>
+   936→      </AlertDialog>
+   937→
+   938→      {/* Products Grid */}
+   939→      {filteredProducts.length === 0 ? (
+   940→        <Card className="border-0 shadow-sm rounded-xl">
+   941→          <CardContent className="p-12 text-center">
+   942→            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+   943→            <p className="text-gray-400 text-sm">Aucun produit trouvé</p>
+   944→          </CardContent>
+   945→        </Card>
+   946→      ) : (
+   947→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   948→          {filteredProducts.map((product: any, i: number) => {
+   949→            const catName = getCategoryName(product.category_id);
+   950→            const isPriceOnQuote = !product.price || product.price === 0;
+   951→            return (
+   952→              <motion.div
+   953→                key={product.id}
+   954→                initial={{ opacity: 0, y: 10 }}
+   955→                animate={{ opacity: 1, y: 0 }}
+   956→                transition={{ delay: i * 0.04 }}
+   957→              >
+   958→                <Card className="border-0 shadow-sm rounded-xl hover:shadow-md transition-all duration-300 overflow-hidden group">
+   959→                  {/* Image placeholder */}
+   960→                  <div className="h-36 relative overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
+   961→                    {product.image_url ? (
+   962→                      <img src={product.image_url} alt={getProductName(product, language)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+   963→                    ) : (
+   964→                      <div className="w-full h-full flex items-center justify-center">
+   965→                        <ImageIcon className="w-10 h-10 text-gray-300" />
+   966→                      </div>
+   967→                    )}
+   968→                    {/* Category badge */}
+   969→                    {catName && (
+   970→                      <Badge className="absolute top-2 left-2 text-[10px] px-2 py-0.5 border-0 font-medium" style={{ backgroundColor: 'rgba(30,58,95,0.85)', color: 'white' }}>
+   971→                        {catName}
+   972→                      </Badge>
+   973→                    )}
+   974→                  </div>
+   975→                  <CardContent className="p-4">
+   976→                    <h3 className="font-semibold text-sm truncate" style={{ color: NAVY }}>
+   977→                      {getProductName(product, language)}
+   978→                    </h3>
+   979→                    <div className="flex items-center gap-2 mt-1.5">
+   980→                      {product.brand && (
+   981→                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-gray-200 text-gray-500">
+   982→                          {product.brand}
+   983→                        </Badge>
+   984→                      )}
+   985→                      {product.ref && (
+   986→                        <span className="text-[10px] text-gray-400">#{product.ref}</span>
+   987→                      )}
+   988→                    </div>
+   989→                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+   990→                      <span className="text-sm font-semibold" style={{ color: isPriceOnQuote ? WARNING : NAVY }}>
+   991→                        {formatPrice(product.price)}
+   992→                      </span>
+   993→                      <div className="flex gap-1">
+   994→                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-blue-50" onClick={() => startEdit(product)}>
+   995→                          <Pencil className="w-3 h-3 text-blue-500" />
+   996→                        </Button>
+   997→                        <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-50" onClick={() => setDeleteConfirm(product.id)}>
+   998→                          <Trash2 className="w-3 h-3 text-red-400" />
+   999→                        </Button>
+  1000→                      </div>
+  1001→                    </div>
+  1002→                  </CardContent>
+  1003→                </Card>
+  1004→              </motion.div>
+  1005→            );
+  1006→          })}
+  1007→        </div>
+  1008→      )}
+  1009→    </div>
+  1010→  );
+  1011→}
+  1012→
+  1013→// ============ Blog Tab ============
+  1014→function BlogTab({ blogPosts, language, t, refresh }: any) {
+  1015→  const [showForm, setShowForm] = useState(false);
+  1016→  const [saving, setSaving] = useState(false);
+  1017→  const [form, setForm] = useState({
+  1018→    title_fr: '',
+  1019→    title_ar: '',
+  1020→    excerpt_fr: '',
+  1021→    excerpt_ar: '',
+  1022→    content_fr: '',
+  1023→    content_ar: '',
+  1024→    category: '',
+  1025→    author: 'ODG Team',
+  1026→  });
+  1027→
+  1028→  const handleSave = async () => {
+  1029→    if (!form.title_fr.trim()) {
+  1030→      toast.error('Le titre est requis');
+  1031→      return;
+  1032→    }
+  1033→    setSaving(true);
+  1034→    try {
+  1035→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+  1036→      if (!isSupabaseConfigured || !supabase) {
+  1037→        toast.error('Supabase non configuré');
+  1038→        setShowForm(false);
+  1039→        setSaving(false);
+  1040→        return;
+  1041→      }
+  1042→
+  1043→      await supabase.from('blog_posts').insert([{
+  1044→        title_fr: form.title_fr,
+  1045→        title_ar: form.title_ar,
+  1046→        excerpt_fr: form.excerpt_fr,
+  1047→        excerpt_ar: form.excerpt_ar,
+  1048→        content_fr: form.content_fr,
+  1049→        content_ar: form.content_ar,
+  1050→        category: form.category,
+  1051→        author: form.author,
+  1052→        slug: form.title_fr.toLowerCase().replace(/\s+/g, '-').substring(0, 60),
+  1053→        date: new Date().toISOString().split('T')[0],
+  1054→        read_time: 5,
+  1055→        tags: [],
+  1056→      }]);
+  1057→      refresh();
+  1058→      toast.success('Article ajouté avec succès');
+  1059→      setShowForm(false);
+  1060→      setForm({ title_fr: '', title_ar: '', excerpt_fr: '', excerpt_ar: '', content_fr: '', content_ar: '', category: '', author: 'ODG Team' });
+  1061→    } catch {
+  1062→      toast.error('Erreur lors de la sauvegarde');
+  1063→    }
+  1064→    setSaving(false);
+  1065→  };
+  1066→
+  1067→  const handleDelete = async (id: string) => {
+  1068→    try {
+  1069→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+  1070→      if (!isSupabaseConfigured || !supabase) return;
+  1071→      await supabase.from('blog_posts').delete().eq('id', id);
+  1072→      refresh();
+  1073→      toast.success('Article supprimé');
+  1074→    } catch {
+  1075→      toast.error('Erreur lors de la suppression');
+  1076→    }
+  1077→  };
+  1078→
+  1079→  const formatDate = (d: string) => {
+  1080→    try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; }
+  1081→  };
+  1082→
+  1083→  return (
+  1084→    <div className="space-y-5">
+  1085→      {/* Header */}
+  1086→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  1087→        <div>
+  1088→          <h2 className="font-bold text-lg" style={{ color: NAVY }}>{t('admin.blog.title')}</h2>
+  1089→          <div className="h-0.5 w-12 rounded-full mt-1" style={{ backgroundColor: GOLD }} />
+  1090→        </div>
+  1091→        <Button onClick={() => setShowForm(!showForm)} className="gap-2 rounded-xl shadow-sm h-9" style={{ backgroundColor: NAVY }}>
+  1092→          <Plus className="w-4 h-4" />
+  1093→          {t('admin.blog.add')}
+  1094→        </Button>
+  1095→      </div>
+  1096→
+  1097→      {/* Form Dialog */}
+  1098→      <Dialog open={showForm} onOpenChange={setShowForm}>
+  1099→        <DialogContent className="sm:max-w-2xl rounded-xl p-0 overflow-hidden">
+  1100→          <div className="h-1" style={{ background: `linear-gradient(90deg, ${NAVY}, ${GOLD})` }} />
+  1101→          <DialogHeader className="px-6 pt-5">
+  1102→            <DialogTitle style={{ color: NAVY }}>Nouvel article</DialogTitle>
+  1103→            <DialogDescription className="text-gray-400 text-xs">Rédigez un nouvel article pour le blog</DialogDescription>
+  1104→          </DialogHeader>
+  1105→          <div className="px-6 space-y-4 max-h-[60vh] overflow-y-auto py-4">
+  1106→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1107→              <div className="space-y-1.5">
+  1108→                <label className="text-xs font-medium text-gray-600">Titre (FR) *</label>
+  1109→                <Input value={form.title_fr} onChange={(e) => setForm({ ...form, title_fr: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1110→              </div>
+  1111→              <div className="space-y-1.5">
+  1112→                <label className="text-xs font-medium text-gray-600">عنوان (AR)</label>
+  1113→                <Input value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} dir="rtl" className="h-9 rounded-lg text-sm" />
+  1114→              </div>
+  1115→            </div>
+  1116→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1117→              <div className="space-y-1.5">
+  1118→                <label className="text-xs font-medium text-gray-600">Extrait (FR)</label>
+  1119→                <Textarea rows={2} value={form.excerpt_fr} onChange={(e) => setForm({ ...form, excerpt_fr: e.target.value })} className="rounded-lg text-sm resize-none" />
+  1120→              </div>
+  1121→              <div className="space-y-1.5">
+  1122→                <label className="text-xs font-medium text-gray-600">مقتطف (AR)</label>
+  1123→                <Textarea rows={2} value={form.excerpt_ar} onChange={(e) => setForm({ ...form, excerpt_ar: e.target.value })} dir="rtl" className="rounded-lg text-sm resize-none" />
+  1124→              </div>
+  1125→            </div>
+  1126→            <div className="space-y-1.5">
+  1127→              <label className="text-xs font-medium text-gray-600">Contenu (FR)</label>
+  1128→              <Textarea rows={4} value={form.content_fr} onChange={(e) => setForm({ ...form, content_fr: e.target.value })} className="rounded-lg text-sm resize-none" />
+  1129→            </div>
+  1130→            <div className="space-y-1.5">
+  1131→              <label className="text-xs font-medium text-gray-600">Catégorie</label>
+  1132→              <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1133→            </div>
+  1134→          </div>
+  1135→          <DialogFooter className="px-6 pb-5 pt-2 gap-2">
+  1136→            <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-lg h-9 text-sm">
+  1137→              {t('admin.products.cancel')}
+  1138→            </Button>
+  1139→            <Button onClick={handleSave} disabled={saving} className="gap-2 rounded-lg h-9 text-sm" style={{ backgroundColor: NAVY }}>
+  1140→              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+  1141→              {saving ? 'Enregistrement...' : t('admin.products.save')}
+  1142→            </Button>
+  1143→          </DialogFooter>
+  1144→        </DialogContent>
+  1145→      </Dialog>
+  1146→
+  1147→      {/* Blog Cards */}
+  1148→      {blogPosts.length === 0 ? (
+  1149→        <Card className="border-0 shadow-sm rounded-xl">
+  1150→          <CardContent className="p-12 text-center">
+  1151→            <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+  1152→            <p className="text-gray-400 text-sm">Aucun article pour le moment</p>
+  1153→          </CardContent>
+  1154→        </Card>
+  1155→      ) : (
+  1156→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  1157→          {blogPosts.map((post: any, i: number) => (
+  1158→            <motion.div
+  1159→              key={post.id}
+  1160→              initial={{ opacity: 0, y: 10 }}
+  1161→              animate={{ opacity: 1, y: 0 }}
+  1162→              transition={{ delay: i * 0.05 }}
+  1163→            >
+  1164→              <Card className="border-0 shadow-sm rounded-xl hover:shadow-md transition-all duration-300 overflow-hidden group">
+  1165→                {/* Featured Image */}
+  1166→                <div className="h-36 relative overflow-hidden" style={{ backgroundColor: '#f0f4f8' }}>
+  1167→                  {post.image_url ? (
+  1168→                    <img src={post.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+  1169→                  ) : (
+  1170→                    <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${NAVY}15, ${GOLD}15)` }}>
+  1171→                      <BookOpen className="w-10 h-10 text-gray-300" />
+  1172→                    </div>
+  1173→                  )}
+  1174→                  <Badge
+  1175→                    className="absolute top-2 right-2 text-[10px] px-2 py-0.5 border-0 font-medium"
+  1176→                    style={{
+  1177→                      backgroundColor: post.status === 'published' ? '#D1FAE5' : '#FEF3C7',
+  1178→                      color: post.status === 'published' ? SUCCESS : WARNING,
+  1179→                    }}
+  1180→                  >
+  1181→                    {post.status === 'published' ? 'Publié' : 'Brouillon'}
+  1182→                  </Badge>
+  1183→                </div>
+  1184→                <CardContent className="p-4">
+  1185→                  <h3 className="font-semibold text-sm line-clamp-2" style={{ color: NAVY }}>
+  1186→                    {language === 'ar' ? post.title_ar : post.title_fr}
+  1187→                  </h3>
+  1188→                  {(post.excerpt_fr || post.excerpt_ar) && (
+  1189→                    <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">
+  1190→                      {language === 'ar' ? post.excerpt_ar : post.excerpt_fr}
+  1191→                    </p>
+  1192→                  )}
+  1193→                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+  1194→                    <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+  1195→                      <Calendar className="w-3 h-3" />
+  1196→                      {formatDate(post.date)}
+  1197→                    </div>
+  1198→                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-50" onClick={() => handleDelete(post.id)}>
+  1199→                      <Trash2 className="w-3 h-3 text-red-400" />
+  1200→                    </Button>
+  1201→                  </div>
+  1202→                </CardContent>
+  1203→              </Card>
+  1204→            </motion.div>
+  1205→          ))}
+  1206→        </div>
+  1207→      )}
+  1208→    </div>
+  1209→  );
+  1210→}
+  1211→
+  1212→// ============ Quotes Tab ============
+  1213→function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => void }) {
+  1214→  const [quotes, setQuotes] = useState<any[]>([]);
+  1215→  const [loading, setLoading] = useState(true);
+  1216→  const [filterStatus, setFilterStatus] = useState('all');
+  1217→
+  1218→  useEffect(() => {
+  1219→    const fetchQuotes = async () => {
+  1220→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+  1221→      if (!isSupabaseConfigured || !supabase) {
+  1222→        setLoading(false);
+  1223→        return;
+  1224→      }
+  1225→      const { data } = await supabase.from('quotes').select('*').order('created_at', { ascending: false });
+  1226→      if (data) setQuotes(data);
+  1227→      setLoading(false);
+  1228→    };
+  1229→    fetchQuotes();
+  1230→  }, [refresh]);
+  1231→
+  1232→  const updateStatus = async (id: string, status: string) => {
+  1233→    try {
+  1234→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+  1235→      if (!isSupabaseConfigured || !supabase) return;
+  1236→      await supabase.from('quotes').update({ status }).eq('id', id);
+  1237→      setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, status } : q)));
+  1238→      toast.success('Statut mis à jour');
+  1239→    } catch {
+  1240→      toast.error('Erreur lors de la mise à jour');
+  1241→    }
+  1242→  };
+  1243→
+  1244→  const statusConfig: Record<string, { bg: string; color: string; label: string; icon: any }> = {
+  1245→    new: { bg: '#DBEAFE', color: '#2563EB', label: t('admin.quotes.new'), icon: AlertCircle },
+  1246→    in_progress: { bg: '#FEF3C7', color: WARNING, label: t('admin.quotes.inProgress'), icon: Clock },
+  1247→    processed: { bg: '#D1FAE5', color: SUCCESS, label: t('admin.quotes.processed'), icon: CheckCircle2 },
+  1248→    archived: { bg: '#F3F4F6', color: '#6B7280', label: t('admin.quotes.archived'), icon: FileCheck },
+  1249→  };
+  1250→
+  1251→  const filteredQuotes = filterStatus === 'all' ? quotes : quotes.filter(q => q.status === filterStatus);
+  1252→
+  1253→  if (loading) {
+  1254→    return (
+  1255→      <div className="space-y-4">
+  1256→        <Skeleton className="h-8 w-48 rounded-lg" />
+  1257→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  1258→          {[1, 2, 3].map(i => (
+  1259→            <Card key={i} className="border-0 shadow-sm rounded-xl">
+  1260→              <CardContent className="p-5 space-y-3">
+  1261→                <Skeleton className="h-4 w-3/4 rounded" />
+  1262→                <Skeleton className="h-3 w-1/2 rounded" />
+  1263→                <Skeleton className="h-3 w-2/3 rounded" />
+  1264→              </CardContent>
+  1265→            </Card>
+  1266→          ))}
+  1267→        </div>
+  1268→      </div>
+  1269→    );
+  1270→  }
+  1271→
+  1272→  return (
+  1273→    <div className="space-y-5">
+  1274→      {/* Header */}
+  1275→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  1276→        <div>
+  1277→          <h2 className="font-bold text-lg" style={{ color: NAVY }}>{t('admin.quotes.title')}</h2>
+  1278→          <div className="h-0.5 w-12 rounded-full mt-1" style={{ backgroundColor: GOLD }} />
+  1279→        </div>
+  1280→        <div className="flex items-center gap-2">
+  1281→          <Badge className="text-xs px-3 py-1 border-0" style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}>
+  1282→            {quotes.filter(q => q.status === 'new').length} Nouveaux
+  1283→          </Badge>
+  1284→          <Select value={filterStatus} onValueChange={setFilterStatus}>
+  1285→            <SelectTrigger className="w-40 h-8 rounded-lg text-xs">
+  1286→              <SelectValue placeholder="Filtrer" />
+  1287→            </SelectTrigger>
+  1288→            <SelectContent>
+  1289→              <SelectItem value="all">Tous les statuts</SelectItem>
+  1290→              <SelectItem value="new">{t('admin.quotes.new')}</SelectItem>
+  1291→              <SelectItem value="in_progress">{t('admin.quotes.inProgress')}</SelectItem>
+  1292→              <SelectItem value="processed">{t('admin.quotes.processed')}</SelectItem>
+  1293→              <SelectItem value="archived">{t('admin.quotes.archived')}</SelectItem>
+  1294→            </SelectContent>
+  1295→          </Select>
+  1296→        </div>
+  1297→      </div>
+  1298→
+  1299→      {filteredQuotes.length === 0 ? (
+  1300→        <Card className="border-0 shadow-sm rounded-xl">
+  1301→          <CardContent className="p-12 text-center">
+  1302→            <ClipboardList className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+  1303→            <p className="text-gray-400 text-sm">Aucun devis pour le moment</p>
+  1304→          </CardContent>
+  1305→        </Card>
+  1306→      ) : (
+  1307→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  1308→          {filteredQuotes.map((quote, i) => {
+  1309→            const sc = statusConfig[quote.status] || statusConfig.new;
+  1310→            const StatusIcon = sc.icon;
+  1311→            return (
+  1312→              <motion.div
+  1313→                key={quote.id}
+  1314→                initial={{ opacity: 0, y: 10 }}
+  1315→                animate={{ opacity: 1, y: 0 }}
+  1316→                transition={{ delay: i * 0.04 }}
+  1317→              >
+  1318→                <Card className="border-0 shadow-sm rounded-xl hover:shadow-md transition-all duration-300 overflow-hidden">
+  1319→                  {/* Status accent line */}
+  1320→                  <div className="h-1" style={{ backgroundColor: sc.color }} />
+  1321→                  <CardContent className="p-5">
+  1322→                    <div className="flex items-start justify-between gap-2 mb-3">
+  1323→                      <div className="flex-1 min-w-0">
+  1324→                        <h3 className="font-semibold text-sm truncate" style={{ color: NAVY }}>
+  1325→                          {quote.nom}
+  1326→                        </h3>
+  1327→                      </div>
+  1328→                      <Badge
+  1329→                        className="text-[10px] px-2 py-0.5 border-0 font-medium shrink-0 flex items-center gap-1"
+  1330→                        style={{ backgroundColor: sc.bg, color: sc.color }}
+  1331→                      >
+  1332→                        <StatusIcon className="w-3 h-3" />
+  1333→                        {sc.label}
+  1334→                      </Badge>
+  1335→                    </div>
+  1336→
+  1337→                    {/* Customer info */}
+  1338→                    <div className="space-y-1.5 mb-4">
+  1339→                      {quote.email && (
+  1340→                        <div className="flex items-center gap-2 text-xs text-gray-500">
+  1341→                          <Mail className="w-3 h-3 text-gray-400 shrink-0" />
+  1342→                          <span className="truncate">{quote.email}</span>
+  1343→                        </div>
+  1344→                      )}
+  1345→                      {quote.telephone && (
+  1346→                        <div className="flex items-center gap-2 text-xs text-gray-500">
+  1347→                          <Phone className="w-3 h-3 text-gray-400 shrink-0" />
+  1348→                          {quote.telephone}
+  1349→                        </div>
+  1350→                      )}
+  1351→                      {quote.wilaya && (
+  1352→                        <div className="flex items-center gap-2 text-xs text-gray-500">
+  1353→                          <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
+  1354→                          {quote.wilaya} {quote.type_client ? `• ${quote.type_client}` : ''}
+  1355→                        </div>
+  1356→                      )}
+  1357→                    </div>
+  1358→
+  1359→                    {quote.message && (
+  1360→                      <p className="text-xs text-gray-500 line-clamp-2 mb-4 bg-gray-50 p-2 rounded-lg">
+  1361→                        {quote.message}
+  1362→                      </p>
+  1363→                    )}
+  1364→
+  1365→                    <Separator className="mb-3" />
+  1366→
+  1367→                    <div className="flex items-center justify-between">
+  1368→                      <div className="text-[10px] text-gray-400 flex items-center gap-1">
+  1369→                        <Calendar className="w-3 h-3" />
+  1370→                        {quote.created_at ? new Date(quote.created_at).toLocaleDateString('fr-FR') : ''}
+  1371→                      </div>
+  1372→                      <Select
+  1373→                        value={quote.status}
+  1374→                        onValueChange={(v) => updateStatus(quote.id, v)}
+  1375→                      >
+  1376→                        <SelectTrigger className="w-32 h-7 text-[10px] rounded-lg">
+  1377→                          <SelectValue />
+  1378→                        </SelectTrigger>
+  1379→                        <SelectContent>
+  1380→                          <SelectItem value="new">{t('admin.quotes.new')}</SelectItem>
+  1381→                          <SelectItem value="in_progress">{t('admin.quotes.inProgress')}</SelectItem>
+  1382→                          <SelectItem value="processed">{t('admin.quotes.processed')}</SelectItem>
+  1383→                          <SelectItem value="archived">{t('admin.quotes.archived')}</SelectItem>
+  1384→                        </SelectContent>
+  1385→                      </Select>
+  1386→                    </div>
+  1387→                  </CardContent>
+  1388→                </Card>
+  1389→              </motion.div>
+  1390→            );
+  1391→          })}
+  1392→        </div>
+  1393→      )}
+  1394→    </div>
+  1395→  );
+  1396→}
+  1397→
+  1398→// ============ Settings Tab ============
+  1399→function SettingsTab({ t }: { t: (k: string) => string }) {
+  1400→  const [settings, setSettings] = useState({
+  1401→    brand_name: 'ODG',
+  1402→    logo_url: '',
+  1403→    phone: '+213 771 88 89 48',
+  1404→    email: 'groupedentalimport@gmail.com',
+  1405→    address: "Coopérative Azzouz Abdelkader, N°45, Oran",
+  1406→    facebook: 'https://facebook.com/odg.algeria',
+  1407→    instagram: 'https://instagram.com/odg.algeria',
+  1408→    linkedin: 'https://linkedin.com/company/odg-algeria',
+  1409→  });
+  1410→  const [savingSection, setSavingSection] = useState<string | null>(null);
+  1411→
+  1412→  const handleSaveSection = async (section: string) => {
+  1413→    setSavingSection(section);
+  1414→    try {
+  1415→      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
+  1416→      if (isSupabaseConfigured && supabase) {
+  1417→        const sectionKeys: Record<string, string[]> = {
+  1418→          general: ['brand_name', 'logo_url'],
+  1419→          contact: ['phone', 'email', 'address'],
+  1420→          social: ['facebook', 'instagram', 'linkedin'],
+  1421→        };
+  1422→        const keys = sectionKeys[section] || [];
+  1423→        for (const key of keys) {
+  1424→          await supabase
+  1425→            .from('site_settings')
+  1426→            .upsert({ key, value_fr: settings[key as keyof typeof settings], category: section, type: 'text' }, { onConflict: 'key' });
+  1427→        }
+  1428→      }
+  1429→      toast.success(t('admin.settings.saved'));
+  1430→    } catch {
+  1431→      toast.error('Erreur lors de la sauvegarde');
+  1432→    }
+  1433→    setSavingSection(null);
+  1434→  };
+  1435→
+  1436→  const sectionCard = (title: string, section: string, icon: any, children: React.ReactNode) => {
+  1437→    const Icon = icon;
+  1438→    return (
+  1439→      <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
+  1440→        <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-gray-100" style={{ backgroundColor: '#f8fafc' }}>
+  1441→          <div className="flex items-center gap-2">
+  1442→            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${NAVY}12` }}>
+  1443→              <Icon className="w-4 h-4" style={{ color: NAVY }} />
+  1444→            </div>
+  1445→            <h3 className="font-semibold text-sm" style={{ color: NAVY }}>{title}</h3>
+  1446→          </div>
+  1447→          <Button
+  1448→            onClick={() => handleSaveSection(section)}
+  1449→            disabled={savingSection === section}
+  1450→            size="sm"
+  1451→            className="gap-1.5 h-8 rounded-lg text-xs"
+  1452→            style={{ backgroundColor: NAVY }}
+  1453→          >
+  1454→            {savingSection === section ? (
+  1455→              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+  1456→            ) : (
+  1457→              <Save className="w-3.5 h-3.5" />
+  1458→            )}
+  1459→            {savingSection === section ? '...' : t('admin.settings.save')}
+  1460→          </Button>
+  1461→        </div>
+  1462→        <CardContent className="p-5">
+  1463→          {children}
+  1464→        </CardContent>
+  1465→      </Card>
+  1466→    );
+  1467→  };
+  1468→
+  1469→  return (
+  1470→    <div className="space-y-5">
+  1471→      <div>
+  1472→        <h2 className="font-bold text-lg" style={{ color: NAVY }}>{t('admin.settings.title')}</h2>
+  1473→        <div className="h-0.5 w-12 rounded-full mt-1" style={{ backgroundColor: GOLD }} />
+  1474→      </div>
+  1475→
+  1476→      {/* General Section */}
+  1477→      {sectionCard(t('admin.settings.logo'), 'general', Globe, (
+  1478→        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1479→          <div className="space-y-1.5">
+  1480→            <label className="text-xs font-medium text-gray-600">Nom de marque</label>
+  1481→            <Input value={settings.brand_name} onChange={(e) => setSettings({ ...settings, brand_name: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1482→          </div>
+  1483→          <div className="space-y-1.5">
+  1484→            <label className="text-xs font-medium text-gray-600">Logo URL</label>
+  1485→            <Input value={settings.logo_url} onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1486→          </div>
+  1487→        </div>
+  1488→      ))}
+  1489→
+  1490→      {/* Contact Section */}
+  1491→      {sectionCard(t('admin.settings.contact'), 'contact', Phone, (
+  1492→        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1493→          <div className="space-y-1.5">
+  1494→            <label className="text-xs font-medium text-gray-600">{t('contact.phone')}</label>
+  1495→            <Input value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1496→          </div>
+  1497→          <div className="space-y-1.5">
+  1498→            <label className="text-xs font-medium text-gray-600">{t('contact.email')}</label>
+  1499→            <Input value={settings.email} onChange={(e) => setSettings({ ...settings, email: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1500→          </div>
+  1501→          <div className="sm:col-span-2 space-y-1.5">
+  1502→            <label className="text-xs font-medium text-gray-600">{t('contact.address')}</label>
+  1503→            <Input value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1504→          </div>
+  1505→        </div>
+  1506→      ))}
+  1507→
+  1508→      {/* Social Section */}
+  1509→      {sectionCard(t('admin.settings.social'), 'social', Globe, (
+  1510→        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  1511→          <div className="space-y-1.5">
+  1512→            <label className="text-xs font-medium text-gray-600">Facebook</label>
+  1513→            <Input value={settings.facebook} onChange={(e) => setSettings({ ...settings, facebook: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1514→          </div>
+  1515→          <div className="space-y-1.5">
+  1516→            <label className="text-xs font-medium text-gray-600">Instagram</label>
+  1517→            <Input value={settings.instagram} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1518→          </div>
+  1519→          <div className="space-y-1.5">
+  1520→            <label className="text-xs font-medium text-gray-600">LinkedIn</label>
+  1521→            <Input value={settings.linkedin} onChange={(e) => setSettings({ ...settings, linkedin: e.target.value })} className="h-9 rounded-lg text-sm" />
+  1522→          </div>
+  1523→        </div>
+  1524→      ))}
+  1525→    </div>
+  1526→  );
+  1527→}
+  1528→

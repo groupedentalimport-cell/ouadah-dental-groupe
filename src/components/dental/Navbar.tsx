@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle } from 'lucide-react';
+import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle, Sun, Moon } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useSiteSettings } from '@/lib/site-settings';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useTheme } from 'next-themes';
 
 export default function Navbar() {
   const { t, language, setLanguage, isRTL } = useTranslation();
@@ -26,10 +27,23 @@ export default function Navbar() {
   const { getText } = useSiteSettings();
   const { products, getProductName } = useData();
   const totalItems = useQuoteCart((s) => s.totalItems());
+  const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Use useRef + requestAnimationFrame to avoid synchronous setState in effect
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      requestAnimationFrame(() => {
+        setMounted(true);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -73,6 +87,10 @@ export default function Navbar() {
     setSearchQuery('');
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
     <motion.nav
       initial={{ y: -100 }}
@@ -80,8 +98,8 @@ export default function Navbar() {
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/90 backdrop-blur-xl shadow-lg border-b border-gray-100/50'
-          : 'bg-white/70 backdrop-blur-md'
+          ? 'bg-white/90 dark:bg-[#0f1d2e]/90 backdrop-blur-xl shadow-lg border-b border-gray-100/50 dark:border-white/5'
+          : 'bg-white/70 dark:bg-[#0f1d2e]/70 backdrop-blur-md'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -106,7 +124,7 @@ export default function Navbar() {
                   ODG
                 </div>
                 <span
-                  className="text-lg font-bold hidden sm:inline"
+                  className="text-lg font-bold hidden sm:inline dark:text-[#7AB0E0]"
                   style={{ color: '#1E3A5F' }}
                 >
                   {brandName}
@@ -125,8 +143,8 @@ export default function Navbar() {
                   onClick={() => handleNav(link.path)}
                   className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'text-[#1E3A5F]'
-                      : 'text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-50'
+                      ? 'text-[#1E3A5F] dark:text-[#7AB0E0]'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   {link.label}
@@ -151,9 +169,33 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="text-gray-600 hover:text-[#1E3A5F] relative"
+              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative"
             >
               <Search className="w-4.5 h-4.5" />
+            </Button>
+
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] relative"
+              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+            >
+              <motion.div
+                initial={false}
+                animate={{
+                  rotate: theme === 'dark' ? 180 : 0,
+                  scale: mounted ? 1 : 0,
+                }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
+                {mounted && (theme === 'dark' ? (
+                  <Sun className="w-4.5 h-4.5 text-[#F0C05A]" />
+                ) : (
+                  <Moon className="w-4.5 h-4.5" />
+                ))}
+              </motion.div>
             </Button>
 
             {/* Language Switcher */}
@@ -161,7 +203,7 @@ export default function Navbar() {
               variant="ghost"
               size="sm"
               onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
-              className="gap-1.5 text-gray-600 hover:text-[#1E3A5F]"
+              className="gap-1.5 text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0]"
             >
               <Globe className="w-4 h-4" />
               <span className="text-xs font-semibold uppercase">
@@ -174,7 +216,7 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => handleNav('/devis')}
-              className="relative text-gray-600 hover:text-[#1E3A5F]"
+              className="relative text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0]"
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
@@ -207,15 +249,36 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-1">
             {/* Search Toggle Mobile */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="text-gray-600"
+              className="text-gray-600 dark:text-gray-300"
             >
               <Search className="w-5 h-5" />
+            </Button>
+
+            {/* Theme Toggle Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-gray-600 dark:text-gray-300"
+              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+            >
+              <motion.div
+                initial={false}
+                animate={{ rotate: theme === 'dark' ? 180 : 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
+                {mounted && (theme === 'dark' ? (
+                  <Sun className="w-5 h-5 text-[#F0C05A]" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                ))}
+              </motion.div>
             </Button>
 
             {/* Cart Mobile */}
@@ -223,7 +286,7 @@ export default function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => handleNav('/devis')}
-              className="relative text-gray-600"
+              className="relative text-gray-600 dark:text-gray-300"
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
@@ -238,17 +301,17 @@ export default function Navbar() {
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-gray-600">
+                <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent
                 side={isRTL ? 'left' : 'right'}
-                className="w-[300px] sm:w-[350px]"
+                className="w-[300px] sm:w-[350px] dark:bg-[#162236]"
               >
                 <SheetHeader>
                   <SheetTitle
-                    className="text-left"
+                    className="text-left dark:text-[#7AB0E0]"
                     style={{ color: '#1E3A5F' }}
                   >
                     {brandName}
@@ -267,8 +330,8 @@ export default function Navbar() {
                         transition={{ delay: i * 0.05 }}
                         className={`w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors flex items-center gap-3 ${
                           isActive
-                            ? 'text-[#1E3A5F] bg-[#1E3A5F]/5'
-                            : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-50'
+                            ? 'text-[#1E3A5F] dark:text-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+                            : 'text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5'
                         }`}
                       >
                         {isActive && (
@@ -279,23 +342,36 @@ export default function Navbar() {
                     );
                   })}
 
-                  <div className="my-3 border-t border-gray-100" />
+                  <div className="my-3 border-t border-gray-100 dark:border-white/10" />
 
                   {/* Language Switcher Mobile */}
                   <button
                     onClick={() => {
                       setLanguage(language === 'fr' ? 'ar' : 'fr');
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-[#1E3A5F] hover:bg-gray-50 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >
                     <Globe className="w-5 h-5" />
                     {language === 'fr' ? 'العربية' : 'Français'}
                   </button>
 
+                  {/* Dark Mode Toggle Mobile */}
+                  <button
+                    onClick={toggleTheme}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
+                  >
+                    {mounted && (theme === 'dark' ? (
+                      <Sun className="w-5 h-5 text-[#F0C05A]" />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    ))}
+                    {mounted && (theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode'))}
+                  </button>
+
                   {/* Admin */}
                   <button
                     onClick={() => handleNav('/admin-login')}
-                    className="w-full text-left px-4 py-3 text-base font-medium text-gray-500 hover:text-[#1E3A5F] hover:bg-gray-50 rounded-lg transition-colors"
+                    className="w-full text-left px-4 py-3 text-base font-medium text-gray-500 dark:text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
                   >
                     {t('nav.admin')}
                   </button>
@@ -324,7 +400,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-gray-100 bg-white/95 backdrop-blur-xl"
+            className="border-t border-gray-100 dark:border-white/5 bg-white/95 dark:bg-[#0f1d2e]/95 backdrop-blur-xl"
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
               <div className="relative max-w-xl mx-auto">
@@ -333,13 +409,13 @@ export default function Navbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('nav.searchPlaceholder')}
-                  className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 focus:border-[#1E3A5F] focus:ring-[#1E3A5F]/20"
+                  className="pl-10 pr-10 h-11 bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 focus:border-[#1E3A5F] dark:focus:border-[#7AB0E0] focus:ring-[#1E3A5F]/20 dark:focus:ring-[#7AB0E0]/20 dark:text-white dark:placeholder:text-gray-400"
                   autoFocus
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <XCircle className="w-4 h-4" />
                   </button>
@@ -352,15 +428,15 @@ export default function Navbar() {
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50"
+                      className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1a2d45] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden z-50"
                     >
                       {searchResults.map((product) => (
                         <button
                           key={product.id}
                           onClick={() => handleSearchSelect(product.slug)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
                         >
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5 shrink-0">
                             {product.images?.[0] ? (
                               <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -370,7 +446,7 @@ export default function Navbar() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium text-sm truncate" style={{ color: '#1E3A5F' }}>
+                            <p className="font-medium text-sm truncate dark:text-white" style={{ color: '#1E3A5F' }}>
                               {getProductName(product, language)}
                             </p>
                             {product.brand && (

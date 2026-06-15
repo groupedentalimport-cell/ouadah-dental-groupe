@@ -34,7 +34,7 @@ import { toast } from 'sonner';
 
 function FAQItem({ question, answer, isOpen, onToggle }: { question: string; answer: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className="border-b border-gray-100 dark:border-white/5 last:border-0">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 px-4 rounded-lg transition-colors"
@@ -59,7 +59,7 @@ function FAQItem({ question, answer, isOpen, onToggle }: { question: string; ans
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <p className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
+            <p className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               {answer}
             </p>
           </motion.div>
@@ -162,7 +162,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
       {/* Animated Gradient Header */}
       <div
         className="relative overflow-hidden"
@@ -254,12 +254,12 @@ export default function ContactPage() {
                         href={card.href}
                         target={card.href.startsWith('http') ? '_blank' : undefined}
                         rel="noopener noreferrer"
-                        className="text-sm text-gray-500 hover:text-[#1E3A5F] transition-colors leading-relaxed"
+                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors leading-relaxed"
                       >
                         {card.value}
                       </a>
                     ) : (
-                      <p className="text-sm text-gray-500 leading-relaxed">{card.value}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{card.value}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -281,7 +281,7 @@ export default function ContactPage() {
                 <h2 className="text-xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
                   {t('contact.form.message')}
                 </h2>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                   {language === 'ar' ? 'سنقوم بالرد عليك في أقرب وقت ممكن' : 'Nous vous répondrons dans les plus brefs délais'}
                 </p>
 
@@ -386,7 +386,7 @@ export default function ContactPage() {
             <Card className="border-0 shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 {/* Map Header */}
-                <div className="flex items-center gap-3 p-4 border-b border-gray-100" style={{ backgroundColor: '#f8fafc' }}>
+                <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-white/5" style={{ backgroundColor: '#f8fafc' }}>
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white"
                     style={{ backgroundColor: '#1E3A5F' }}
@@ -397,7 +397,7 @@ export default function ContactPage() {
                     <h3 className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
                       {t('contact.findUs')}
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {language === 'ar' ? contactInfo.address?.ar : contactInfo.address?.fr}
                     </p>
                   </div>

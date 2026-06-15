@@ -98,7 +98,7 @@ export default function Footer() {
       <div className="h-1" style={{ background: 'linear-gradient(90deg, #1E3A5F, #F0C05A, #1E3A5F)' }} />
 
       {/* ==================== TOP CTA BAR ==================== */}
-      <div style={{ backgroundColor: '#0f2b47' }}>
+      <div className="dark:bg-[#0a1929] bg-[#0f2b47]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-blue-200 text-sm sm:text-base font-medium text-center sm:text-left">
             {t('footer.cta')}
@@ -117,7 +117,7 @@ export default function Footer() {
       </div>
 
       {/* ==================== MAIN FOOTER ==================== */}
-      <div style={{ backgroundColor: '#1E3A5F' }}>
+      <div className="dark:bg-[#0f1d2e] bg-[#1E3A5F]">
         <motion.div
           variants={containerVariants}
           initial="hidden"
