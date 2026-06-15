@@ -1,0 +1,727 @@
+     1→export interface Category {
+     2→  slug: string;
+     3→  name: { fr: string; ar: string };
+     4→  description: { fr: string; ar: string };
+     5→  icon: string;
+     6→  count: number;
+     7→  image: string;
+     8→}
+     9→
+    10→export interface ProductSpec {
+    11→  label: { fr: string; ar: string };
+    12→  value: string;
+    13→}
+    14→
+    15→export interface Product {
+    16→  id: string;
+    17→  slug: string;
+    18→  name: { fr: string; ar: string };
+    19→  description: { fr: string; ar: string };
+    20→  shortDescription: { fr: string; ar: string };
+    21→  category: string;
+    22→  price: number;
+    23→  images: string[];
+    24→  specs: ProductSpec[];
+    25→  features: { fr: string[]; ar: string[] };
+    26→  inStock: boolean;
+    27→  isFeatured: boolean;
+    28→  isNew: boolean;
+    29→  isBestSeller: boolean;
+    30→  brand: string;
+    31→  origin: string;
+    32→  warranty: string;
+    33→  deliveryTime: { fr: string; ar: string };
+    34→  installationIncluded: boolean;
+    35→  trainingIncluded: boolean;
+    36→  ref: string;
+    37→  target: string[]; // cible: ['Clinique', 'Revendeur', 'Comptoir']
+    38→  pdfUrl?: string; // fiche technique PDF
+    39→  brochurePdf?: string; // brochure PDF
+    40→  videos?: { title: { fr: string; ar: string }; url: string; type: 'youtube' | 'vimeo' }[];
+    41→  productInfo?: Record<string, string>; // Extended product info (SAV, installation, formation details)
+    42→}
+    43→
+    44→export interface BlogPost {
+    45→  id: string;
+    46→  slug: string;
+    47→  title: { fr: string; ar: string };
+    48→  excerpt: { fr: string; ar: string };
+    49→  content: { fr: string; ar: string };
+    50→  image: string;
+    51→  author: string;
+    52→  date: string;
+    53→  readTime: number;
+    54→  tags: string[];
+    55→  category: string;
+    56→}
+    57→
+    58→export interface ContactInfo {
+    59→  address: { fr: string; ar: string };
+    60→  phone: string;
+    61→  email: string;
+    62→  whatsapp: string;
+    63→  hours: { fr: string; ar: string };
+    64→  city: { fr: string; ar: string };
+    65→  wilaya: { fr: string; ar: string };
+    66→  social: {
+    67→    facebook: string;
+    68→    instagram: string;
+    69→    linkedin: string;
+    70→    youtube: string;
+    71→  };
+    72→}
+    73→
+    74→// ============================================================
+    75→// CATEGORIES
+    76→// ============================================================
+    77→export const categories: Category[] = [
+    78→  {
+    79→    slug: 'fauteuil-dentaire',
+    80→    name: { fr: 'Fauteuils Dentaires', ar: 'كراسي طب الأسنان' },
+    81→    description: {
+    82→      fr: 'Fauteuils ergonomiques de dernière génération pour un confort optimal du patient et du praticien. Nos fauteuils intègrent les dernières technologies pour une pratique dentaire moderne et efficace.',
+    83→      ar: 'كراسي مريحة من الجيل الأخير لضمان راحة مثالية للمريض والطبيب. تدمج كراسينا أحدث التقنيات لممارسة طب أسنان حديثة وفعالة.',
+    84→    },
+    85→    icon: 'Armchair',
+    86→    count: 12,
+    87→    image: 'https://placehold.co/600x400/2563EB/FFFFFF?text=Fauteuil+Dentaire',
+    88→  },
+    89→  {
+    90→    slug: 'unit-dentaire',
+    91→    name: { fr: 'Unités Dentaires', ar: 'وحدات طب الأسنان' },
+    92→    description: {
+    93→      fr: 'Unités de soins complètes et modulaires adaptées à tous les cabinets dentaires. Configurez votre unité selon vos besoins spécifiques avec nos options personnalisables.',
+    94→      ar: 'وحدات علاجية كاملة ومعيارية تناسب جميع عيادات طب الأسنان. خصّصوا وحدتكم حسب احتياجاتكم الخاصة بخياراتنا القابلة للتخصيص.',
+    95→    },
+    96→    icon: 'Monitor',
+    97→    count: 8,
+    98→    image: 'https://placehold.co/600x400/0EA5E9/FFFFFF?text=Unit+Dentaire',
+    99→  },
+   100→  {
+   101→    slug: 'radiologie',
+   102→    name: { fr: 'Radiologie', ar: 'الأشعة' },
+   103→    description: {
+   104→      fr: 'Équipements de radiologie numérique pour un diagnostic précis et rapide. Réduisez l\'exposition aux rayons X tout en obtenant des images d\'une qualité exceptionnelle.',
+   105→      ar: 'معدات أشعة رقمية لتشخيص دقيق وسريع. قلّلوا التعرض للأشعة السينية مع الحصول على صور بجودة استثنائية.',
+   106→    },
+   107→    icon: 'Scan',
+   108→    count: 6,
+   109→    image: 'https://placehold.co/600x400/10B981/FFFFFF?text=Radiologie',
+   110→  },
+   111→  {
+   112→    slug: 'sterilisation',
+   113→    name: { fr: 'Stérilisation', ar: 'التعقيم' },
+   114→    description: {
+   115→      fr: 'Autoclaves et stérilisateurs professionnels pour une hygiène irréprochable. Conformité aux normes internationales les plus strictes pour la sécurité de vos patients.',
+   116→      ar: 'أوتوكلاف ومعقمات احترافية لنظافة لا تشوبها شائبة. التوافق مع أ صار المعايير الدولية لسلامة مرضاكم.',
+   117→    },
+   118→    icon: 'ShieldCheck',
+   119→    count: 10,
+   120→    image: 'https://placehold.co/600x400/F59E0B/FFFFFF?text=Sterilisation',
+   121→  },
+   122→];
+   123→
+   124→// ============================================================
+   125→// PRODUCTS
+   126→// ============================================================
+   127→export const products: Product[] = [
+   128→  {
+   129→    id: '1',
+   130→    slug: 'fauteuil-dentaire-prestige-x500',
+   131→    name: { fr: 'Fauteuil Dentaire Prestige X500', ar: 'كرسي أسنان بريستيج X500' },
+   132→    description: {
+   133→      fr: 'Le fauteuil Prestige X500 représente l\'excellence en matière de confort dentaire. Doté d\'un moteur silencieux, d\'un dossier articulé à 6 positions et d\'un plateau instrumental intégré, il offre une expérience de soins incomparable. Son design ergonomique réduit la fatigue du praticien tout en assurant un confort maximal pour le patient. Le revêtement en cuir synthétique de grade médical garantit une hygiène parfaite et une durabilité exceptionnelle.',
+   134→      ar: 'يمثل كرسي بريستيج X500 التميز في مجال راحة طب الأسنان. مزود بمحرك هادئ، ومسند ظهر مفصلي بـ 6 وضعيات وصينية أدوات مدمجة، يوفر تجربة علاجية لا مثيل لها. يقلل تصميمه المريح من إرهاق الطبيب مع ضمان أقصى راحة للمريض. الغلاف الجلدي الاصطناعي من الدرجة الطبية يضمن نظافة مثالية ومتانة استثنائية.',
+   135→    },
+   136→    shortDescription: {
+   137→      fr: 'Fauteuil dentaire haut de gamme avec moteur silencieux et plateau instrumental intégré',
+   138→      ar: 'كرسي أسنان راقي بمحرك هادئ وصينية أدوات مدمجة',
+   139→    },
+   140→    category: 'fauteuil-dentaire',
+   141→    price: 2850000,
+   142→    images: [
+   143→      'https://placehold.co/600x400/2563EB/FFFFFF?text=Prestige+X500',
+   144→      'https://placehold.co/600x400/1D4ED8/FFFFFF?text=X500+Side',
+   145→      'https://placehold.co/600x400/1E40AF/FFFFFF?text=X500+Detail',
+   146→    ],
+   147→    specs: [
+   148→      { label: { fr: 'Poids maximal patient', ar: 'الوزن الأقصى للمريض' }, value: '200 kg' },
+   149→      { label: { fr: 'Vitesse de rotation', ar: 'سرعة الدوران' }, value: '40 000 tr/min' },
+   150→      { label: { fr: 'Nombre de positions', ar: 'عدد الوضعيات' }, value: '6 positions' },
+   151→      { label: { fr: 'Alimentation', ar: 'الطاقة' }, value: '220V / 50Hz' },
+   152→      { label: { fr: 'Niveau sonore', ar: 'مستوى الضوضاء' }, value: '< 45 dB' },
+   153→      { label: { fr: 'Dimensions', ar: 'الأبعاد' }, value: '185 x 80 x 130 cm' },
+   154→    ],
+   155→    features: {
+   156→      fr: [
+   157→        'Mètre silencieux haute performance',
+   158→        'Dossier articulé 6 positions',
+   159→        'Plateau instrumental LED intégré',
+   160→        'Système d\'aspiration central',
+   161→        'Commandes au pied sans fil',
+   162→        'Revêtement cuir médical',
+   163→        'Appuie-tête adjustable',
+   164→      ],
+   165→      ar: [
+   166→        'محرك عالي الأداء هادئ',
+   167→        'مسند ظهر مفصلي بـ 6 وضعيات',
+   168→        'صينية أدوات LED مدمجة',
+   169→        'نظام شفط مركزي',
+   170→        'أوامر قدم لاسلكية',
+   171→        'غلاف جلدي طبي',
+   172→        'مسند رأس قابل للتعديل',
+   173→      ],
+   174→    },
+   175→    inStock: true,
+   176→    isFeatured: true,
+   177→    isNew: true,
+   178→    isBestSeller: true,
+   179→    brand: 'DentaLine',
+   180→    origin: 'Allemagne',
+   181→    warranty: '5 ans',
+   182→    deliveryTime: { fr: '3-4 semaines', ar: '3-4 أسابيع' },
+   183→    installationIncluded: true,
+   184→    trainingIncluded: true,
+   185→    ref: 'DL-FDX500',
+   186→    target: ['Clinique', 'Revendeur'],
+   187→    pdfUrl: '',
+   188→    brochurePdf: '',
+   189→    videos: [
+   190→      {
+   191→        title: { fr: 'Démonstration du Fauteuil Prestige X500', ar: 'عرض توضيحي لكرسي بريستيج X500' },
+   192→        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+   193→        type: 'youtube',
+   194→      },
+   195→    ],
+   196→  },
+   197→  {
+   198→    id: '2',
+   199→    slug: 'fauteuil-dentaire-ergo-pro-300',
+   200→    name: { fr: 'Fauteuil Dentaire Ergo Pro 300', ar: 'كرسي أسنان إرغو برو 300' },
+   201→    description: {
+   202→      fr: 'L\'Ergo Pro 300 combine ergonomie avancée et technologie de pointe. Parfaitement adapté aux cabinets modernes, il dispose d\'un écran tactile de contrôle, d\'un éclairage LED optimisé et d\'un système de positionnement automatique. Son design compact optimise l\'espace de travail tout en offrant toutes les fonctionnalités nécessaires.',
+   203→      ar: 'يجمع إرغو برو 300 بين الراحة المتقدمة والتكنولوجيا الرائدة. متكيف تماماً مع العيادات الحديثة، يتميز بشاشة تحكم تعمل باللمس، وإضاءة LED محسنة ونظام تموضع آلي. تصميمه المدمج يحسن مساحة العمل مع توفير جميع الوظائف اللازمة.',
+   204→    },
+   205→    shortDescription: {
+   206→      fr: 'Fauteuil ergonomique avec écran tactile et éclairage LED optimisé',
+   207→      ar: 'كرسي مريح بشاشة لمس وإضاءة LED محسنة',
+   208→    },
+   209→    category: 'fauteuil-dentaire',
+   210→    price: 1950000,
+   211→    images: [
+   212→      'https://placehold.co/600x400/0EA5E9/FFFFFF?text=Ergo+Pro+300',
+   213→      'https://placehold.co/600x400/0284C7/FFFFFF?text=ErgoPro+Side',
+   214→    ],
+   215→    specs: [
+   216→      { label: { fr: 'Poids maximal patient', ar: 'الوزن الأقصى للمريض' }, value: '180 kg' },
+   217→      { label: { fr: 'Écran de contrôle', ar: 'شاشة التحكم' }, value: '7 pouces tactile' },
+   218→      { label: { fr: 'Éclairage', ar: 'الإضاءة' }, value: 'LED 20 000 lux' },
+   219→      { label: { fr: 'Alimentation', ar: 'الطاقة' }, value: '220V / 50Hz' },
+   220→      { label: { fr: 'Dimensions', ar: 'الأبعاد' }, value: '175 x 75 x 125 cm' },
+   221→    ],
+   222→    features: {
+   223→      fr: [
+   224→        'Écran tactile 7 pouces',
+   225→        'Éclairage LED 20 000 lux',
+   226→        'Positionnement automatique',
+   227→        'Design compact',
+   228→        'Programmation 4 positions mémoire',
+   229→      ],
+   230→      ar: [
+   231→        'شاشة لمس 7 بوصات',
+   232→        'إضاءة LED 20 000 لوكس',
+   233→        'تموضع آلي',
+   234→        'تصميم مدمج',
+   235→        'برمجة 4 وضعيات ذاكرة',
+   236→      ],
+   237→    },
+   238→    inStock: true,
+   239→    isFeatured: true,
+   240→    isNew: false,
+   241→    isBestSeller: true,
+   242→    brand: 'MediChair',
+   243→    origin: 'Italie',
+   244→    warranty: '3 ans',
+   245→    deliveryTime: { fr: '2-3 semaines', ar: '2-3 أسابيع' },
+   246→    installationIncluded: true,
+   247→    trainingIncluded: true,
+   248→    ref: 'MC-EP300',
+   249→    target: ['Clinique', 'Comptoir'],
+   250→    pdfUrl: '',
+   251→    brochurePdf: '',
+   252→    videos: [
+   253→      {
+   254→        title: { fr: 'Tutoriel Fauteuil Ergo Pro 300', ar: 'دليل تعليمي لكرسي إرغو برو 300' },
+   255→        url: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+   256→        type: 'youtube',
+   257→      },
+   258→    ],
+   259→  },
+   260→  {
+   261→    id: '3',
+   262→    slug: 'unit-dentaire-complete-smile-800',
+   263→    name: { fr: 'Unit Dentaire Complète Smile 800', ar: 'وحدة أسنان كاملة سمايل 800' },
+   264→    description: {
+   265→      fr: 'L\'unit Smile 800 est la solution complète pour votre cabinet dentaire. Elle intègre un fauteuil, un plateau instrumental avec 5 positions, un crachoir céramique, une lampe LED et un système d\'aspiration puissant. Modulaire et personnalisable, elle s\'adapte à toutes les configurations de cabinet et à tous les budgets.',
+   266→      ar: 'وحدة سمايل 800 هي الحل الكامل لعيادتكم. تدمج كرسياً، وصينية أدوات بـ 5 وضعيات، وبصاق خزفي، ومصباح LED ونظام شفط قوي. معيارية وقابلة للتخصيص، تتكيف مع جميع تهيئات العيادات وجميع الميزانيات.',
+   267→    },
+   268→    shortDescription: {
+   269→      fr: 'Unité dentaire complète modulaire avec 5 positions instrumentales',
+   270→      ar: 'وحدة أسنان كاملة معيارية بـ 5 وضعيات أدوات',
+   271→    },
+   272→    category: 'unit-dentaire',
+   273→    price: 3500000,
+   274→    images: [
+   275→      'https://placehold.co/600x400/10B981/FFFFFF?text=Smile+800',
+   276→      'https://placehold.co/600x400/059669/FFFFFF?text=Smile800+Side',
+   277→      'https://placehold.co/600x400/047857/FFFFFF?text=Smile800+Top',
+   278→    ],
+   279→    specs: [
+   280→      { label: { fr: 'Positions instrumentales', ar: 'وضعيات الأدوات' }, value: '5 positions' },
+   281→      { label: { fr: 'Type de crachoir', ar: 'نوع البصاق' }, value: 'Céramique' },
+   282→      { label: { fr: 'Système d\'aspiration', ar: 'نظام الشفط' }, value: 'Central haute puissance' },
+   283→      { label: { fr: 'Lampe', ar: 'المصباح' }, value: 'LED 25 000 lux' },
+   284→      { label: { fr: 'Alimentation', ar: 'الطاقة' }, value: '220V / 50Hz' },
+   285→      { label: { fr: 'Dimensions', ar: 'الأبعاد' }, value: '210 x 90 x 140 cm' },
+   286→    ],
+   287→    features: {
+   288→      fr: [
+   289→        'Plateau instrumental 5 positions',
+   290→        'Crachoir céramique avec chauffage',
+   291→        'Lampe LED 25 000 lux',
+   292→        'Aspiration centrale haute puissance',
+   293→        'Système de commande pneumatique',
+   294→        'Tablette patiente amovible',
+   295→      ],
+   296→      ar: [
+   297→        'صينية أدوات بـ 5 وضعيات',
+   298→        'بصاق خزفي مع تدفئة',
+   299→        'مصباح LED 25 000 لوكس',
+   300→        'شفط مركزي عالي القدرة',
+   301→        'نظام تحكم هوائي',
+   302→        'لوحة مريض قابلة للإزالة',
+   303→      ],
+   304→    },
+   305→    inStock: true,
+   306→    isFeatured: true,
+   307→    isNew: true,
+   308→    isBestSeller: false,
+   309→    brand: 'DentaLine',
+   310→    origin: 'Allemagne',
+   311→    warranty: '5 ans',
+   312→    deliveryTime: { fr: '4-6 semaines', ar: '4-6 أسابيع' },
+   313→    installationIncluded: true,
+   314→    trainingIncluded: true,
+   315→    ref: 'DL-SM800',
+   316→    target: ['Clinique', 'Revendeur', 'Comptoir'],
+   317→    pdfUrl: '',
+   318→    brochurePdf: '',
+   319→    videos: [
+   320→      {
+   321→        title: { fr: 'Démonstration Unit Smile 800', ar: 'عرض توضيحي لوحدة سمايل 800' },
+   322→        url: 'https://www.youtube.com/watch?v=5qap5aO4i9A',
+   323→        type: 'youtube',
+   324→      },
+   325→      {
+   326→        title: { fr: 'Tutoriel de configuration Smile 800', ar: 'دليل تعليمي لإعداد سمايل 800' },
+   327→        url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+   328→        type: 'youtube',
+   329→      },
+   330→    ],
+   331→  },
+   332→  {
+   333→    id: '4',
+   334→    slug: 'radio-digitale-periapical-xr200',
+   335→    name: { fr: 'Radio Digitale Périapicale XR200', ar: 'جهاز أشعة رقمية محيطية XR200' },
+   336→    description: {
+   337→      fr: 'Le XR200 est un capteur d\'imagerie numérique périapicale de dernière génération. Avec sa résolution exceptionnelle de 25 lp/mm et son exposition réduite de 70%, il permet un diagnostic précis tout en protégeant vos patients. Compatible avec tous les logiciels de gestion dentaire, il s\'intègre parfaitement dans votre flux de travail existant.',
+   338→      ar: 'XR200 هو جهاز تصوير رقمي محيطي من الجيل الأخير. بدقته الاستثنائية 25 زوج خط/مم وانخفاض التعرض بنسبة 70%، يسمح بتشخيص دقيق مع حماية مرضاكم. متوافق مع جميع برامج إدارة طب الأسنان، يندمج بسلاسة في سير عملكم الحالي.',
+   339→    },
+   340→    shortDescription: {
+   341→      fr: 'Capteur d\'imagerie numérique haute résolution avec réduction d\'exposition 70%',
+   342→      ar: 'جهاز تصوير رقمي عالي الدقة مع انخفاض التعرض بنسبة 70%',
+   343→    },
+   344→    category: 'radiologie',
+   345→    price: 890000,
+   346→    images: [
+   347→      'https://placehold.co/600x400/8B5CF6/FFFFFF?text=XR200',
+   348→      'https://placehold.co/600x400/7C3AED/FFFFFF?text=XR200+Screen',
+   349→    ],
+   350→    specs: [
+   351→      { label: { fr: 'Résolution', ar: 'الدقة' }, value: '25 lp/mm' },
+   352→      { label: { fr: 'Taille du capteur', ar: 'حجم المستشعر' }, value: '30 x 22 mm' },
+   353→      { label: { fr: 'Réduction d\'exposition', ar: 'تقليل التعرض' }, value: '70%' },
+   354→      { label: { fr: 'Temps d\'acquisition', ar: 'وقت الاستحواذ' }, value: '< 5 secondes' },
+   355→      { label: { fr: 'Connectivité', ar: 'الاتصال' }, value: 'USB 3.0 / WiFi' },
+   356→      { label: { fr: 'Compatibilité', ar: 'التوافق' }, value: 'DICOM 3.0' },
+   357→    ],
+   358→    features: {
+   359→      fr: [
+   360→        'Résolution ultra-haute 25 lp/mm',
+   361→        'Réduction d\'exposition 70%',
+   362→        'Acquisition en moins de 5 secondes',
+   363→        'Compatible DICOM 3.0',
+   364→        'Connectivité USB 3.0 et WiFi',
+   365→        'Logiciel d\'analyse intégré',
+   366→      ],
+   367→      ar: [
+   368→        'دقة فائقة 25 زوج خط/مم',
+   369→        'انخفاض التعرض بنسبة 70%',
+   370→        'استحواذ في أقل من 5 ثوانٍ',
+   371→        'متوافق مع DICOM 3.0',
+   372→        'اتصال USB 3.0 و WiFi',
+   373→        'برنامج تحليل مدمج',
+   374→      ],
+   375→    },
+   376→    inStock: true,
+   377→    isFeatured: true,
+   378→    isNew: false,
+   379→    isBestSeller: true,
+   380→    brand: 'RadioDent',
+   381→    origin: 'Corée du Sud',
+   382→    warranty: '3 ans',
+   383→    deliveryTime: { fr: '2-3 semaines', ar: '2-3 أسابيع' },
+   384→    installationIncluded: true,
+   385→    trainingIncluded: true,
+   386→    ref: 'RD-XR200',
+   387→    target: ['Clinique', 'Revendeur'],
+   388→    pdfUrl: '',
+   389→    brochurePdf: '',
+   390→    videos: [
+   391→      {
+   392→        title: { fr: 'Démonstration Radio XR200', ar: 'عرض توضيحي لجهاز أشعة XR200' },
+   393→        url: 'https://www.youtube.com/watch?v=9bZkp7q19f0',
+   394→        type: 'youtube',
+   395→      },
+   396→    ],
+   397→  },
+   398→  {
+   399→    id: '5',
+   400→    slug: 'autoclave-classe-b-steril-pro-23l',
+   401→    name: { fr: 'Autoclave Classe B Stéril Pro 23L', ar: 'أوتوكلاف فئة B ستريل برو 23 لتر' },
+   402→    description: {
+   403→      fr: 'L\'autoclave Stéril Pro 23L est un stérilisateur de Classe B, la norme la plus élevée en matière de stérilisation dentaire. Avec sa chambre de 23 litres, il peut traiter tous les types d\'instruments, y compris les instruments creux et emballés. Son cycle de stérilisation à 134°C garantit l\'élimination de tous les micro-organismes, y compris les prions.',
+   404→      ar: 'الأوتوكلاف ستريل برو 23 لتر هو معقم من الفئة B، أعلى معيار في مجال تعقيم طب الأسنان. بغرفته سعة 23 لتر، يمكنه معالجة جميع أنواع الأدوات، بما في ذلك الأدوات المجوفة والمغلقة. دورة التعقيم على 134 درجة مئوية تضمن القضاء على جميع الكائنات الدقيقة، بما في ذلك البريونات.',
+   405→    },
+   406→    shortDescription: {
+   407→      fr: 'Stérilisateur Classe B 23 litres avec cycle 134°C et traçabilité complète',
+   408→      ar: 'معقم فئة B سعة 23 لتر بدورة 134 درجة وتتبع كامل',
+   409→    },
+   410→    category: 'sterilisation',
+   411→    price: 1250000,
+   412→    images: [
+   413→      'https://placehold.co/600x400/F59E0B/FFFFFF?text=Steril+Pro+23L',
+   414→      'https://placehold.co/600x400/D97706/FFFFFF?text=SterilPro+Open',
+   415→    ],
+   416→    specs: [
+   417→      { label: { fr: 'Classe', ar: 'الفئة' }, value: 'Classe B (EN 13060)' },
+   418→      { label: { fr: 'Capacité', ar: 'السعة' }, value: '23 litres' },
+   419→      { label: { fr: 'Température max', ar: 'درجة الحرارة القصوى' }, value: '134°C' },
+   420→      { label: { fr: 'Temps de cycle', ar: 'مدة الدورة' }, value: '30-45 min' },
+   421→      { label: { fr: 'Système de séchage', ar: 'نظام التجفيف' }, value: 'Vacuum drying' },
+   422→      { label: { fr: 'Imprimante', ar: 'الطابعة' }, value: 'Intégrée' },
+   423→    ],
+   424→    features: {
+   425→      fr: [
+   426→        'Conforme EN 13060 Classe B',
+   427→        'Chambre 23 litres inox 316L',
+   428→        'Cycle 134°C avec séchage sous vide',
+   429→        'Imprimante intégrée pour traçabilité',
+   430→        'Écran LCD de contrôle',
+   431→        '6 programmes prédéfinis',
+   432→        'Système de sécurité anti-surchauffe',
+   433→      ],
+   434→      ar: [
+   435→        'متوافق مع EN 13060 فئة B',
+   436→        'غرفة 23 لتر ستانلس ستيل 316L',
+   437→        'دورة 134 درجة مع تجفيف بالتفريغ',
+   438→        'طابعة مدمجة للتتبع',
+   439→        'شاشة LCD للتحكم',
+   440→        '6 برامج مسبقة الإعداد',
+   441→        'نظام أمان ضد ارتفاع الحرارة',
+   442→      ],
+   443→    },
+   444→    inStock: true,
+   445→    isFeatured: true,
+   446→    isNew: true,
+   447→    isBestSeller: false,
+   448→    brand: 'SteriMed',
+   449→    origin: 'Turquie',
+   450→    warranty: '2 ans',
+   451→    deliveryTime: { fr: '1-2 semaines', ar: '1-2 أسبوع' },
+   452→    installationIncluded: true,
+   453→    trainingIncluded: true,
+   454→    ref: 'SM-SP23L',
+   455→    target: ['Clinique', 'Comptoir'],
+   456→    pdfUrl: '',
+   457→    brochurePdf: '',
+   458→    videos: [
+   459→      {
+   460→        title: { fr: 'Tutoriel Autoclave Stéril Pro 23L', ar: 'دليل تعليمي لأوتوكلاف ستريل برو 23 لتر' },
+   461→        url: 'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
+   462→        type: 'youtube',
+   463→      },
+   464→    ],
+   465→  },
+   466→  {
+   467→    id: '6',
+   468→    slug: 'panoramique-3d-denta-scan-ct',
+   469→    name: { fr: 'Panoramique 3D DentaScan CT', ar: 'بانورامي ثلاثي الأبعاد دينتا سكان CT' },
+   470→    description: {
+   471→      fr: 'Le DentaScan CT est un système d\'imagerie panoramique et CBCT 3D de pointe. Avec un champ de vision allant jusqu\'à 16x13 cm et une résolution voxel de 75 μm, il offre une qualité d\'image exceptionnelle pour la planification implantaire, l\'orthodontie et la chirurgie maxillo-faciale. Son design compact et sa faible empreinte au sol le rendent idéal pour les cabinets de taille moyenne.',
+   472→      ar: 'دينتا سكان CT هو نظام تصوير بانورامي و CBCT ثلاثي الأبعاد متقدم. بمجال رؤية يصل إلى 16×13 سم ودقة فوكسل 75 ميكرومتر، يوفر جودة صور استثنائية لتخطيط الزرع، تقويم الأسنان وجراحة الوجه والفكين. تصميمه المدمج وبصمته الأرضية المنخفضة يجعلانه مثالياً للعيادات المتوسطة.',
+   473→    },
+   474→    shortDescription: {
+   475→      fr: 'Système panoramique et CBCT 3D avec résolution voxel 75μm',
+   476→      ar: 'نظام بانورامي و CBCT ثلاثي الأبعاد بدقة فوكسل 75 ميكرومتر',
+   477→    },
+   478→    category: 'radiologie',
+   479→    price: 6500000,
+   480→    images: [
+   481→      'https://placehold.co/600x400/6366F1/FFFFFF?text=DentaScan+CT',
+   482→      'https://placehold.co/600x400/4F46E5/FFFFFF?text=DentaScan+3D',
+   483→      'https://placehold.co/600x400/4338CA/FFFFFF?text=DentaScan+Screen',
+   484→    ],
+   485→    specs: [
+   486→      { label: { fr: 'Type', ar: 'النوع' }, value: 'Pano + CBCT 3D' },
+   487→      { label: { fr: 'FOV maximum', ar: 'مجال الرؤية الأقصى' }, value: '16 x 13 cm' },
+   488→      { label: { fr: 'Résolution voxel', ar: 'دقة الفوكسل' }, value: '75 μm' },
+   489→      { label: { fr: 'Temps d\'acquisition', ar: 'وقت الاستحواذ' }, value: '8-24 secondes' },
+   490→      { label: { fr: 'Tension', ar: 'الجهد' }, value: '60-90 kVp' },
+   491→      { label: { fr: 'Empreinte au sol', ar: 'البصمة الأرضية' }, value: '130 x 145 cm' },
+   492→    ],
+   493→    features: {
+   494→      fr: [
+   495→        'Imagerie panoramique et CBCT 3D',
+   496→        'Résolution voxel 75 μm',
+   497→        'FOV jusqu\'à 16x13 cm',
+   498→        'Acquisition rapide 8-24 secondes',
+   499→        'Faible dose d\'irradiation',
+   500→        'Logiciel de planification implantaire',
+   501→        'Compatible DICOM 3.0',
+   502→        'Design compact empreinte réduite',
+   503→      ],
+   504→      ar: [
+   505→        'تصوير بانورامي و CBCT ثلاثي الأبعاد',
+   506→        'دقة فوكسل 75 ميكرومتر',
+   507→        'مجال رؤية حتى 16×13 سم',
+   508→        'استحواذ سريع 8-24 ثانية',
+   509→        'جرعة إشعاع منخفضة',
+   510→        'برنامج تخطيط زراعة الأسنان',
+   511→        'متوافق مع DICOM 3.0',
+   512→        'تصميم مدمج بصمة منخفضة',
+   513→      ],
+   514→    },
+   515→    inStock: false,
+   516→    isFeatured: true,
+   517→    isNew: true,
+   518→    isBestSeller: false,
+   519→    brand: 'RadioDent',
+   520→    origin: 'Corée du Sud',
+   521→    warranty: '5 ans',
+   522→    deliveryTime: { fr: '6-8 semaines', ar: '6-8 أسابيع' },
+   523→    installationIncluded: true,
+   524→    trainingIncluded: true,
+   525→    ref: 'RD-DSCT',
+   526→    target: ['Clinique'],
+   527→    pdfUrl: '',
+   528→    brochurePdf: '',
+   529→    videos: [
+   530→      {
+   531→        title: { fr: 'Démonstration DentaScan CT 3D', ar: 'عرض توضيحي لدينتا سكان CT ثلاثي الأبعاد' },
+   532→        url: 'https://www.youtube.com/watch?v=OPf0YbXqDm0',
+   533→        type: 'youtube',
+   534→      },
+   535→      {
+   536→        title: { fr: 'Tutoriel imagerie panoramique DentaScan', ar: 'دليل تعليمي للتصوير البانورامي دينتا سكان' },
+   537→        url: 'https://www.youtube.com/watch?v=RgKAFK5djSk',
+   538→        type: 'youtube',
+   539→      },
+   540→    ],
+   541→  },
+   542→];
+   543→
+   544→// ============================================================
+   545→// BLOG POSTS
+   546→// ============================================================
+   547→export const blogPosts: BlogPost[] = [
+   548→  {
+   549→    id: '1',
+   550→    slug: 'tendances-equipements-dentaires-2024',
+   551→    title: {
+   552→      fr: 'Les Tendances en Équipements Dentaires pour 2024',
+   553→      ar: 'اتجاهات معدات طب الأسنان لعام 2024',
+   554→    },
+   555→    excerpt: {
+   556→      fr: 'Découvrez les innovations technologiques qui transforment la pratique dentaire en 2024 : intelligence artificielle, imagerie 3D, fauteuils connectés et plus encore.',
+   557→      ar: 'اكتشفوا الابتكارات التكنولوجية التي تحول ممارسة طب الأسنان في 2024: الذكاء الاصطناعي، التصوير ثلاثي الأبعاد، الكراسي المتصلة والمزيد.',
+   558→    },
+   559→    content: {
+   560→      fr: `<h2>L'intelligence artificielle au service du diagnostic</h2>
+   561→<p>L'IA révolutionne le diagnostic dentaire en permettant la détection précoce des caries, des lésions périapicales et des anomalies osseuses. Les algorithmes d'apprentissage profond atteignent désormais des taux de précision supérieurs à 95%, surpassant parfois les cliniciens expérimentés dans la détection de lésions subtiles.</p>
+   562→
+   563→<h2>L'imagerie CBCT 3D devient la norme</h2>
+   564→<p>La tomographie volumique à faisceau conique (CBCT) s'impose comme l'outil d'imagerie de référence en dentisterie. Les nouveaux systèmes offrent des résolutions inférieures à 100 microns avec des doses d'irradiation toujours plus faibles. Cette technologie est désormais indispensable pour la planification implantaire, l'orthodontie et la chirurgie maxillo-faciale.</p>
+   565→
+   566→<h2>Les fauteuils dentaires connectés</h2>
+   567→<p>Les fauteuils de nouvelle génération intègrent des capteurs IoT qui permettent le suivi en temps réel de l'utilisation, la maintenance prédictive et l'optimisation des protocoles de soin. Ces données aident les praticiens à améliorer leur efficacité et à réduire les temps d'arrêt.</p>
+   568→
+   569→<h2>Stérilisation et traçabilité renforcées</h2>
+   570→<p>Les nouveaux autoclaves de Classe B offrent une traçabilité complète du cycle de stérilisation, conforme aux normes EN 13060 et ISO 11607. L'intégration de puces RFID dans les plateaux d'instruments permet un suivi individualisé de chaque instrument.</p>`,
+   571→      ar: `<h2>الذكاء الاصطناعي في خدمة التشخيص</h2>
+   572→<p>يثور الذكاء الاصطناعي تشخيص طب الأسنان من خلال السماح بالكشف المبكر عن التسوس والآفات المحيطية والشذوذ العظمي. تصل خوارزميات التعلم العميق الآن إلى معدلات دقة تتجاوز 95%، متفوقة أحياناً على الأطباء ذوي الخبرة في الكشف عن الآفات الدقيقة.</p>
+   573→
+   574→<h2>التصوير CBCT ثلاثي الأبعاد يصبح المعيار</h2>
+   575→<p>تفرض طبقة شعاع الحزمة المخروطية (CBCT) نفسها كأداة تصوير مرجعية في طب الأسنان. توفر الأنظمة الجديدة دقة أقل من 100 ميكرون مع جرعات إشعاع منخفضة باستمرار. أصبحت هذه التقنية ضرورية الآن لتخطيط الزراعة، تقويم الأسنان وجراحة الوجه والفكين.</p>
+   576→
+   577→<h2>كراسي أسنان متصلة</h2>
+   578→<p>تدمج كراسي الجيل الجديد مستشعرات IoT تسمح بالمتابعة في الوقت الحقيقي للاستخدام، الصيانة التنبؤية وتحسين بروتوكولات العلاج. تساعد هذه البيانات الممارسين على تحسين كفاءتهم وتقليل أوقات التوقف.</p>
+   579→
+   580→<h2>التعقيم والتتبع المعزز</h2>
+   581→<p>توفر الأوتوكلافات الجديدة من الفئة B تتبعاً كاملاً لدورة التعقيم، متوافقة مع معايير EN 13060 و ISO 11607. يسمح دمج شرائح RFID في صواني الأدوات بالمتابعة الفردية لكل أداة.</p>`,
+   582→    },
+   583→    image: 'https://placehold.co/800x400/2563EB/FFFFFF?text=Tendances+2024',
+   584→    author: 'Dr. Karim Benali',
+   585→    date: '2024-03-15',
+   586→    readTime: 6,
+   587→    tags: ['technologie', 'innovation', 'IA', 'CBCT'],
+   588→    category: 'technologie',
+   589→  },
+   590→  {
+   591→    id: '2',
+   592→    slug: 'guide-choisir-autoclave-cabinet-dentaire',
+   593→    title: {
+   594→      fr: 'Guide Complet pour Choisir un Autoclave pour votre Cabinet Dentaire',
+   595→      ar: 'دليل شامل لاختيار أوتوكلاف لعيادة طب الأسنان',
+   596→    },
+   597→    excerpt: {
+   598→      fr: 'Tout ce que vous devez savoir pour choisir le bon autoclave : Classe B vs Classe S, capacité, fonctionnalités et normes de conformité.',
+   599→      ar: 'كل ما تحتاج معرفته لاختيار الأوتوكلاف المناسب: الفئة B مقابل الفئة S، السعة، الميزات ومعايير التوافق.',
+   600→    },
+   601→    content: {
+   602→      fr: `<h2>Classe B vs Classe S : Quelle différence ?</h2>
+   603→<p>Les autoclaves de Classe B sont les seuls à garantir une stérilisation conforme pour TOUS les types d'instruments, y compris les instruments creux et emballés. Ils utilisent un système de pré-vide fractionné qui élimine l'air résiduel de la chambre, assurant une pénétration optimale de la vapeur.</p>
+   604→<p>Les autoclaves de Classe S sont adaptés aux instruments pleins non emballés. Ils sont moins chers mais ne conviennent pas à tous les types d'instruments dentaires.</p>
+   605→
+   606→<h2>Quelle capacité choisir ?</h2>
+   607→<p>Pour un cabinet de 1 à 2 fauteuils, une capacité de 17 à 23 litres est généralement suffisante. Pour les cabinets plus importants ou les centres de soins, privilégiez une capacité de 28 à 45 litres pour optimiser les cycles de stérilisation.</p>
+   608→
+   609→<h2>Les fonctionnalités essentielles</h2>
+   610→<p>Vérifiez que votre autoclave dispose au minimum de : un système de séchage sous vide, une imprimante intégrée pour la traçabilité, un écran de contrôle LCD, et au moins 4 programmes prédéfinis (134°C emballé, 134°C non emballé, 121°C, programme prion).</p>
+   611→
+   612→<h2>Conformité et normes</h2>
+   613→<p>Assurez-vous que votre autoclave est conforme à la norme EN 13060 et dispose du marquage CE médical. En Algérie, la conformité aux normes du Ministère de la Santé est obligatoire.</p>`,
+   614→      ar: `<h2>الفئة B مقابل الفئة S: ما الفرق؟</h2>
+   615→<p>أوتوكلافات الفئة B هي الوحيدة التي تضمن تعقيماً متوافقاً لجميع أنواع الأدوات، بما في ذلك الأدوات المجوفة والمغلقة. تستخدم نظام تفريغ مسبق مجزأ يزيل الهواء المتبقي من الغرفة، مما يضمن اختراقاً مثالياً للبخار.</p>
+   616→<p>أوتوكلافات الفئة S مناسبة للأدوات المصمتة غير المغلفة. هي أرخص لكنها لا تناسب جميع أنواع أدوات طب الأسنان.</p>
+   617→
+   618→<h2>أي سعة تختارون؟</h2>
+   619→<p>لعيادة من 1 إلى 2 كراسي، سعة 17 إلى 23 لتر عادة ما تكون كافية. للعيادات الأكبر أو مراكز العلاج، فضّلوا سعة 28 إلى 45 لتر لتحسين دورات التعقيم.</p>
+   620→
+   621→<h2>الميزات الأساسية</h2>
+   622→<p>تحققوا من أن أوتوكلافكم يتوفر على الأقل على: نظام تجفيف بالتفريغ، طابعة مدمجة للتتبع، شاشة تحكم LCD، و4 برامج مسبقة الإعداد على الأقل (134 درجة مغلّف، 134 درجة غير مغلّف، 121 درجة، برنامج البريونات).</p>
+   623→
+   624→<h2>التوافق والمعايير</h2>
+   625→<p>تأكدوا من أن أوتوكلافكم متوافق مع معيار EN 13060 ويحمل علامة CE الطبية. في الجزائر، التوافق مع معايير وزارة الصحة إلزامي.</p>`,
+   626→    },
+   627→    image: 'https://placehold.co/800x400/F59E0B/FFFFFF?text=Guide+Autoclave',
+   628→    author: 'Dr. Samira Hadj',
+   629→    date: '2024-02-28',
+   630→    readTime: 8,
+   631→    tags: ['sterilisation', 'guide', 'autoclave', 'conformite'],
+   632→    category: 'guide',
+   633→  },
+   634→];
+   635→
+   636→// ============================================================
+   637→// CONTACT INFO
+   638→// ============================================================
+   639→export const contactInfo: ContactInfo = {
+   640→  address: {
+   641→    fr: 'Coopérative Azzouz Abdelkader, N°45, Commune d\'Es-Senia, Oran, Algérie',
+   642→    ar: 'تعاونية عزوز عبد القادر، رقم 45، بلدية السانية، وهران، الجزائر',
+   643→  },
+   644→  phone: '0771 88 89 48',
+   645→  email: 'groupedentalimport@gmail.com',
+   646→  whatsapp: '+213 771 88 89 48',
+   647→  hours: {
+   648→    fr: 'Dimanche - Jeudi : 8h00 - 17h00',
+   649→    ar: 'الأحد - الخميس: 8:00 - 17:00',
+   650→  },
+   651→  city: { fr: 'Oran', ar: 'وهران' },
+   652→  wilaya: { fr: 'Oran', ar: 'ولاية وهران' },
+   653→  social: {
+   654→    facebook: 'https://facebook.com/groupedentalimport',
+   655→    instagram: 'https://instagram.com/groupedentalimport',
+   656→    linkedin: 'https://linkedin.com/company/groupedentalimport',
+   657→    youtube: 'https://youtube.com/@groupedentalimport',
+   658→  },
+   659→};
+   660→
+   661→// ============================================================
+   662→// COMPANY INFO
+   663→// ============================================================
+   664→export const companyInfo = {
+   665→  name: { fr: 'OUADAH DENTAL GROUPE (ODG)', ar: 'مجموعة وقاح لطب الأسنان (ODG)' },
+   666→  slogan: {
+   667→    fr: 'L\'excellence au service de votre pratique',
+   668→    ar: 'التميز في خدمة ممارستكم',
+   669→  },
+   670→  foundedYear: 2009,
+   671→  stats: {
+   672→    years: 16,
+   673→    products: 200,
+   674→    clients: 2500,
+   675→    cities: 48,
+   676→    satisfaction: 98,
+   677→    warranty: 5,
+   678→    brands: 15,
+   679→    installations: 3500,
+   680→  },
+   681→};
+   682→
+   683→// ============================================================
+   684→// HELPER FUNCTIONS
+   685→// ============================================================
+   686→export function getProductBySlug(slug: string): Product | undefined {
+   687→  return products.find((p) => p.slug === slug);
+   688→}
+   689→
+   690→export function getProductsByCategory(categorySlug: string): Product[] {
+   691→  return products.filter((p) => p.category === categorySlug);
+   692→}
+   693→
+   694→export function getCategoryBySlug(slug: string): Category | undefined {
+   695→  return categories.find((c) => c.slug === slug);
+   696→}
+   697→
+   698→export function getFeaturedProducts(): Product[] {
+   699→  return products.filter((p) => p.isFeatured);
+   700→}
+   701→
+   702→export function getNewProducts(): Product[] {
+   703→  return products.filter((p) => p.isNew);
+   704→}
+   705→
+   706→export function getBestSellerProducts(): Product[] {
+   707→  return products.filter((p) => p.isBestSeller);
+   708→}
+   709→
+   710→export function getBlogPostBySlug(slug: string): BlogPost | undefined {
+   711→  return blogPosts.find((p) => p.slug === slug);
+   712→}
+   713→
+   714→export function getRelatedProducts(productId: string, limit: number = 3): Product[] {
+   715→  const product = products.find((p) => p.id === productId);
+   716→  if (!product) return [];
+   717→  return products
+   718→    .filter((p) => p.id !== productId && p.category === product.category)
+   719→    .slice(0, limit);
+   720→}
+   721→
+   722→export function formatPrice(price: number, lang: 'fr' | 'ar' = 'fr'): string {
+   723→  const formatted = new Intl.NumberFormat(lang === 'ar' ? 'ar-DZ' : 'fr-DZ').format(price);
+   724→  const currency = lang === 'ar' ? 'د.ج' : 'DA';
+   725→  return `${formatted} ${currency}`;
+   726→}
+   727→
