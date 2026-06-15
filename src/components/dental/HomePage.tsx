@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, useInView, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowRight,
   Shield,
@@ -27,10 +27,12 @@ import {
   CheckCircle,
   Clock,
   Sparkles,
+  ChevronDown,
   ChevronRight,
   Play,
   Users,
   ArrowUp,
+  X,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -44,32 +46,62 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import QuickViewModal from '@/components/dental/QuickViewModal';
 import type { Product } from '@/lib/data-service';
 
-// Animated counter hook - shows end value, then animates from 0 when in view
-function useCounter(end: number, duration = 2000) {
-  const [count, setCount] = useState(0);
-  const hasAnimatedRef = useRef(false);
+// Animated counter component - counts up with smooth easing
+function AnimatedCounter({ end, suffix, delay = 0 }: { end: number; suffix: string; delay?: number }) {
+  const [count, setCount] = useState(end); // Show final value immediately
+  const [animated, setAnimated] = useState(false);
+  const hasStartedRef = useRef(false);
+
+  // Use IntersectionObserver directly for more reliable detection
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (!inView) return;
-    if (hasAnimatedRef.current) return;
-    hasAnimatedRef.current = true;
-    let start = 0;
-    const step = end / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
-    return () => clearInterval(timer);
-  }, [inView, end, duration]);
+    const el = ref.current;
+    if (!el || hasStartedRef.current) return;
 
-  return { count, ref };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStartedRef.current) {
+            hasStartedRef.current = true;
+            // Start from 0 and count up
+            setCount(0);
+            setAnimated(true);
+            const startTime = performance.now() + delay;
+            const duration = 1800;
+            let rafId: number;
+
+            const animate = (currentTime: number) => {
+              const elapsed = currentTime - startTime;
+              if (elapsed < 0) {
+                rafId = requestAnimationFrame(animate);
+                return;
+              }
+              const progress = Math.min(elapsed / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3);
+              setCount(Math.round(eased * end));
+              if (progress < 1) {
+                rafId = requestAnimationFrame(animate);
+              }
+            };
+
+            rafId = requestAnimationFrame(animate);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, delay]);
+
+  return (
+    <div ref={ref} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1">
+      {count}<span style={{ color: '#F0C05A' }}>{suffix}</span>
+    </div>
+  );
 }
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -126,16 +158,11 @@ export default function HomePage() {
   const heroOpacity = useTransform(scrollY, [0, 400], [1, 0.3]);
 
   // Stats with icons
-  const stat1 = useCounter(500);
-  const stat2 = useCounter(48);
-  const stat3 = useCounter(15);
-  const stat4 = useCounter(48);
-
   const stats = [
-    { ref: stat1.ref, value: stat1.count, suffix: '+', label: t('stats.clinics'), icon: <Building2 className="w-7 h-7" /> },
-    { ref: stat2.ref, value: stat2.count, suffix: '', label: t('stats.wilayas'), icon: <MapPin className="w-7 h-7" /> },
-    { ref: stat3.ref, value: stat3.count, suffix: '+', label: t('stats.brands'), icon: <Award className="w-7 h-7" /> },
-    { ref: stat4.ref, value: stat4.count, suffix: 'h', label: t('stats.sav'), icon: <Headphones className="w-7 h-7" /> },
+    { end: 500, suffix: '+', label: t('stats.clinics'), icon: <Building2 className="w-7 h-7" /> },
+    { end: 48, suffix: '', label: t('stats.wilayas'), icon: <MapPin className="w-7 h-7" /> },
+    { end: 15, suffix: '+', label: t('stats.brands'), icon: <Award className="w-7 h-7" /> },
+    { end: 48, suffix: 'h', label: t('stats.sav'), icon: <Headphones className="w-7 h-7" /> },
   ];
 
   const whyChooseUs = [
@@ -216,6 +243,17 @@ export default function HomePage() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [promoDismissed, setPromoDismissed] = useState(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('odg_promo_dismissed');
+    if (dismissed === 'true') setPromoDismissed(true);
+  }, []);
+
+  const dismissPromo = useCallback(() => {
+    setPromoDismissed(true);
+    localStorage.setItem('odg_promo_dismissed', 'true');
+  }, []);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,6 +297,7 @@ export default function HomePage() {
     <div className="overflow-hidden">
       {/* ==================== HERO SECTION ==================== */}
       <section ref={heroRef} className="relative min-h-[82vh] flex items-center justify-center overflow-hidden">
+
         {/* Background image with parallax effect */}
         <motion.div
           className="absolute inset-0 bg-cover bg-center -top-20 -bottom-20"
@@ -371,7 +410,7 @@ export default function HomePage() {
                 onClick={() => navigate('/devis')}
                 size="lg"
                 variant="outline"
-                className="text-base font-semibold px-8 h-13 border-2 border-white/60 text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg"
+                className="text-base font-semibold px-8 h-13 border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg bg-white/10"
               >
                 {t('hero.cta.quote')}
                 <ChevronRight className="w-5 h-5" />
@@ -384,16 +423,16 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.6 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-8"
+            className="mt-10 flex flex-wrap items-center justify-center gap-5 sm:gap-10"
           >
             {[
-              { icon: <Award className="w-4 h-4" />, text: language === 'ar' ? '15+ سنة خبرة' : '15+ ans d\'expérience' },
-              { icon: <Clock className="w-4 h-4" />, text: language === 'ar' ? 'خدمة 48 ساعة' : 'Service 48h' },
-              { icon: <Wrench className="w-4 h-4" />, text: language === 'ar' ? 'تركيب مشمول' : 'Installation incluse' },
+              { icon: <Award className="w-5 h-5" />, text: language === 'ar' ? '15+ سنة خبرة' : '15+ ans d\'expérience' },
+              { icon: <Clock className="w-5 h-5" />, text: language === 'ar' ? 'خدمة 48 ساعة' : 'Service 48h' },
+              { icon: <Wrench className="w-5 h-5" />, text: language === 'ar' ? 'تركيب مشمول' : 'Installation incluse' },
             ].map((badge, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 text-white/60 text-sm font-medium"
+                className="flex items-center gap-2.5 text-white/70 text-sm font-medium bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10"
               >
                 <span style={{ color: '#F0C05A' }}>{badge.icon}</span>
                 {badge.text}
@@ -425,6 +464,11 @@ export default function HomePage() {
           </motion.div>
         </div>
 
+        {/* Scroll down indicator */}
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+          <ChevronDown className="w-6 h-6 text-white/60 animate-scroll-hint" />
+        </div>
+
         {/* Bottom wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -435,6 +479,54 @@ export default function HomePage() {
           </svg>
         </div>
       </section>
+
+      {/* ==================== PROMOTIONAL BANNER ==================== */}
+      <AnimatePresence>
+        {!promoDismissed && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+            className="relative"
+          >
+            {/* Gold top accent line */}
+            <div className="h-[2px] w-full" style={{ backgroundColor: '#F0C05A' }} />
+            <div
+              className="py-3 px-4 sm:px-6 lg:px-8"
+              style={{ background: 'linear-gradient(90deg, #1E3A5F 0%, #2A5F8F 50%, #1E3A5F 100%)' }}
+            >
+              <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span className="text-xl shrink-0">🎁</span>
+                  <p className="text-white text-sm sm:text-base font-medium truncate">
+                    {t('promo.text')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    className="h-8 px-4 text-xs font-semibold shadow-md hover:shadow-lg transition-all"
+                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+                    onClick={() => navigate('/catalogue')}
+                  >
+                    {t('promo.cta')}
+                  </Button>
+                  <button
+                    onClick={dismissPromo}
+                    className="text-white/50 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                    aria-label="Fermer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* Gold bottom accent line */}
+            <div className="h-[2px] w-full" style={{ backgroundColor: '#F0C05A' }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ==================== STATS SECTION ==================== */}
       <section className="py-12 sm:py-14 relative overflow-hidden" style={{ backgroundColor: '#1E3A5F' }}>
@@ -463,7 +555,6 @@ export default function HomePage() {
             {stats.map((stat, i) => (
               <motion.div
                 key={i}
-                ref={stat.ref}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -476,9 +567,7 @@ export default function HomePage() {
                 >
                   {stat.icon}
                 </div>
-                <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-1">
-                  {stat.value}<span style={{ color: '#F0C05A' }}>{stat.suffix}</span>
-                </div>
+                <AnimatedCounter end={stat.end} suffix={stat.suffix} />
                 <div className="text-blue-200/60 text-xs sm:text-sm font-medium">{stat.label}</div>
               </motion.div>
             ))}
@@ -490,7 +579,7 @@ export default function HomePage() {
           <svg viewBox="0 0 1440 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             <path
               d="M0,35 C480,70 960,0 1440,35 L1440,70 L0,70 Z"
-              fill="#f9fafb"
+              className="fill-gray-50 dark:fill-[#0c1622]"
             />
           </svg>
         </div>
@@ -540,13 +629,13 @@ export default function HomePage() {
                   transition={{ duration: 0.2 }}
                 >
                   <div
-                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-44 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500"
+                    className="group cursor-pointer relative rounded-2xl overflow-hidden h-44 sm:h-52 shadow-md hover:shadow-2xl transition-all duration-500 hover-lift"
                     onClick={() => navigate(`/catalogue?category=${cat.slug}`)}
                   >
                     {/* Background image */}
                     {imgSrc ? (
                       <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-115"
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                         style={{ backgroundImage: `url('${imgSrc}')` }}
                       />
                     ) : (
@@ -559,8 +648,16 @@ export default function HomePage() {
                     )}
                     {/* Dark overlay with dramatic hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F]/95 via-[#1E3A5F]/40 to-transparent transition-all duration-500 group-hover:from-[#1E3A5F]/80 group-hover:via-[#1E3A5F]/20 group-hover:to-transparent" />
+                    {/* Subtle gold gradient overlay at bottom for text readability */}
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#F0C05A]/15 to-transparent pointer-events-none" />
                     {/* Gold accent bottom border */}
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-500 group-hover:h-1" style={{ backgroundColor: '#F0C05A' }} />
+                    {/* Product count badge */}
+                    <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} z-10`}>
+                      <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-[10px] font-bold text-white shadow-md" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+                        {products.filter((p) => p.category_id === cat.id).length}
+                      </span>
+                    </div>
                     {/* Content */}
                     <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
                       <div className="flex items-center gap-2 mb-1">
@@ -636,10 +733,9 @@ export default function HomePage() {
                 transition={{ delay: idx * 0.06, duration: 0.4 }}
                 className="min-w-[260px] sm:min-w-0"
               >
-                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col">
+                <Card className="group border-0 shadow-md dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col hover-lift" style={{ borderTop: '2px solid #F0C05A' }}>
                   <div
-                    className="h-48 flex items-center justify-center relative overflow-hidden"
-                    style={{ backgroundColor: '#f0f4f8' }}
+                    className="h-48 flex items-center justify-center relative overflow-hidden product-img-placeholder"
                   >
                     {product.images && product.images.length > 0 ? (
                       <img
@@ -684,12 +780,15 @@ export default function HomePage() {
                       {getProductShortDescription(product, language)}
                     </p>
                     <div className="flex items-center justify-between gap-2 mt-auto">
-                      <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
-                        {(product.price ?? 0) === 0
-                          ? (language === 'ar' ? 'عند الطلب' : 'Sur devis')
-                          : `${(product.price ?? 0).toLocaleString('fr-DZ')} DA`
-                        }
-                      </span>
+                      {(product.price ?? 0) === 0 ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide" style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}>
+                          {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-sm" style={{ color: '#1E3A5F' }}>
+                          {(product.price ?? 0).toLocaleString('fr-DZ')} DA
+                        </span>
+                      )}
                       <div className="flex items-center gap-1.5">
                         <Button
                           size="sm"

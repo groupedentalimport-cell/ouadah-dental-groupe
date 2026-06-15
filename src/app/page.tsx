@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useTranslation } from '@/lib/i18n';
 import { RouterProvider, useRouter } from '@/lib/router';
-import { DataProvider } from '@/lib/data-service';
+import { DataProvider, useData } from '@/lib/data-service';
 import { SiteSettingsProvider } from '@/lib/site-settings';
 import { AdminAuthProvider } from '@/lib/admin-auth';
 import Navbar from '@/components/dental/Navbar';
@@ -28,6 +28,55 @@ import {
 } from '@/components/dental/LegalPages';
 import AdminPanel from '@/components/dental/AdminPanel';
 import ScrollToTop from '@/components/dental/ScrollToTop';
+
+// Route-to-title mapping for dynamic page titles
+const routeTitles: Record<string, string> = {
+  home: 'ODG - Équipements Dentaires Professionnels',
+  catalogue: 'Catalogue | ODG',
+  compare: 'Comparaison | ODG',
+  blog: 'Blog | ODG',
+  article: 'Article | ODG',
+  about: 'À propos | ODG',
+  contact: 'Contact | ODG',
+  devis: 'Demander un devis | ODG',
+  'mentions-legales': 'Mentions légales | ODG',
+  'politique-confidentialite': 'Politique de confidentialité | ODG',
+  'conditions-vente': 'Conditions générales de vente | ODG',
+};
+
+function PageTitleUpdater() {
+  const { route, params } = useRouter();
+  const { products, blogPosts } = useData();
+
+  useEffect(() => {
+    let title = routeTitles[route] || 'ODG - Ouadah Dental Groupe';
+
+    // Dynamic title for product detail page
+    if (route === 'product' && params?.slug) {
+      const product = products.find((p) => p.slug === params.slug);
+      if (product) {
+        title = `${product.name_fr} | ODG`;
+      }
+    }
+
+    // Dynamic title for article detail page
+    if (route === 'article' && params?.slug) {
+      const article = blogPosts.find((a) => a.slug === params.slug);
+      if (article) {
+        title = `${article.title_fr} | ODG`;
+      }
+    }
+
+    // Admin routes
+    if (route.startsWith('admin')) {
+      title = 'Administration | ODG';
+    }
+
+    document.title = title;
+  }, [route, params, products, blogPosts]);
+
+  return null;
+}
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
@@ -81,6 +130,7 @@ function AppContent() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageTitleUpdater />
       {!isAdminRoute && <Navbar />}
       <main className="flex-1">
         <AnimatePresence mode="wait">

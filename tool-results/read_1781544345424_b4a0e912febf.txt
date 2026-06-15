@@ -1,0 +1,953 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  ArrowLeft,
+     7→  ShoppingCart,
+     8→  CheckCircle2,
+     9→  Shield,
+    10→  Wrench,
+    11→  GraduationCap,
+    12→  Truck,
+    13→  ChevronLeft,
+    14→  ChevronRight,
+    15→  X,
+    16→  Package,
+    17→  FileText,
+    18→  Tag,
+    19→  Hash,
+    20→  CircleDot,
+    21→  GitCompareArrows,
+    22→  Check,
+    23→  Share2,
+    24→  Printer,
+    25→  Home,
+    26→  ChevronDown,
+    27→  Link2,
+    28→  ZoomIn,
+    29→  Maximize2,
+    30→} from 'lucide-react';
+    31→import { useTranslation } from '@/lib/i18n';
+    32→import { useRouter } from '@/lib/router';
+    33→import { useData } from '@/lib/data-service';
+    34→import { Button } from '@/components/ui/button';
+    35→import { Card, CardContent } from '@/components/ui/card';
+    36→import { Badge } from '@/components/ui/badge';
+    37→import {
+    38→  Dialog,
+    39→  DialogContent,
+    40→  DialogTitle,
+    41→} from '@/components/ui/dialog';
+    42→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    43→import { useCompare } from '@/hooks/useCompare';
+    44→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    45→import type { Product } from '@/lib/data-service';
+    46→import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+    47→import { toast } from 'sonner';
+    48→
+    49→// Decode double-encoded HTML entities
+    50→function decodeHtmlEntities(text: string): string {
+    51→  if (!text) return '';
+    52→  let decoded = text;
+    53→  for (let i = 0; i < 3; i++) {
+    54→    const prev = decoded;
+    55→    decoded = decoded
+    56→      .replace(/&amp;/g, '&')
+    57→      .replace(/&lt;/g, '<')
+    58→      .replace(/&gt;/g, '>')
+    59→      .replace(/&quot;/g, '"')
+    60→      .replace(/&#39;/g, "'")
+    61→      .replace(/&nbsp;/g, ' ');
+    62→    if (decoded === prev) break;
+    63→  }
+    64→  return decoded;
+    65→}
+    66→
+    67→function sanitizeHtml(html: string): string {
+    68→  if (!html) return '';
+    69→  let sanitized = decodeHtmlEntities(html);
+    70→  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    71→  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    72→  sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, '');
+    73→  return sanitized;
+    74→}
+    75→
+    76→export default function ProductDetailPage() {
+    77→  const { t, language, isRTL } = useTranslation();
+    78→  const { params, navigate, goBack } = useRouter();
+    79→  const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
+    80→  const addItem = useQuoteCart((s) => s.addItem);
+    81→  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+    82→  const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
+    83→
+    84→  const product = useMemo(
+    85→    () => products.find((p) => p.slug === params.slug),
+    86→    [products, params.slug]
+    87→  );
+    88→
+    89→  const category = useMemo(
+    90→    () => categories.find((c) => c.id === product?.category_id),
+    91→    [categories, product]
+    92→  );
+    93→
+    94→  const relatedProducts = useMemo(
+    95→    () =>
+    96→      product
+    97→        ? products
+    98→            .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+    99→            .slice(0, 3)
+   100→        : [],
+   101→    [products, product]
+   102→  );
+   103→
+   104→  const [currentImage, setCurrentImage] = useState(0);
+   105→  const [lightboxOpen, setLightboxOpen] = useState(false);
+   106→  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+   107→
+   108→  // Image zoom state
+   109→  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+   110→  const [isZooming, setIsZooming] = useState(false);
+   111→  const imageRef = useRef<HTMLDivElement>(null);
+   112→
+   113→  // Lightbox zoom state
+   114→  const [lightboxZoom, setLightboxZoom] = useState(false);
+   115→  const [lightboxZoomPos, setLightboxZoomPos] = useState({ x: 50, y: 50 });
+   116→  const lightboxImgRef = useRef<HTMLDivElement>(null);
+   117→
+   118→  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+   119→    if (!imageRef.current) return;
+   120→    const rect = imageRef.current.getBoundingClientRect();
+   121→    const x = ((e.clientX - rect.left) / rect.width) * 100;
+   122→    const y = ((e.clientY - rect.top) / rect.height) * 100;
+   123→    setZoomPosition({ x, y });
+   124→  }, []);
+   125→
+   126→  const handleLightboxMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+   127→    if (!lightboxImgRef.current) return;
+   128→    const rect = lightboxImgRef.current.getBoundingClientRect();
+   129→    const x = ((e.clientX - rect.left) / rect.width) * 100;
+   130→    const y = ((e.clientY - rect.top) / rect.height) * 100;
+   131→    setLightboxZoomPos({ x, y });
+   132→  }, []);
+   133→
+   134→  // Reset lightbox zoom when changing images - use event handler pattern
+   135→  const handleImageChange = useCallback((index: number) => {
+   136→    setCurrentImage(index);
+   137→    setLightboxZoom(false);
+   138→  }, []);
+   139→
+   140→  // Keyboard navigation for lightbox
+   141→  useEffect(() => {
+   142→    if (!lightboxOpen) return;
+   143→    const handleKeyDown = (e: KeyboardEvent) => {
+   144→      const images = product?.images || [];
+   145→      if (e.key === 'Escape') {
+   146→        setLightboxOpen(false);
+   147→        setLightboxZoom(false);
+   148→      } else if (e.key === 'ArrowLeft') {
+   149→        e.preventDefault();
+   150→        handleImageChange(currentImage > 0 ? currentImage - 1 : images.length - 1);
+   151→      } else if (e.key === 'ArrowRight') {
+   152→        e.preventDefault();
+   153→        handleImageChange(currentImage < images.length - 1 ? currentImage + 1 : 0);
+   154→      }
+   155→    };
+   156→    window.addEventListener('keydown', handleKeyDown);
+   157→    return () => window.removeEventListener('keydown', handleKeyDown);
+   158→  }, [lightboxOpen, product?.images, handleImageChange, currentImage]);
+   159→
+   160→  // Track recently viewed product
+   161→  useEffect(() => {
+   162→    if (product) {
+   163→      addRecentlyViewed(
+   164→        product.id,
+   165→        product.slug,
+   166→        getProductName(product, language),
+   167→        product.images?.[0] || '',
+   168→        product.price
+   169→      );
+   170→    }
+   171→  }, [product, addRecentlyViewed, getProductName, language]);
+   172→
+   173→  if (loading) {
+   174→    return <ProductDetailPageSkeleton />;
+   175→  }
+   176→
+   177→  if (!product) {
+   178→    return (
+   179→      <div className="min-h-screen flex items-center justify-center pt-20">
+   180→        <div className="text-center">
+   181→          <div
+   182→            className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center dark:bg-white/5"
+   183→            style={{ backgroundColor: '#f0f4f8' }}
+   184→          >
+   185→            <Package className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+   186→          </div>
+   187→          <p className="text-gray-500 dark:text-gray-400 mb-4">{t('common.noResults')}</p>
+   188→          <Button onClick={() => navigate('/catalogue')} style={{ backgroundColor: '#1E3A5F' }}>
+   189→            {t('common.back')}
+   190→          </Button>
+   191→        </div>
+   192→      </div>
+   193→    );
+   194→  }
+   195→
+   196→  const images = product.images && product.images.length > 0 ? product.images : [];
+   197→  const features = language === 'ar' ? product.features_ar : product.features_fr;
+   198→  const specs = product.specs || [];
+   199→  const priceDisplay = product.price && product.price > 0
+   200→    ? product.price.toLocaleString('fr-DZ') + ' DA'
+   201→    : null;
+   202→  const isOnQuote = !priceDisplay;
+   203→
+   204→  const descriptionHtml = sanitizeHtml(getProductDescription(product, language));
+   205→
+   206→  const hasWarranty = product.warranty && product.warranty.length > 0 && product.warranty !== '-';
+   207→  const hasInstallation = product.installation_included === true;
+   208→  const hasTraining = product.training_included === true;
+   209→  const hasDelivery = (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr) &&
+   210→    (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr).length > 0;
+   211→
+   212→  const handleShare = async () => {
+   213→    const url = window.location.href;
+   214→    try {
+   215→      await navigator.clipboard.writeText(url);
+   216→      toast.success(t('products.linkCopied'), {
+   217→        icon: <Link2 className="w-4 h-4" />,
+   218→      });
+   219→    } catch {
+   220→      // Fallback
+   221→      const textArea = document.createElement('textarea');
+   222→      textArea.value = url;
+   223→      document.body.appendChild(textArea);
+   224→      textArea.select();
+   225→      document.execCommand('copy');
+   226→      document.body.removeChild(textArea);
+   227→      toast.success(t('products.linkCopied'), {
+   228→        icon: <Link2 className="w-4 h-4" />,
+   229→      });
+   230→    }
+   231→    setShareMenuOpen(false);
+   232→  };
+   233→
+   234→  const handlePrint = () => {
+   235→    window.print();
+   236→  };
+   237→
+   238→  const openLightbox = () => {
+   239→    if (images.length > 0) {
+   240→      setLightboxOpen(true);
+   241→      setLightboxZoom(false);
+   242→    }
+   243→  };
+   244→
+   245→  const goToPrevImage = () => {
+   246→    if (images.length <= 1) return;
+   247→    handleImageChange(currentImage > 0 ? currentImage - 1 : images.length - 1);
+   248→  };
+   249→
+   250→  const goToNextImage = () => {
+   251→    if (images.length <= 1) return;
+   252→    handleImageChange(currentImage < images.length - 1 ? currentImage + 1 : 0);
+   253→  };
+   254→
+   255→  return (
+   256→    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20 animate-in fade-in duration-500">
+   257→      {/* Lightbox using Dialog */}
+   258→      <Dialog open={lightboxOpen} onOpenChange={(open) => { setLightboxOpen(open); if (!open) setLightboxZoom(false); }}>
+   259→        <DialogContent
+   260→          className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-black/95 backdrop-blur-sm sm:max-w-[90vw]"
+   261→          showCloseButton={false}
+   262→        >
+   263→          <DialogTitle className="sr-only">
+   264→            {getProductName(product, language)} - {t('products.gallery')}
+   265→          </DialogTitle>
+   266→          <div className="relative w-full h-[85vh] flex items-center justify-center">
+   267→            {/* Close button */}
+   268→            <button
+   269→              className="absolute top-3 right-3 z-10 text-white/70 hover:text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+   270→              onClick={() => { setLightboxOpen(false); setLightboxZoom(false); }}
+   271→              aria-label={t('products.close_gallery')}
+   272→            >
+   273→              <X className="w-6 h-6" />
+   274→            </button>
+   275→
+   276→            {/* Image counter */}
+   277→            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-medium">
+   278→              {currentImage + 1} / {images.length}
+   279→            </div>
+   280→
+   281→            {/* Prev/Next navigation */}
+   282→            {images.length > 1 && (
+   283→              <>
+   284→                <button
+   285→                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-2 sm:p-3 hover:bg-white/10 rounded-full transition-colors"
+   286→                  onClick={goToPrevImage}
+   287→                  aria-label={t('products.prev_image')}
+   288→                >
+   289→                  <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+   290→                </button>
+   291→                <button
+   292→                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-2 sm:p-3 hover:bg-white/10 rounded-full transition-colors"
+   293→                  onClick={goToNextImage}
+   294→                  aria-label={t('products.next_image')}
+   295→                >
+   296→                  <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+   297→                </button>
+   298→              </>
+   299→            )}
+   300→
+   301→            {/* Main image with zoom */}
+   302→            <div
+   303→              ref={lightboxImgRef}
+   304→              className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-crosshair"
+   305→              onMouseMove={handleLightboxMouseMove}
+   306→              onClick={() => setLightboxZoom(!lightboxZoom)}
+   307→            >
+   308→              <motion.img
+   309→                key={currentImage}
+   310→                initial={{ opacity: 0, scale: 0.95 }}
+   311→                animate={{ opacity: 1, scale: 1 }}
+   312→                transition={{ duration: 0.2 }}
+   313→                src={images[currentImage]}
+   314→                alt={getProductName(product, language)}
+   315→                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg transition-transform duration-200 select-none"
+   316→                style={{
+   317→                  transform: lightboxZoom ? 'scale(2.5)' : 'scale(1)',
+   318→                  transformOrigin: `${lightboxZoomPos.x}% ${lightboxZoomPos.y}%`,
+   319→                }}
+   320→                draggable={false}
+   321→              />
+   322→            </div>
+   323→
+   324→            {/* Zoom indicator */}
+   325→            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+   326→              <button
+   327→                className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/70 hover:text-white hover:bg-white/20 text-xs font-medium transition-colors flex items-center gap-1.5"
+   328→                onClick={() => setLightboxZoom(!lightboxZoom)}
+   329→              >
+   330→                <ZoomIn className="w-3.5 h-3.5" />
+   331→                {lightboxZoom
+   332→                  ? (language === 'ar' ? 'تصغير' : 'Réduire')
+   333→                  : (language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir')
+   334→                }
+   335→              </button>
+   336→            </div>
+   337→
+   338→            {/* Thumbnail strip in lightbox */}
+   339→            {images.length > 1 && (
+   340→              <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 px-3 py-2 rounded-xl bg-white/5 backdrop-blur-sm">
+   341→                {images.map((img, i) => (
+   342→                  <button
+   343→                    key={i}
+   344→                    onClick={(e) => { e.stopPropagation(); handleImageChange(i); }}
+   345→                    className={`w-12 h-12 rounded-md overflow-hidden shrink-0 border-2 transition-all duration-200 ${
+   346→                      i === currentImage
+   347→                        ? 'border-[#F0C05A] shadow-lg shadow-[#F0C05A]/30'
+   348→                        : 'border-white/20 opacity-50 hover:opacity-100'
+   349→                    }`}
+   350→                  >
+   351→                    <img src={img} alt="" className="w-full h-full object-cover" />
+   352→                  </button>
+   353→                ))}
+   354→              </div>
+   355→            )}
+   356→          </div>
+   357→        </DialogContent>
+   358→      </Dialog>
+   359→
+   360→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   361→        {/* Breadcrumbs */}
+   362→        <motion.div
+   363→          initial={{ opacity: 0, x: -10 }}
+   364→          animate={{ opacity: 1, x: 0 }}
+   365→          className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 mb-6 flex-wrap"
+   366→        >
+   367→          <button onClick={() => navigate('/')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1">
+   368→            <Home className="w-3.5 h-3.5" />
+   369→            {t('products.breadcrumb.home')}
+   370→          </button>
+   371→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+   372→          <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
+   373→            {t('products.title')}
+   374→          </button>
+   375→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+   376→          {category && (
+   377→            <>
+   378→              <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
+   379→                {getCategoryName(category, language)}
+   380→              </button>
+   381→              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-600" />
+   382→            </>
+   383→          )}
+   384→          <span className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[200px]">
+   385→            {getProductName(product, language)}
+   386→          </span>
+   387→        </motion.div>
+   388→
+   389→        {/* Back Button */}
+   390→        <motion.div
+   391→          initial={{ opacity: 0, x: -10 }}
+   392→          animate={{ opacity: 1, x: 0 }}
+   393→        >
+   394→          <Button
+   395→            variant="outline"
+   396→            onClick={goBack}
+   397→            className="mb-6 gap-2 shadow-sm dark:border-white/10 dark:text-[#7AB0E0]"
+   398→            style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   399→          >
+   400→            <ArrowLeft className="w-4 h-4" />
+   401→            {t('common.back')}
+   402→          </Button>
+   403→        </motion.div>
+   404→
+   405→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+   406→          {/* Image Gallery with Zoom */}
+   407→          <motion.div
+   408→            initial={{ opacity: 0, x: -20 }}
+   409→            animate={{ opacity: 1, x: 0 }}
+   410→          >
+   411→            <div
+   412→              ref={imageRef}
+   413→              className="aspect-square rounded-2xl overflow-hidden bg-white dark:bg-[#162236] shadow-sm cursor-crosshair relative group"
+   414→              onMouseEnter={() => setIsZooming(true)}
+   415→              onMouseLeave={() => setIsZooming(false)}
+   416→              onMouseMove={handleMouseMove}
+   417→              onClick={openLightbox}
+   418→            >
+   419→              {images.length > 0 ? (
+   420→                <img
+   421→                  src={images[currentImage]}
+   422→                  alt={getProductName(product, language)}
+   423→                  className="w-full h-full object-cover transition-transform duration-200"
+   424→                  style={{
+   425→                    transform: isZooming ? 'scale(1.5)' : 'scale(1)',
+   426→                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+   427→                  }}
+   428→                />
+   429→              ) : (
+   430→                <div
+   431→                  className="w-full h-full flex items-center justify-center"
+   432→                  style={{
+   433→                    background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   434→                  }}
+   435→                >
+   436→                  <div className="text-center">
+   437→                    <Package className="w-24 h-24 text-white/30 mx-auto mb-3" />
+   438→                    <p className="text-white/25 text-sm font-medium tracking-wider uppercase">
+   439→                      {language === 'ar' ? 'صورة غير متوفرة' : 'Image non disponible'}
+   440→                    </p>
+   441→                  </div>
+   442→                </div>
+   443→              )}
+   444→              {/* Zoom indicator */}
+   445→              {isZooming && images.length > 0 && (
+   446→                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/50 text-white text-xs flex items-center gap-1 pointer-events-none">
+   447→                  <ZoomIn className="w-3 h-3" />
+   448→                  {language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir'}
+   449→                </div>
+   450→              )}
+   451→              {/* Fullscreen indicator */}
+   452→              {!isZooming && images.length > 0 && (
+   453→                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/30 text-white/70 text-xs flex items-center gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+   454→                  <Maximize2 className="w-3 h-3" />
+   455→                  {language === 'ar' ? 'عرض كامل' : 'Plein écran'}
+   456→                </div>
+   457→              )}
+   458→            </div>
+   459→            {/* Thumbnail strip */}
+   460→            {images.length > 1 && (
+   461→              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   462→                {images.map((img, i) => (
+   463→                  <button
+   464→                    key={i}
+   465→                    onClick={() => handleImageChange(i)}
+   466→                    className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 ${
+   467→                      i === currentImage
+   468→                        ? 'border-[#1E3A5F] dark:border-[#7AB0E0] shadow-md'
+   469→                        : 'border-transparent opacity-60 hover:opacity-100 dark:opacity-40 dark:hover:opacity-80'
+   470→                    }`}
+   471→                  >
+   472→                    <img src={img} alt="" className="w-full h-full object-cover" />
+   473→                  </button>
+   474→                ))}
+   475→              </div>
+   476→            )}
+   477→          </motion.div>
+   478→
+   479→          {/* Product Info */}
+   480→          <motion.div
+   481→            initial={{ opacity: 0, x: 20 }}
+   482→            animate={{ opacity: 1, x: 0 }}
+   483→          >
+   484→            {/* Status Badges */}
+   485→            <div className="flex flex-wrap gap-2 mb-4">
+   486→              {product.is_new && (
+   487→                <Badge className="border-0" style={{ backgroundColor: '#1E3A5F' }}>
+   488→                  {t('products.new')}
+   489→                </Badge>
+   490→              )}
+   491→              {product.is_best_seller && (
+   492→                <Badge className="border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   493→                  {t('products.bestSeller')}
+   494→                </Badge>
+   495→              )}
+   496→            </div>
+   497→
+   498→            {/* Product Name */}
+   499→            <h1 className="text-2xl sm:text-3xl font-bold mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   500→              {getProductName(product, language)}
+   501→            </h1>
+   502→
+   503→            {/* Brand & Reference Badges */}
+   504→            <div className="flex flex-wrap gap-2 mb-5">
+   505→              {product.brand && (
+   506→                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full text-xs font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   507→                  <Tag className="w-3.5 h-3.5" />
+   508→                  {product.brand}
+   509→                </div>
+   510→              )}
+   511→              {product.ref && (
+   512→                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full text-xs font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   513→                  <Hash className="w-3.5 h-3.5" />
+   514→                  {product.ref}
+   515→                </div>
+   516→              )}
+   517→              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+   518→                product.in_stock
+   519→                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+   520→                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+   521→              }`}>
+   522→                <CircleDot className="w-3.5 h-3.5" />
+   523→                {product.in_stock ? t('products.inStock') : t('products.outOfStock')}
+   524→              </div>
+   525→            </div>
+   526→
+   527→            {/* Price Display */}
+   528→            <div className="mb-6">
+   529→              {priceDisplay ? (
+   530→                <div className="flex items-baseline gap-2">
+   531→                  <span className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   532→                    {priceDisplay}
+   533→                  </span>
+   534→                </div>
+   535→              ) : (
+   536→                <div
+   537→                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg dark:bg-[#F0C05A10]"
+   538→                  style={{ backgroundColor: '#F0C05A20' }}
+   539→                >
+   540→                  <FileText className="w-5 h-5" style={{ color: '#F0C05A' }} />
+   541→                  <span className="text-lg font-semibold dark:text-[#F0C05A]" style={{ color: '#1E3A5F' }}>
+   542→                    {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+   543→                  </span>
+   544→                </div>
+   545→              )}
+   546→            </div>
+   547→
+   548→            {/* Meta Info Grid */}
+   549→            <div className="grid grid-cols-2 gap-3 mb-6">
+   550→              {product.origin && (
+   551→                <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+   552→                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{t('products.origin')}</p>
+   553→                  <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.origin}</p>
+   554→                </div>
+   555→              )}
+   556→              {hasWarranty && (
+   557→                <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+   558→                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{t('products.warranty')}</p>
+   559→                  <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
+   560→                </div>
+   561→              )}
+   562→            </div>
+   563→
+   564→            {/* Service Badges */}
+   565→            {(hasWarranty || hasInstallation || hasTraining || hasDelivery) && (
+   566→              <div className="flex flex-wrap gap-2 mb-6">
+   567→                {hasWarranty && (
+   568→                  <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   569→                    <Shield className="w-3.5 h-3.5" />
+   570→                    {product.warranty}
+   571→                  </div>
+   572→                )}
+   573→                {hasInstallation && (
+   574→                  <div className="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   575→                    <Wrench className="w-3.5 h-3.5" />
+   576→                    {t('products.installation')}
+   577→                  </div>
+   578→                )}
+   579→                {hasTraining && (
+   580→                  <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   581→                    <GraduationCap className="w-3.5 h-3.5" />
+   582→                    {t('products.training')}
+   583→                  </div>
+   584→                )}
+   585→                {hasDelivery && (
+   586→                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   587→                    <Truck className="w-3.5 h-3.5" />
+   588→                    {language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr}
+   589→                  </div>
+   590→                )}
+   591→              </div>
+   592→            )}
+   593→
+   594→            {/* Action Buttons */}
+   595→            <div className="space-y-3">
+   596→              <div className="flex gap-2">
+   597→                <Button
+   598→                  size="lg"
+   599→                  className="flex-1 h-12 text-base font-semibold shadow-lg"
+   600→                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   601→                  onClick={() => {
+   602→                    addItem({
+   603→                      id: product.id,
+   604→                      slug: product.slug,
+   605→                      name: getProductName(product, language),
+   606→                      price: product.price,
+   607→                      image: product.images?.[0] || '',
+   608→                    });
+   609→                  }}
+   610→                >
+   611→                  <ShoppingCart className="w-5 h-5" />
+   612→                  {t('products.addQuote')}
+   613→                </Button>
+   614→                <Button
+   615→                  size="lg"
+   616→                  variant="outline"
+   617→                  className={`h-12 px-4 font-semibold ${
+   618→                    isInCompare(product.id)
+   619→                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+   620→                      : 'border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-amber-400 dark:hover:border-amber-600 hover:text-amber-600 dark:hover:text-amber-400'
+   621→                  }`}
+   622→                  disabled={!isInCompare(product.id) && productIds.length >= 4}
+   623→                  title={
+   624→                    isInCompare(product.id)
+   625→                      ? t('compare.remove')
+   626→                      : productIds.length >= 4
+   627→                      ? t('compare.maxReached')
+   628→                      : t('compare.add')
+   629→                  }
+   630→                  onClick={() => {
+   631→                    if (isInCompare(product.id)) {
+   632→                      removeCompareProduct(product.id);
+   633→                    } else {
+   634→                      addCompareProduct(product.id);
+   635→                    }
+   636→                  }}
+   637→                >
+   638→                  {isInCompare(product.id) ? (
+   639→                    <Check className="w-5 h-5" />
+   640→                  ) : (
+   641→                    <GitCompareArrows className="w-5 h-5" />
+   642→                  )}
+   643→                </Button>
+   644→              </div>
+   645→
+   646→              {/* Share & Print Buttons */}
+   647→              <div className="flex gap-2">
+   648→                <Button
+   649→                  variant="outline"
+   650→                  size="sm"
+   651→                  className="flex-1 gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
+   652→                  onClick={handleShare}
+   653→                >
+   654→                  <Share2 className="w-4 h-4" />
+   655→                  {t('products.share')}
+   656→                </Button>
+   657→                <Button
+   658→                  variant="outline"
+   659→                  size="sm"
+   660→                  className="flex-1 gap-2 text-gray-600 dark:text-gray-400 dark:border-white/10"
+   661→                  onClick={handlePrint}
+   662→                >
+   663→                  <Printer className="w-4 h-4" />
+   664→                  {t('products.print')}
+   665→                </Button>
+   666→              </div>
+   667→
+   668→              {isOnQuote && (
+   669→                <Button
+   670→                  size="lg"
+   671→                  variant="outline"
+   672→                  className="w-full h-12 text-base font-semibold dark:border-white/10 dark:text-[#7AB0E0]"
+   673→                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   674→                  onClick={() => navigate('/devis')}
+   675→                >
+   676→                  <FileText className="w-5 h-5" />
+   677→                  {t('products.requestQuote')}
+   678→                </Button>
+   679→              )}
+   680→            </div>
+   681→          </motion.div>
+   682→        </div>
+   683→
+   684→        {/* Features */}
+   685→        {features && features.length > 0 && (
+   686→          <motion.div
+   687→            initial={{ opacity: 0, y: 20 }}
+   688→            whileInView={{ opacity: 1, y: 0 }}
+   689→            viewport={{ once: true }}
+   690→            className="mt-12"
+   691→          >
+   692→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+   693→              <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
+   694→              <CardContent className="p-6">
+   695→                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   696→                  {t('products.features')}
+   697→                </h2>
+   698→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   699→                  {features.map((feat, i) => (
+   700→                    <div key={i} className="flex items-start gap-2">
+   701→                      <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#1E3A5F' }} />
+   702→                      <span className="text-sm text-gray-700 dark:text-gray-300">{feat}</span>
+   703→                    </div>
+   704→                  ))}
+   705→                </div>
+   706→              </CardContent>
+   707→            </Card>
+   708→          </motion.div>
+   709→        )}
+   710→
+   711→        {/* Specs */}
+   712→        {specs.length > 0 && (
+   713→          <motion.div
+   714→            initial={{ opacity: 0, y: 20 }}
+   715→            whileInView={{ opacity: 1, y: 0 }}
+   716→            viewport={{ once: true }}
+   717→            className="mt-8"
+   718→          >
+   719→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+   720→              <div className="h-1" style={{ backgroundColor: '#2A5F8F' }} />
+   721→              <CardContent className="p-6">
+   722→                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   723→                  {t('products.specs')}
+   724→                </h2>
+   725→                <div className="divide-y dark:divide-white/10">
+   726→                  {specs.map((spec, i) => (
+   727→                    <div key={i} className="flex justify-between py-3">
+   728→                      <span className="text-sm text-gray-500 dark:text-gray-400">
+   729→                        {language === 'ar' ? spec.label_ar : spec.label_fr}
+   730→                      </span>
+   731→                      <span className="text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   732→                        {spec.value}
+   733→                      </span>
+   734→                    </div>
+   735→                  ))}
+   736→                </div>
+   737→              </CardContent>
+   738→            </Card>
+   739→          </motion.div>
+   740→        )}
+   741→
+   742→        {/* Description */}
+   743→        {descriptionHtml && (
+   744→          <motion.div
+   745→            initial={{ opacity: 0, y: 20 }}
+   746→            whileInView={{ opacity: 1, y: 0 }}
+   747→            viewport={{ once: true }}
+   748→            className="mt-8"
+   749→          >
+   750→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+   751→              <div className="h-1" style={{ backgroundColor: '#3A7CB8' }} />
+   752→              <CardContent className="p-6">
+   753→                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   754→                  {t('products.description')}
+   755→                </h2>
+   756→                <div
+   757→                  className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300
+   758→                    prose-headings:font-bold prose-headings:text-[#1E3A5F] dark:prose-headings:text-[#7AB0E0]
+   759→                    prose-a:text-[#2A5F8F] dark:prose-a:text-[#7AB0E0] prose-a:no-underline hover:prose-a:underline
+   760→                    prose-ul:list-disc prose-ol:list-decimal
+   761→                    prose-li:marker:text-[#F0C05A]
+   762→                    prose-strong:text-[#1E3A5F] dark:prose-strong:text-[#7AB0E0]
+   763→                    prose-table:border-collapse
+   764→                    prose-th:bg-gray-50 dark:prose-th:bg-white/5 prose-th:p-2 prose-th:border prose-th:border-gray-200 dark:prose-th:border-white/10
+   765→                    prose-td:p-2 prose-td:border prose-td:border-gray-200 dark:prose-td:border-white/10"
+   766→                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+   767→                />
+   768→              </CardContent>
+   769→            </Card>
+   770→          </motion.div>
+   771→        )}
+   772→
+   773→        {/* Related Products - Prominent heading */}
+   774→        {relatedProducts.length > 0 && (
+   775→          <motion.div
+   776→            initial={{ opacity: 0, y: 20 }}
+   777→            whileInView={{ opacity: 1, y: 0 }}
+   778→            viewport={{ once: true }}
+   779→            className="mt-12"
+   780→          >
+   781→            <div className="flex items-center gap-3 mb-6">
+   782→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   783→              <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   784→                {t('products.relatedProducts')}
+   785→              </h2>
+   786→            </div>
+   787→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   788→              {relatedProducts.map((rp) => (
+   789→                <Card
+   790→                  key={rp.id}
+   791→                  className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+   792→                  onClick={() => {
+   793→                    handleImageChange(0);
+   794→                    navigate(`/product/${rp.slug}`);
+   795→                  }}
+   796→                >
+   797→                  <div className="h-36 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+   798→                    {rp.images?.[0] ? (
+   799→                      <img
+   800→                        src={rp.images[0]}
+   801→                        alt={getProductName(rp, language)}
+   802→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+   803→                      />
+   804→                    ) : (
+   805→                      <div
+   806→                        className="w-full h-full flex items-center justify-center"
+   807→                        style={{
+   808→                          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   809→                        }}
+   810→                      >
+   811→                        <Package className="w-10 h-10 text-white/30" />
+   812→                      </div>
+   813→                    )}
+   814→                  </div>
+   815→                  <CardContent className="p-3">
+   816→                    {rp.brand && (
+   817→                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+   818→                        {rp.brand}
+   819→                      </span>
+   820→                    )}
+   821→                    <h3 className="font-semibold text-sm line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+   822→                      {getProductName(rp, language)}
+   823→                    </h3>
+   824→                  </CardContent>
+   825→                </Card>
+   826→              ))}
+   827→            </div>
+   828→          </motion.div>
+   829→        )}
+   830→      </div>
+   831→
+   832→      {/* Recently Viewed Products Section */}
+   833→      {recentlyViewedItems.length > 0 && (
+   834→        <motion.div
+   835→          initial={{ opacity: 0, y: 20 }}
+   836→          whileInView={{ opacity: 1, y: 0 }}
+   837→          viewport={{ once: true }}
+   838→          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+   839→        >
+   840→          <div className="flex items-center justify-between mb-4">
+   841→            <div className="flex items-center gap-3">
+   842→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+   843→              <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   844→                {t('products.recentlyViewed')}
+   845→              </h2>
+   846→            </div>
+   847→            <Button
+   848→              variant="ghost"
+   849→              size="sm"
+   850→              className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+   851→              onClick={clearRecentlyViewed}
+   852→            >
+   853→              {t('products.recentlyViewed.clear')}
+   854→            </Button>
+   855→          </div>
+   856→          <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   857→            {recentlyViewedItems
+   858→              .filter((rv) => rv.id !== product.id)
+   859→              .map((rv) => {
+   860→                const rvProduct = products.find((p) => p.id === rv.id);
+   861→                return (
+   862→                  <motion.div
+   863→                    key={rv.id}
+   864→                    whileHover={{ y: -4 }}
+   865→                    className="min-w-[160px] sm:min-w-[180px] shrink-0"
+   866→                  >
+   867→                    <Card
+   868→                      className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+   869→                      onClick={() => navigate(`/product/${rv.slug}`)}
+   870→                    >
+   871→                      <div className="h-28 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+   872→                        {rv.image ? (
+   873→                          <img
+   874→                            src={rv.image}
+   875→                            alt={rv.name}
+   876→                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+   877→                          />
+   878→                        ) : (
+   879→                          <div
+   880→                            className="w-full h-full flex items-center justify-center"
+   881→                            style={{
+   882→                              background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   883→                            }}
+   884→                          >
+   885→                            <Package className="w-8 h-8 text-white/30" />
+   886→                          </div>
+   887→                        )}
+   888→                      </div>
+   889→                      <CardContent className="p-2.5">
+   890→                        {rvProduct?.brand && (
+   891→                          <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+   892→                            {rvProduct.brand}
+   893→                          </span>
+   894→                        )}
+   895→                        <h3 className="font-semibold text-xs line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+   896→                          {rv.name}
+   897→                        </h3>
+   898→                        <p className="text-[10px] font-medium mt-1 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   899→                          {rv.price && rv.price > 0
+   900→                            ? `${rv.price.toLocaleString('fr-DZ')} DA`
+   901→                            : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+   902→                          }
+   903→                        </p>
+   904→                      </CardContent>
+   905→                    </Card>
+   906→                  </motion.div>
+   907→                );
+   908→              })}
+   909→          </div>
+   910→        </motion.div>
+   911→      )}
+   912→
+   913→      {/* Sticky Add-to-Quote Bar on Mobile */}
+   914→      <motion.div
+   915→        initial={{ y: 100 }}
+   916→        animate={{ y: 0 }}
+   917→        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#162236]/95 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+   918→      >
+   919→        <div className="px-4 py-3 flex items-center gap-3">
+   920→          <div className="flex-1 min-w-0">
+   921→            <p className="text-sm font-bold truncate dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   922→              {getProductName(product, language)}
+   923→            </p>
+   924→            {priceDisplay ? (
+   925→              <p className="text-xs font-semibold dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
+   926→            ) : (
+   927→              <p className="text-xs font-medium" style={{ color: '#F0C05A' }}>
+   928→                {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+   929→              </p>
+   930→            )}
+   931→          </div>
+   932→          <Button
+   933→            className="h-10 px-5 font-semibold shadow-md shrink-0"
+   934→            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   935→            onClick={() => {
+   936→              addItem({
+   937→                id: product.id,
+   938→                slug: product.slug,
+   939→                name: getProductName(product, language),
+   940→                price: product.price,
+   941→                image: product.images?.[0] || '',
+   942→              });
+   943→            }}
+   944→          >
+   945→            <ShoppingCart className="w-4 h-4 mr-1.5" />
+   946→            {t('products.addToQuoteSticky')}
+   947→          </Button>
+   948→        </div>
+   949→      </motion.div>
+   950→    </div>
+   951→  );
+   952→}
+   953→

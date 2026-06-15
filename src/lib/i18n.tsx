@@ -84,8 +84,10 @@ const fr: Translations = {
   'products.title': 'Notre Catalogue',
   'products.subtitle': 'Découvrez notre gamme complète d\'équipements dentaires professionnels',
   'products.featured': 'Produits vedettes',
-  'products.new': 'Nouveautés',
-  'products.bestSeller': 'Meilleure vente',
+  'products.new': 'Nouveau',
+  'products.bestSeller': 'Best-seller',
+  'catalogue.brands': 'Marques',
+  'catalogue.allBrands': 'Toutes les marques',
   'products.inStock': 'En stock',
   'products.outOfStock': 'Rupture de stock',
   'products.addQuote': 'Ajouter au devis',
@@ -191,6 +193,8 @@ const fr: Translations = {
   'contact.form.success': 'Message envoyé avec succès !',
   'contact.form.error': 'Erreur lors de l\'envoi. Veuillez réessayer.',
   'contact.findUs': 'Comment nous trouver',
+  'contact.callUs': 'Appelez-nous',
+  'contact.whatsappUs': 'WhatsApp',
 
   // --- QUOTE ---
   'quote.title': 'Demander un Devis',
@@ -234,6 +238,7 @@ const fr: Translations = {
   'footer.cta': 'Équipez votre cabinet avec les meilleurs',
   'footer.newsletter.mini': 'Inscrivez-vous à notre newsletter',
   'footer.requestQuote': 'Demander un devis',
+  'footer.backToTop': 'Retour en haut ↑',
 
   // --- TESTIMONIALS ---
   'testimonials.title': 'Ce que disent nos clients',
@@ -445,6 +450,23 @@ const fr: Translations = {
   // --- DARK MODE NAV ---
   'nav.darkMode': 'Mode sombre',
   'nav.lightMode': 'Mode clair',
+  'nav.promotions': 'Promotions',
+
+  // --- PROMO BANNER ---
+  'promo.text': 'Offre spéciale : Installation gratuite pour toute commande avant le 30 juin',
+  'promo.cta': 'En savoir plus',
+
+  // --- FOOTER COMMITMENTS ---
+  'footer.commitments': 'Nos engagements',
+  'footer.commitments.delivery': 'Livraison 58 wilayas',
+  'footer.commitments.installation': 'Installation professionnelle',
+  'footer.commitments.sav': 'SAV 48h',
+  'footer.commitments.warranty': 'Garantie constructeur',
+  'footer.certifications': 'Certifications & Partenaires',
+
+  // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
+  'products.youMayAlsoLike': 'Vous aimerez aussi',
+  'products.relatedCategories': 'Catégories associées',
 };
 
 // ============================================================
@@ -509,6 +531,8 @@ const ar: Translations = {
   'products.featured': 'منتجات مميزة',
   'products.new': 'جديد',
   'products.bestSeller': 'الأكثر مبيعاً',
+  'catalogue.brands': 'العلامات التجارية',
+  'catalogue.allBrands': 'جميع العلامات',
   'products.inStock': 'متوفر',
   'products.outOfStock': 'نفذ المخزون',
   'products.addQuote': 'أضف إلى عرض السعر',
@@ -614,6 +638,8 @@ const ar: Translations = {
   'contact.form.success': 'تم إرسال الرسالة بنجاح!',
   'contact.form.error': 'خطأ في الإرسال. يرجى المحاولة مرة أخرى.',
   'contact.findUs': 'كيف تجدنا',
+  'contact.callUs': 'اتصل بنا',
+  'contact.whatsappUs': 'واتساب',
 
   // --- QUOTE ---
   'quote.title': 'طلب عرض سعر',
@@ -657,6 +683,7 @@ const ar: Translations = {
   'footer.cta': 'جهز عيادتك بأفضل المعدات',
   'footer.newsletter.mini': 'اشترك في نشرتنا الإخبارية',
   'footer.requestQuote': 'طلب عرض سعر',
+  'footer.backToTop': 'العودة للأعلى ↑',
 
   // --- TESTIMONIALS ---
   'testimonials.title': 'ماذا يقول عملاؤنا',
@@ -868,6 +895,23 @@ const ar: Translations = {
   // --- DARK MODE NAV ---
   'nav.darkMode': 'الوضع الداكن',
   'nav.lightMode': 'الوضع الفاتح',
+  'nav.promotions': 'العروض',
+
+  // --- PROMO BANNER ---
+  'promo.text': 'عرض خاص: تركيب مجاني لكل طلب قبل 30 يونيو',
+  'promo.cta': 'اعرف المزيد',
+
+  // --- FOOTER COMMITMENTS ---
+  'footer.commitments': 'التزاماتنا',
+  'footer.commitments.delivery': 'توصيل 58 ولاية',
+  'footer.commitments.installation': 'تركيب احترافي',
+  'footer.commitments.sav': 'خدمة ما بعد البيع 48 ساعة',
+  'footer.commitments.warranty': 'ضمان الشركة المصنعة',
+  'footer.certifications': 'الشهادات والشركاء',
+
+  // --- PRODUCT DETAIL - YOU MAY ALSO LIKE ---
+  'products.youMayAlsoLike': 'قد يعجبك أيضاً',
+  'products.relatedCategories': 'الفئات المرتبطة',
 };
 
 const translations: Record<Language, Translations> = { fr, ar };

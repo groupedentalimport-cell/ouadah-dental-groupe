@@ -813,13 +813,328 @@ Stage Summary:
 - Product image upload in admin panel not yet functional (URL input only)
 - Real Supabase CRUD for products/blog in admin not implemented (uses mock data)
 - SEO meta tags per page not implemented
-- No product filtering by brand in catalogue
+- ~~No product filtering by brand in catalogue~~ → DONE (Task R6-A)
 - Performance optimization (lazy loading images) not yet done
 
 ### Next Phase Priorities:
 1. Real Supabase CRUD for products/blog in admin panel
 2. Product image upload in admin (file upload to Supabase Storage)
-3. SEO improvements (meta tags per page, Open Graph)
-4. Brand filter in catalogue
+3. ~~SEO improvements (meta tags per page, Open Graph)~~ → DONE (Task R6-B)
+4. ~~Brand filter in catalogue~~ → DONE (Task R6-A)
 5. Performance optimization (lazy loading images, code splitting)
 6. PWA support (service worker, manifest)
+
+---
+Task ID: R6-Main
+Agent: Main Coordinator
+Task: Round 6 QA, bug fixes, feature development, and visual polish
+
+Work Log:
+- Reviewed worklog.md to understand project history (Rounds 1-5 completed)
+- Tested all pages with agent-browser + VLM analysis
+- Initial VLM ratings: Desktop 7/10, Mobile 7/10, Catalogue 7/10
+- **Fixed critical bug: Stats counter showing "0"** on homepage:
+  - Replaced broken `useCounter` hook with `AnimatedCounter` component using `IntersectionObserver` directly
+  - Shows final value immediately (no "0" flash), then animates counting from 0 when scrolled into view
+  - Uses `requestAnimationFrame` with ease-out cubic easing for smooth animation
+  - Fixed lint error by using `useRef` for `hasAnimated` flag instead of `useState`
+- **Fixed hero section issues**:
+  - Improved trust badges: bigger icons, pill-shaped badges with bg-white/5 and backdrop-blur, more spacing
+  - Enhanced secondary CTA button: added `bg-white/10` background, `border-white/80` for better visibility
+  - Fixed bottom wave transition to support dark mode (`className="fill-gray-50 dark:fill-[#0c1622]"` instead of hardcoded `fill="#f9fafb"`)
+- **Fixed brand filter deduplication**:
+  - Brand extraction now normalizes case (e.g., "ICANCLAVE" and "icanclave" merge into one)
+  - Brand filter uses case-insensitive matching
+- **Added CSS utility classes** (`globals.css`):
+  - `.hover-lift` - Card lift effect on hover with shadow
+  - `.gold-underline` - Gold underline animation on hover
+  - `.animate-badge-pulse` - Subtle pulse for badges
+  - `.animate-scroll-hint` - Scroll indicator animation
+  - `.gradient-border` - Gradient border effect using mask
+  - `.product-img-placeholder` - Product image placeholder with gradient background
+- Applied `.hover-lift` to catalogue product cards
+- Launched 4 parallel subagents: R6-A (Brand Filter), R6-B (SEO), R6-C (New Features), R6-D (Final Polish)
+- Final VLM ratings: Desktop Homepage 8/10 (up from 7/10), Mobile 8/10, Hero 9/10, Trust Signals 9/10, Professionalism 9/10
+- All lint checks pass, dev server compiles without errors
+
+Stage Summary:
+- Stats counter bug completely fixed - now shows correct values (500+, 48, 15+, 48h)
+- Hero section improved with better trust badges and more visible CTA buttons
+- Brand filter deduplicated and working with case-insensitive matching
+- 6 new CSS utility classes added for reusable styling effects
+- Homepage rated 8/10 by VLM (up from 7/10 initial)
+- Hero section rated 9/10, Trust signals 9/10, Professionalism 9/10
+- All pages functioning correctly with no runtime errors
+
+---
+
+## Current Project Status (Post Round 6)
+
+### VLM Quality Assessment:
+- **Desktop Homepage**: 8/10 (up from 7/10 in Round 5)
+- **Hero Section**: 9/10
+- **Trust Signals**: 9/10
+- **Professionalism**: 9/10
+- **Mobile Homepage**: 8/10 (up from 7/10)
+- **Catalogue**: Brand filter working, product badges improved
+
+### Completed Features (Cumulative):
+- ✅ Full SPA with hash-based routing (24+ routes)
+- ✅ Bilingual FR/AR with 310+ translation keys and full RTL support
+- ✅ Supabase integration with automatic column name mapping
+- ✅ Homepage: parallax hero, animated gradient, floating icons, trust badges (pill-shaped), trusted-by pill, stats (animated counter), categories (image backgrounds, hover-lift, gold badges), featured products (hover-lift, gold border), why choose us (pulse icons), testimonials (avatars), brand marquee, newsletter (backend), promotional banner (dismissible), CTA, section dividers, scroll-down indicator
+- ✅ Product catalogue: gradient header, visual filters, brand filter (multi-select, case-insensitive), price range filter (slider+inputs), compare buttons, search & sort, quick view, Nouveau/Best-seller badges, hover glow
+- ✅ Product detail: image gallery/lightbox with zoom, breadcrumbs, share/print, recently viewed, sticky mobile quote bar, related categories, "Vous aimerez aussi" section
+- ✅ Quick View modal: Dialog-based with product preview, compare toggle, add to quote
+- ✅ Product comparison: floating CompareDrawer, side-by-side CompareView with difference highlighting
+- ✅ Blog: gradient header, featured article, category filters, enhanced cards
+- ✅ About: gradient header, 6-milestone timeline, key figures, values, team stats, certifications
+- ✅ Contact: gradient header, FAQ accordion, color-coded cards, Google Maps, API backend, Call/WhatsApp quick action buttons
+- ✅ Newsletter: Backend API with Supabase storage, loading states
+- ✅ Loading skeletons for all main pages
+- ✅ 21 default products covering all 8 categories
+- ✅ Admin panel: Professional redesign with dashboard (charts, orders, recent quotes), products (bulk actions, export CSV, status toggle, specs editor, preview), blog, quotes, settings (logo, social links, business hours, preview), notifications, breadcrumbs
+- ✅ Dark mode: Full support across all pages with ODG-branded colors and toggle in Navbar
+- ✅ SEO: Meta tags, Open Graph, Twitter cards, JSON-LD structured data, dynamic page titles, sitemap.xml, robots.txt
+- ✅ WhatsApp bubble, AI Chat bubble (with pulse indicator)
+- ✅ Professional navbar with search, active indicator, cart badge, dark mode toggle, Promotions link with red dot, gold border on scroll
+- ✅ Professional footer with stats bar, trust badges (ISO/CE), commitments column, certifications row, back-to-top, gradient border, social animations, newsletter backend
+- ✅ Page transitions with framer-motion AnimatePresence
+- ✅ ScrollToTop button with animated visibility
+- ✅ Promotional banner (dismissible, localStorage persistence)
+- ✅ Custom CSS utilities (shimmer, float, pulse-gold, glass, gradient-text, custom scrollbar, hover-lift, gold-underline, gradient-border, product-img-placeholder, scroll-hint, badge-pulse)
+
+### Remaining Known Issues:
+- Product image upload in admin panel not yet functional (URL input only)
+- Real Supabase CRUD for products/blog in admin not implemented (uses mock data)
+- Some Supabase categories show 0 products (expected - Supabase data doesn't have products for all categories yet)
+- Performance optimization (lazy loading images, code splitting) not yet done
+- PWA support (service worker, manifest) not yet implemented
+
+### Next Phase Priorities:
+1. Real Supabase CRUD for products/blog in admin panel (highest priority)
+2. Product image upload in admin (file upload to Supabase Storage)
+3. Performance optimization (lazy loading images, code splitting)
+4. PWA support (service worker, manifest)
+5. Product video integration (embed YouTube/Vimeo in product detail)
+6. Advanced search with Elasticsearch or Algolia
+
+---
+
+### Task ID: R6-B - SEO Meta Tags and Open Graph Support
+**Agent:** Full-stack Developer
+**Task:** Add comprehensive SEO metadata, Open Graph support, JSON-LD structured data, dynamic page titles, sitemap, and robots.txt
+
+**Work Log:**
+- **Updated `/src/app/layout.tsx`** with comprehensive SEO metadata:
+  - Added `metadataBase` for proper social image URL resolution (fixes Next.js warning)
+  - Title template: `%s | ODG - Ouadah Dental Groupe` with full default title
+  - Description: French SEO-optimized description covering all key product categories
+  - Keywords: 12 targeted keywords in French and English (dental equipment Algeria, fauteuil dentaire, etc.)
+  - `authors`, `creator`, `publisher` set to OUADAH DENTAL GROUPE
+  - `robots`: index/follow with googleBot directives (max-image-preview: large, max-snippet: -1)
+  - `alternates.canonical`: https://ouadah-dental-groupe.vercel.app/
+  - Open Graph: type website, locale fr_DZ, alternateLocale ar_DZ, siteName, hero-dental.jpg image (1200x630)
+  - Twitter: summary_large_image card with hero-dental.jpg
+  - Viewport: device-width, initialScale 1, maximumScale 5, themeColor #1e3a5f
+- **Added JSON-LD structured data** in layout.tsx `<head>`:
+  - Type: Organization (OUADAH DENTAL GROUPE / ODG)
+  - URL, logo, French description
+  - PostalAddress: Oran, Algeria
+  - ContactPoint: phone, sales, French/Arabic languages
+  - sameAs: Facebook, Instagram
+  - foundingDate: 2009, areaServed: Algeria
+- **Added dynamic page title updater** (`PageTitleUpdater`) in `/src/app/page.tsx`:
+  - Client-side component that updates `document.title` on route change
+  - Route-to-title mapping for all pages (home, catalogue, blog, about, contact, devis, legal pages)
+  - Dynamic product name titles: `{Product Name} | ODG` (looks up product by slug from data context)
+  - Dynamic article titles: `{Article Title} | ODG` (looks up article by slug)
+  - Admin routes: `Administration | ODG`
+- **Created `/public/sitemap.xml`**:
+  - Homepage (priority 1.0, weekly)
+  - Catalogue (priority 0.9, weekly)
+  - Blog (priority 0.8, weekly)
+  - About (priority 0.7, monthly)
+  - Contact (priority 0.7, monthly)
+- **Updated `/public/robots.txt`**:
+  - Allow all crawlers
+  - Added Sitemap reference: https://ouadah-dental-groupe.vercel.app/sitemap.xml
+
+**Stage Summary:**
+- Full SEO metadata with Open Graph, Twitter cards, canonical URL, and robots directives
+- JSON-LD Organization structured data for rich search results
+- Dynamic document.title updates for all hash-based routes including product/article detail pages
+- Sitemap.xml and robots.txt for search engine crawling
+- Lint passes cleanly, dev server compiles without warnings
+
+---
+
+### Task ID: R6-A - Brand Filter + Catalogue Polish
+**Agent:** Full-stack Developer
+**Task:** Add brand filter to catalogue page and polish product cards
+
+**Work Log:**
+- Added `selectedBrands` state (Set<string>) for multi-brand selection in CataloguePage
+- Computed `brandsWithCounts` via useMemo - extracts unique brands from products with product counts, sorted alphabetically
+- Added `toggleBrand()` function for toggling brand selection on/off
+- Added brand filter logic in `filteredProducts` useMemo (filters products by selected brands)
+- Updated `isFiltering` to include `selectedBrands.size > 0`
+- Updated `handleClearFilters` to reset brand selection (`setSelectedBrands(new Set())`)
+- Added brand filter UI in desktop sidebar below Categories section:
+  - "MARQUES" header with navy color scheme
+  - "Toutes les marques" option (active when no brands selected, navy background)
+  - Scrollable brand list (max-h-48) with each brand as clickable chip
+  - Active brand chips show gold accent (#F0C05A) with checkmark icon and count badge
+  - Product count badges next to each brand name
+- Added brand filter UI in mobile filter sheet:
+  - Compact chip/tag layout with "Toutes les marques" and brand chips
+  - Active chips highlighted with gold (#F0C05A) background
+  - Brand name with product count in parentheses
+- Updated product card Nouveau/Best-seller badges:
+  - Moved badges from top-left to top-right corner of image area
+  - Changed "Nouveau" badge from navy (#1E3A5F) to green (#3B8C6E)
+  - Added font-semibold to Best-seller badge
+  - Stock badge moved to top-left position
+- Added hover border glow effect on product cards: `hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40`
+- Added i18n translation keys:
+  - `catalogue.brands` → FR: "Marques", AR: "العلامات التجارية"
+  - `catalogue.allBrands` → FR: "Toutes les marques", AR: "جميع العلامات"
+  - Updated `products.new` → FR: "Nouveau" (was "Nouveautés")
+  - Updated `products.bestSeller` → FR: "Best-seller" (was "Meilleure vente")
+- Lint passes with no errors
+
+**Files Modified:**
+- `/home/z/my-project/src/lib/i18n.tsx` - Added catalogue.brands, catalogue.allBrands keys; updated products.new and products.bestSeller French translations
+- `/home/z/my-project/src/components/dental/CataloguePage.tsx` - Added brand filter state/logic/UI in sidebar and mobile sheet; improved product card badges and hover glow
+
+**Stage Summary:**
+- Brand filter fully functional with multi-select support in both desktop sidebar and mobile sheet
+- Product cards now display Nouveau (green) and Best-seller (gold) badges in top-right corner
+- Subtle amber/gold hover ring glow on product cards
+- All filters (category, brand, price, search) reset properly via clear filters button
+
+---
+
+### Task ID: R6-C - Styling Polish and New Features
+**Agent:** Full-stack Developer
+**Task:** Add promotional banner, enhance footer, navbar, and product detail page
+
+**Work Log:**
+
+1. **i18n keys added** (`/home/z/my-project/src/lib/i18n.tsx`):
+   - `nav.promotions` → FR: "Promotions", AR: "العروض"
+   - `promo.text` → FR: "Offre spéciale : Installation gratuite pour toute commande avant le 30 juin", AR: "عرض خاص: تركيب مجاني لكل طلب قبل 30 يونيو"
+   - `promo.cta` → FR: "En savoir plus", AR: "اعرف المزيد"
+   - `footer.commitments` → FR: "Nos engagements", AR: "التزاماتنا"
+   - `footer.commitments.delivery` → FR: "Livraison 58 wilayas", AR: "توصيل 58 ولاية"
+   - `footer.commitments.installation` → FR: "Installation professionnelle", AR: "تركيب احترافي"
+   - `footer.commitments.sav` → FR: "SAV 48h", AR: "خدمة ما بعد البيع 48 ساعة"
+   - `footer.commitments.warranty` → FR: "Garantie constructeur", AR: "ضمان الشركة المصنعة"
+   - `footer.certifications` → FR: "Certifications & Partenaires", AR: "الشهادات والشركاء"
+   - `products.youMayAlsoLike` → FR: "Vous aimerez aussi", AR: "قد يعجبك أيضاً"
+   - `products.relatedCategories` → FR: "Catégories associées", AR: "الفئات المرتبطة"
+
+2. **Promotional Banner** (`/home/z/my-project/src/components/dental/HomePage.tsx`):
+   - Added `X` icon import from lucide-react
+   - Added `promoDismissed` state with localStorage persistence (`odg_promo_dismissed`)
+   - Added `dismissPromo` callback to set localStorage and hide banner
+   - Added `AnimatePresence`-wrapped banner between hero and stats sections
+   - Banner features: gradient background (#1E3A5F → #2A5F8F → #1E3A5F), gold accent lines top/bottom, 🎁 emoji, dismissible X button, "En savoir plus" CTA button
+   - Slide-down animation with spring physics
+
+3. **Enhanced Footer** (`/home/z/my-project/src/components/dental/Footer.tsx`):
+   - Added `Truck`, `Wrench`, `Shield` icon imports
+   - Changed grid from 4 to 5 columns (`lg:grid-cols-5`)
+   - Added Column 5: "Nos engagements" with 4 commitment items (delivery, installation, SAV, warranty) each with icon
+   - Added "Certifications & Partenaires" row above bottom copyright section with CE, ISO 9001, ISO 13485 styled text badges
+
+4. **Navbar Enhancement** (`/home/z/my-project/src/components/dental/Navbar.tsx`):
+   - Changed scroll threshold from 20px to 10px
+   - Replaced `shadow-lg` with `shadow-md` when scrolled for subtler effect
+   - Added 2px gold (#F0C05A) bottom border line that appears only when scrolled
+   - Added "Promotions" nav link between "Blog" and "À propos" navigating to `/catalogue`
+   - Promotions link has red dot indicator (#C0564F) in both desktop and mobile menus
+   - Changed `key` prop from `link.path` to `link.routeName` for proper React key uniqueness
+
+5. **Product Detail Page Enhancement** (`/home/z/my-project/src/components/dental/ProductDetailPage.tsx`):
+   - Added `youMayAlsoLike` useMemo (max 4 products from same category)
+   - Added `relatedCategories` useMemo (current + adjacent categories)
+   - Added "Related Categories" section with green accent bar, clickable category badges
+   - Added "Vous aimerez aussi" section with compact product cards (horizontal layout on mobile, vertical on desktop)
+   - Related product cards show image, brand, name, and price
+
+**Files Modified:**
+- `/home/z/my-project/src/lib/i18n.tsx` - Added 12 new i18n keys (6 FR + 6 AR)
+- `/home/z/my-project/src/components/dental/HomePage.tsx` - Added promotional banner with dismiss + localStorage
+- `/home/z/my-project/src/components/dental/Footer.tsx` - Added commitments column + certifications row
+- `/home/z/my-project/src/components/dental/Navbar.tsx` - Added gold border, shadow, promotions link with red dot
+- `/home/z/my-project/src/components/dental/ProductDetailPage.tsx` - Added related categories + you may also like sections
+
+**Stage Summary:**
+- Promotional banner displays between hero and stats with animated entrance, dismisses to localStorage
+- Footer now has 5 columns including "Nos engagements" and certifications badges row
+- Navbar shows 2px gold border on scroll, shadow-md effect, and Promotions link with red dot indicator
+- Product detail page shows related categories and "Vous aimerez aussi" compact product cards
+- All lint passes cleanly, no errors
+
+---
+
+### Task ID: R6-D - Final Visual Polish Pass
+**Agent:** Full-stack Developer
+**Task:** Improve visual quality to push VLM rating from 7/10 to 8-9/10
+
+**Work Log:**
+
+1. **Added Scroll Down Indicator to Hero Section** (`/home/z/my-project/src/components/dental/HomePage.tsx`):
+   - Added `ChevronDown` to lucide-react imports
+   - Added animated scroll-down chevron icon positioned `bottom-20` centered above the bottom wave
+   - Uses `animate-scroll-hint` CSS class (already defined in globals.css)
+   - Icon styled as `text-white/60` with `w-6 h-6` for subtle appearance
+
+2. **Improved Category Cards on Homepage** (`/home/z/my-project/src/components/dental/HomePage.tsx`):
+   - Added `hover-lift` class to each category card for lift-on-hover effect
+   - Added product count badge with gold (#F0C05A) background in the top-right corner of each card
+   - Badge shows the number of products in that category, styled with rounded-full, shadow, and bold text
+   - Changed image zoom from `scale-115` to `scale-110` for balanced hover effect
+   - Added subtle gold gradient overlay at bottom of each card image (`h-16 bg-gradient-to-t from-[#F0C05A]/15 to-transparent`) for better text readability
+
+3. **Improved Featured Products Section** (`/home/z/my-project/src/components/dental/HomePage.tsx`):
+   - Added `hover-lift` class to each product card
+   - Replaced plain "Sur devis" text with a styled badge using `inline-flex` with gold-tinted background (`rgba(240,192,90,0.15)`)
+   - Added subtle 2px gold (#F0C05A) border-top accent line on each product card via `style={{ borderTop: '2px solid #F0C05A' }}`
+   - Used `product-img-placeholder` class for image placeholder backgrounds
+
+4. **Added WhatsApp and Phone Quick Actions to Contact Page** (`/home/z/my-project/src/components/dental/ContactPage.tsx`):
+   - Added prominent "Call Us Now" button with Phone icon at the top of the contact form section
+   - Added "WhatsApp" button with MessageCircle icon next to it
+   - Both buttons are large (py-4, px-6), with framer-motion hover animations (scale, boxShadow)
+   - Call button styled with navy (#1E3A5F) background
+   - WhatsApp button styled with green (#25D366) background
+   - Phone number displayed next to the phone button with `dir="ltr"` for proper RTL rendering
+   - Added i18n keys: `contact.callUs` → FR: "Appelez-nous", AR: "اتصل بنا"; `contact.whatsappUs` → FR: "WhatsApp", AR: "واتساب"
+
+5. **Added "Back to Top" Button in Footer** (`/home/z/my-project/src/components/dental/Footer.tsx`):
+   - Added at the very bottom of the footer, after the bottom bar
+   - Small "Retour en haut ↑" text button with `text-white/50 hover:text-white/80`
+   - On click, smoothly scrolls to top via `window.scrollTo({ top: 0, behavior: 'smooth' })`
+   - Separated from bottom bar with `border-t border-white/5`
+   - Added i18n key: `footer.backToTop` → FR: "Retour en haut ↑", AR: "العودة للأعلى ↑"
+
+6. **Added i18n Keys** (`/home/z/my-project/src/lib/i18n.tsx`):
+   - `contact.callUs` → FR: "Appelez-nous", AR: "اتصل بنا"
+   - `contact.whatsappUs` → FR: "WhatsApp", AR: "واتساب"
+   - `footer.backToTop` → FR: "Retour en haut ↑", AR: "العودة للأعلى ↑"
+
+**Files Modified:**
+- `/home/z/my-project/src/components/dental/HomePage.tsx` - Scroll indicator, category card improvements, featured product improvements
+- `/home/z/my-project/src/components/dental/ContactPage.tsx` - WhatsApp and Phone quick action buttons
+- `/home/z/my-project/src/components/dental/Footer.tsx` - Back to Top button
+- `/home/z/my-project/src/lib/i18n.tsx` - Added 6 new i18n keys (3 FR + 3 AR)
+
+**Stage Summary:**
+- Hero section now has an animated scroll-down chevron hint
+- Category cards have hover-lift effect, gold product count badges, gold gradient overlay, and adjusted zoom
+- Featured product cards have hover-lift, gold top border accent, and styled "Sur devis" badge
+- Contact page has prominent Call and WhatsApp quick action buttons
+- Footer has a "Retour en haut" scroll-to-top button
+- All lint passes cleanly, no errors

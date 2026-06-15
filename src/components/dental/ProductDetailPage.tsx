@@ -101,6 +101,30 @@ export default function ProductDetailPage() {
     [products, product]
   );
 
+  const youMayAlsoLike = useMemo(
+    () =>
+      product
+        ? products
+            .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+            .slice(0, 4)
+        : [],
+    [products, product]
+  );
+
+  const relatedCategories = useMemo(() => {
+    if (!product || !categories.length) return [];
+    const currentCatIndex = categories.findIndex((c) => c.id === product.category_id);
+    if (currentCatIndex === -1) return [categories[0]].filter(Boolean);
+    const result = [];
+    // Current category
+    result.push(categories[currentCatIndex]);
+    // Adjacent category before
+    if (currentCatIndex > 0) result.push(categories[currentCatIndex - 1]);
+    // Adjacent category after
+    if (currentCatIndex < categories.length - 1) result.push(categories[currentCatIndex + 1]);
+    return result.filter(Boolean);
+  }, [categories, product]);
+
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
@@ -906,6 +930,106 @@ export default function ProductDetailPage() {
                   </motion.div>
                 );
               })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Related Categories Section */}
+      {relatedCategories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#3B8C6E' }} />
+            <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+              {t('products.relatedCategories')}
+            </h2>
+          </div>
+          <div className="flex gap-3 flex-wrap">
+            {relatedCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => navigate('/catalogue')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 hover:border-[#1E3A5F] dark:hover:border-[#7AB0E0] hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200 group"
+                style={{ backgroundColor: 'rgba(30,58,95,0.03)' }}
+              >
+                {cat.icon && (
+                  <span className="text-lg" dangerouslySetInnerHTML={{ __html: cat.icon }} />
+                )}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
+                  {getCategoryName(cat, language)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* You May Also Like Section */}
+      {youMayAlsoLike.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+            <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+              {t('products.youMayAlsoLike')}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {youMayAlsoLike.map((rp) => (
+              <Card
+                key={rp.id}
+                className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+                onClick={() => {
+                  handleImageChange(0);
+                  navigate(`/product/${rp.slug}`);
+                }}
+              >
+                <div className="flex sm:flex-col">
+                  <div className="w-24 sm:w-full h-24 sm:h-36 shrink-0 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+                    {rp.images?.[0] ? (
+                      <img
+                        src={rp.images[0]}
+                        alt={getProductName(rp, language)}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+                        }}
+                      >
+                        <Package className="w-8 h-8 text-white/30" />
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-3 flex-1 min-w-0">
+                    {rp.brand && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+                        {rp.brand}
+                      </span>
+                    )}
+                    <h3 className="font-semibold text-sm line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+                      {getProductName(rp, language)}
+                    </h3>
+                    <p className="text-xs font-medium mt-1 dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>
+                      {rp.price && rp.price > 0
+                        ? `${rp.price.toLocaleString('fr-DZ')} DA`
+                        : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+                      }
+                    </p>
+                  </CardContent>
+                </div>
+              </Card>
+            ))}
           </div>
         </motion.div>
       )}

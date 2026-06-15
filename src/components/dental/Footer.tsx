@@ -16,6 +16,9 @@ import {
   Heart,
   Youtube,
   Twitter,
+  Truck,
+  Wrench,
+  Shield,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -125,7 +128,7 @@ export default function Footer() {
           viewport={{ once: true, margin: '-50px' }}
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
             {/* Column 1: Brand & Social */}
             <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-4">
@@ -290,11 +293,56 @@ export default function Footer() {
                 {t('newsletter.privacy')}
               </p>
             </motion.div>
+
+            {/* Column 5: Nos Engagements */}
+            <motion.div variants={itemVariants}>
+              <h3 className="text-[#F0C05A] font-semibold text-sm uppercase tracking-wider mb-5">
+                {t('footer.commitments')}
+              </h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-blue-200 text-sm group">
+                  <Truck className="w-4 h-4 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" style={{ color: '#F0C05A' }} />
+                  <span className="group-hover:text-white transition-colors">{t('footer.commitments.delivery')}</span>
+                </li>
+                <li className="flex items-start gap-3 text-blue-200 text-sm group">
+                  <Wrench className="w-4 h-4 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" style={{ color: '#F0C05A' }} />
+                  <span className="group-hover:text-white transition-colors">{t('footer.commitments.installation')}</span>
+                </li>
+                <li className="flex items-start gap-3 text-blue-200 text-sm group">
+                  <Phone className="w-4 h-4 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" style={{ color: '#F0C05A' }} />
+                  <span className="group-hover:text-white transition-colors">{t('footer.commitments.sav')}</span>
+                </li>
+                <li className="flex items-start gap-3 text-blue-200 text-sm group">
+                  <Shield className="w-4 h-4 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" style={{ color: '#F0C05A' }} />
+                  <span className="group-hover:text-white transition-colors">{t('footer.commitments.warranty')}</span>
+                </li>
+              </ul>
+            </motion.div>
           </div>
         </motion.div>
 
         {/* Gold line above bottom bar */}
         <div className="h-px mx-4 sm:mx-6 lg:mx-8 max-w-7xl lg:mx-auto" style={{ backgroundColor: '#F0C05A', opacity: 0.3 }} />
+
+        {/* Certifications & Partenaires Row */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h4 className="text-[#F0C05A] font-semibold text-xs uppercase tracking-wider">
+              {t('footer.certifications')}
+            </h4>
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              {['CE', 'ISO 9001', 'ISO 13485'].map((cert) => (
+                <span
+                  key={cert}
+                  className="px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide border border-white/20 text-blue-200/80 hover:border-[#F0C05A]/50 hover:text-white transition-colors"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+                >
+                  {cert}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Bottom Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -305,6 +353,18 @@ export default function Footer() {
             <p className="flex items-center gap-1">
               Fait avec <Heart className="w-3 h-3 text-red-400 inline" /> en Algérie 🇩🇿
             </p>
+          </div>
+        </div>
+
+        {/* Back to Top */}
+        <div className="border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-center">
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="text-white/50 hover:text-white/80 text-xs transition-colors duration-200"
+            >
+              {t('footer.backToTop')}
+            </button>
           </div>
         </div>
       </div>

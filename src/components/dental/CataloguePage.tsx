@@ -119,6 +119,7 @@ export default function CataloguePage() {
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortOption>('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -131,6 +132,42 @@ export default function CataloguePage() {
   const priceMax = useMemo(() => pricesWithValues.length > 0 ? Math.max(...pricesWithValues) : 10000000, [pricesWithValues]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [includeOnQuote, setIncludeOnQuote] = useState(true);
+
+  // Brand extraction with product counts (case-insensitive normalization)
+  const brandsWithCounts = useMemo(() => {
+    const brandMap = new Map<string, { display: string; count: number }>();
+    products.forEach((p) => {
+      if (p.brand) {
+        const key = p.brand.toLowerCase().trim();
+        const existing = brandMap.get(key);
+        if (existing) {
+          // Prefer the properly-cased version
+          const display = p.brand.trim().charAt(0).toUpperCase() + p.brand.trim().slice(1);
+          if (display === p.brand.trim()) {
+            existing.display = p.brand.trim();
+          }
+          existing.count += 1;
+        } else {
+          brandMap.set(key, { display: p.brand.trim(), count: 1 });
+        }
+      }
+    });
+    return Array.from(brandMap.entries())
+      .map(([key, data]) => ({ brand: data.display, key, count: data.count }))
+      .sort((a, b) => a.brand.localeCompare(b.brand));
+  }, [products]);
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      if (next.has(brand)) {
+        next.delete(brand);
+      } else {
+        next.add(brand);
+      }
+      return next;
+    });
+  };
 
   // Parse category from URL hash if present
   React.useEffect(() => {
@@ -150,6 +187,12 @@ export default function CataloguePage() {
     if (selectedCategory !== 'all') {
       const cat = categories.find((c) => c.slug === selectedCategory);
       if (cat) result = result.filter((p) => p.category_id === cat.id);
+    }
+
+    // Filter by brands (case-insensitive matching)
+    if (selectedBrands.size > 0) {
+      const lowerBrands = new Set(Array.from(selectedBrands).map(b => b.toLowerCase()));
+      result = result.filter((p) => p.brand && lowerBrands.has(p.brand.toLowerCase()));
     }
 
     // Filter by search
@@ -195,18 +238,19 @@ export default function CataloguePage() {
     }
 
     return result;
-  }, [products, categories, selectedCategory, search, sort, language, priceRange, includeOnQuote]);
+  }, [products, categories, selectedCategory, selectedBrands, search, sort, language, priceRange, includeOnQuote]);
 
   const formatPrice = (price: number | undefined) => {
     if (price == null || isNaN(price) || price === 0) return null;
     return price.toLocaleString('fr-DZ') + ' DA';
   };
 
-  const isFiltering = selectedCategory !== 'all' || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote;
+  const isFiltering = selectedCategory !== 'all' || selectedBrands.size > 0 || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote;
 
   const handleClearFilters = () => {
     setSearch('');
     setSelectedCategory('all');
+    setSelectedBrands(new Set());
     setSort('newest');
     setPriceRange([0, priceMax]);
     setIncludeOnQuote(true);
@@ -412,6 +456,74 @@ export default function CataloguePage() {
                 })}
               </div>
 
+              {/* Brand Filter in Sidebar */}
+              {brandsWithCounts.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                  <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                    {t('catalogue.brands')}
+                  </h4>
+                  <div className="space-y-1">
+                    {/* "Toutes les marques" option */}
+                    <button
+                      onClick={() => setSelectedBrands(new Set())}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+                        selectedBrands.size === 0
+                          ? 'font-semibold shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                      }`}
+                      style={
+                        selectedBrands.size === 0
+                          ? { backgroundColor: '#1E3A5F', color: '#fff' }
+                          : {}
+                      }
+                    >
+                      <span className="flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        {t('catalogue.allBrands')}
+                      </span>
+                    </button>
+
+                    <div className="my-2 border-t border-gray-100 dark:border-white/10" />
+
+                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1" style={{ scrollbarWidth: 'thin' }}>
+                      {brandsWithCounts.map(({ brand, count }) => {
+                        const isActive = selectedBrands.has(brand);
+                        return (
+                          <button
+                            key={brand}
+                            onClick={() => toggleBrand(brand)}
+                            className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+                              isActive
+                                ? 'font-medium shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                            }`}
+                            style={
+                              isActive
+                                ? { backgroundColor: '#F0C05A20', color: '#1E3A5F' }
+                                : {}
+                            }
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              {isActive && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />}
+                              <span className="truncate">{brand}</span>
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center shrink-0 ml-1 ${
+                                isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+                              }`}
+                              style={isActive ? { backgroundColor: '#F0C05A', color: '#1E3A5F' } : {}}
+                            >
+                              {count}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Price Range Filter in Sidebar */}
               <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
             </div>
@@ -473,6 +585,44 @@ export default function CataloguePage() {
                       );
                     })}
                   </div>
+                  {/* Brand filter in mobile */}
+                  {brandsWithCounts.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                      <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+                        {t('catalogue.brands')}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setSelectedBrands(new Set())}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            selectedBrands.size === 0
+                              ? 'text-white shadow-sm'
+                              : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
+                          }`}
+                          style={selectedBrands.size === 0 ? { backgroundColor: '#1E3A5F' } : {}}
+                        >
+                          {t('catalogue.allBrands')}
+                        </button>
+                        {brandsWithCounts.map(({ brand, count }) => {
+                          const isActive = selectedBrands.has(brand);
+                          return (
+                            <button
+                              key={brand}
+                              onClick={() => toggleBrand(brand)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                                isActive
+                                  ? 'shadow-sm'
+                                  : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/15'
+                              }`}
+                              style={isActive ? { backgroundColor: '#F0C05A', color: '#1E3A5F' } : {}}
+                            >
+                              {brand} ({count})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {/* Price Range in mobile filter */}
                   <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
                 </motion.div>
@@ -592,7 +742,7 @@ function ProductCard({
       transition={{ delay: Math.min(index * 0.04, 0.3) }}
     >
       <Card
-        className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer"
+        className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-xl dark:hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 hover-lift"
         onClick={() => navigate(`/product/${product.slug}`)}
       >
         {/* Image area */}
@@ -617,22 +767,22 @@ function ProductCard({
             </div>
           )}
 
-          {/* Top-left badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {/* Top-right: Nouveau & Best-seller badges */}
+          <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end z-[2]">
             {product.is_new && (
-              <Badge className="text-[10px] px-2 py-0.5 border-0" style={{ backgroundColor: '#1E3A5F' }}>
+              <Badge className="text-[10px] px-2 py-0.5 border-0 text-white" style={{ backgroundColor: '#3B8C6E' }}>
                 {t('products.new')}
               </Badge>
             )}
             {product.is_best_seller && (
-              <Badge className="text-[10px] px-2 py-0.5 border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+              <Badge className="text-[10px] px-2 py-0.5 border-0 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
                 {t('products.bestSeller')}
               </Badge>
             )}
           </div>
 
-          {/* Top-right: Stock badge */}
-          <div className="absolute top-3 right-3">
+          {/* Top-left: Stock badge */}
+          <div className="absolute top-3 left-3 z-[2]">
             {product.in_stock ? (
               <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-white/90 dark:bg-[#162236]/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 backdrop-blur-sm">
                 {t('products.inStock')}

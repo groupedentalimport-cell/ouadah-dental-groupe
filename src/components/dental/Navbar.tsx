@@ -46,7 +46,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -57,6 +57,7 @@ export default function Navbar() {
   const navLinks = [
     { label: t('nav.catalogue'), path: '/catalogue', routeName: 'catalogue' },
     { label: t('nav.blog'), path: '/blog', routeName: 'blog' },
+    { label: t('nav.promotions'), path: '/catalogue', routeName: 'promotions', isPromo: true },
     { label: t('nav.about'), path: '/about', routeName: 'about' },
     { label: t('nav.contact'), path: '/contact', routeName: 'contact' },
   ];
@@ -98,10 +99,14 @@ export default function Navbar() {
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/90 dark:bg-[#0f1d2e]/90 backdrop-blur-xl shadow-lg border-b border-gray-100/50 dark:border-white/5'
+          ? 'bg-white/90 dark:bg-[#0f1d2e]/90 backdrop-blur-xl shadow-md'
           : 'bg-white/70 dark:bg-[#0f1d2e]/70 backdrop-blur-md'
       }`}
     >
+      {/* Gold bottom border line when scrolled */}
+      {scrolled && (
+        <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ backgroundColor: '#F0C05A' }} />
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo */}
@@ -139,7 +144,7 @@ export default function Navbar() {
               const isActive = route === link.routeName;
               return (
                 <button
-                  key={link.path}
+                  key={link.routeName}
                   onClick={() => handleNav(link.path)}
                   className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
@@ -148,6 +153,10 @@ export default function Navbar() {
                   }`}
                 >
                   {link.label}
+                  {/* Red dot indicator for promotions link */}
+                  {'isPromo' in link && link.isPromo && (
+                    <span className="absolute -top-0.5 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#C0564F' }} />
+                  )}
                   {/* Gold accent line under active item */}
                   {isActive && (
                     <motion.div
@@ -323,7 +332,7 @@ export default function Navbar() {
                     const isActive = route === link.routeName;
                     return (
                       <motion.button
-                        key={link.path}
+                        key={link.routeName}
                         onClick={() => handleNav(link.path)}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -338,6 +347,9 @@ export default function Navbar() {
                           <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
                         )}
                         {link.label}
+                        {'isPromo' in link && link.isPromo && (
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#C0564F' }} />
+                        )}
                       </motion.button>
                     );
                   })}

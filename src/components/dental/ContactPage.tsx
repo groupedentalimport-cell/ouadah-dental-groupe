@@ -278,6 +278,33 @@ export default function ContactPage() {
             <Card className="border-0 shadow-sm overflow-hidden">
               <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
               <CardContent className="p-6 sm:p-8">
+                {/* Quick Action Buttons - Call & WhatsApp */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <motion.a
+                    href={`tel:${contactInfo.phone?.replace(/\s/g, '')}`}
+                    whileHover={{ scale: 1.03, boxShadow: '0 10px 25px -5px rgba(30,58,95,0.3)' }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-semibold text-base shadow-lg transition-all duration-300"
+                    style={{ backgroundColor: '#1E3A5F' }}
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>{t('contact.callUs')}</span>
+                    <span className="text-white/70 text-sm font-normal" dir="ltr">{contactInfo.phone}</span>
+                  </motion.a>
+                  <motion.a
+                    href={`https://wa.me/${contactInfo.phone?.replace(/\s/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.03, boxShadow: '0 10px 25px -5px rgba(37,211,102,0.3)' }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-semibold text-base shadow-lg transition-all duration-300"
+                    style={{ backgroundColor: '#25D366' }}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>{t('contact.whatsappUs')}</span>
+                  </motion.a>
+                </div>
+
                 <h2 className="text-xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
                   {t('contact.form.message')}
                 </h2>
