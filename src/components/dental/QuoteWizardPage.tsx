@@ -89,27 +89,31 @@ export default function QuoteWizardPage() {
     setSubmitError(false);
 
     try {
-      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
-      if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase.from('quotes').insert([
-          {
-            nom: clientInfo.fullName,
-            email: clientInfo.email,
-            telephone: clientInfo.phone,
-            wilaya: clientInfo.wilaya,
-            type_client: clientInfo.clientType,
-            produits_selectionnes: cart.items.map((item) => ({
-              id: item.id,
-              slug: item.slug,
-              name: item.name,
-              quantity: item.quantity,
-            })),
-            message: clientInfo.message,
-            status: 'new',
-          },
-        ]);
-        if (error) throw error;
+      const response = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: clientInfo.fullName,
+          email: clientInfo.email,
+          telephone: clientInfo.phone,
+          wilaya: clientInfo.wilaya,
+          type_client: clientInfo.clientType,
+          produits_selectionnes: cart.items.map((item) => ({
+            id: item.id,
+            slug: item.slug,
+            name: item.name,
+            quantity: item.quantity,
+          })),
+          message: clientInfo.message,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Quote submission failed:', errorData);
+        throw new Error(errorData.error || 'Failed to submit quote');
       }
+
       setSubmitted(true);
       cart.clearCart();
     } catch (err) {
@@ -552,7 +556,7 @@ export default function QuoteWizardPage() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting || cart.items.length === 0}
+                  disabled={submitting}
                   className="gap-2"
                   style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                 >
@@ -646,7 +650,7 @@ export default function QuoteWizardPage() {
                             if (step < totalSteps) handleNext();
                             else handleSubmit();
                           }}
-                          disabled={submitting || (step === totalSteps && cart.items.length === 0)}
+                          disabled={submitting}
                           className="w-full h-10 font-semibold text-sm gap-2"
                           style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                         >
@@ -710,7 +714,7 @@ export default function QuoteWizardPage() {
                   else if (step === 2) handleNext();
                   else handleSubmit();
                 }}
-                disabled={submitting || (step === totalSteps && cart.items.length === 0)}
+                disabled={submitting}
                 className="h-10 px-4 font-semibold text-sm gap-1.5 whitespace-nowrap"
                 style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
               >

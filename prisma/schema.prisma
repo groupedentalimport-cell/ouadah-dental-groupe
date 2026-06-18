@@ -30,3 +30,37 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Quote {
+  id                  String   @id @default(cuid())
+  nom                 String
+  email               String
+  telephone           String
+  wilaya              String
+  typeClient          String   @default("clinique") // clinique, revendeur, comptoir
+  produitsSelectionnes String  @default("[]") // JSON string
+  message             String?
+  statut              String   @default("nouveau") // nouveau, en_cours, traite, archive
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  statut    String   @default("nouveau") // nouveau, en_cours, traite, archive
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  statut    String   @default("actif") // actif, desabonne
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

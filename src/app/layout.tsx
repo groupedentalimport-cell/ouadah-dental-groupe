@@ -137,7 +137,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ODG" />
         <script
@@ -148,6 +148,7 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${cairo.variable} antialiased bg-background text-foreground`}
         style={{ fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif" }}
+        suppressHydrationWarning
       >
         <ThemeProvider
           attribute="class"

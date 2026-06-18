@@ -1761,38 +1761,46 @@ function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => vo
 
   useEffect(() => {
     const fetchQuotes = async () => {
-      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
-      if (!isSupabaseConfigured || !supabase) {
-        setLoading(false);
-        return;
+      try {
+        const res = await fetch('/api/quotes/list?statut=all');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.quotes) setQuotes(data.quotes);
+        }
+      } catch {
+        // silently fail
       }
-      const { data } = await supabase.from('quotes').select('*').order('created_at', { ascending: false });
-      if (data) setQuotes(data);
       setLoading(false);
     };
     fetchQuotes();
   }, [refresh]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, statut: string) => {
     try {
-      const { supabase, isSupabaseConfigured } = await import('@/lib/supabase');
-      if (!isSupabaseConfigured || !supabase) return;
-      await supabase.from('quotes').update({ status }).eq('id', id);
-      setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, status } : q)));
-      toast.success('Statut mis à jour');
+      const res = await fetch('/api/quotes/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, statut }),
+      });
+      if (res.ok) {
+        setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, statut } : q)));
+        toast.success('Statut mis à jour');
+      } else {
+        toast.error('Erreur lors de la mise à jour');
+      }
     } catch {
       toast.error('Erreur lors de la mise à jour');
     }
   };
 
   const statusConfig: Record<string, { bg: string; color: string; label: string; icon: any }> = {
-    new: { bg: '#DBEAFE', color: '#2563EB', label: t('admin.quotes.new'), icon: AlertCircle },
-    in_progress: { bg: '#FEF3C7', color: WARNING, label: t('admin.quotes.inProgress'), icon: Clock },
-    processed: { bg: '#D1FAE5', color: SUCCESS, label: t('admin.quotes.processed'), icon: CheckCircle2 },
-    archived: { bg: '#F3F4F6', color: '#6B7280', label: t('admin.quotes.archived'), icon: FileCheck },
+    nouveau: { bg: '#DBEAFE', color: '#2563EB', label: t('admin.quotes.new'), icon: AlertCircle },
+    en_cours: { bg: '#FEF3C7', color: WARNING, label: t('admin.quotes.inProgress'), icon: Clock },
+    traite: { bg: '#D1FAE5', color: SUCCESS, label: t('admin.quotes.processed'), icon: CheckCircle2 },
+    archive: { bg: '#F3F4F6', color: '#6B7280', label: t('admin.quotes.archived'), icon: FileCheck },
   };
 
-  const filteredQuotes = filterStatus === 'all' ? quotes : quotes.filter(q => q.status === filterStatus);
+  const filteredQuotes = filterStatus === 'all' ? quotes : quotes.filter(q => q.statut === filterStatus);
 
   if (loading) {
     return (
@@ -1823,7 +1831,7 @@ function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => vo
         </div>
         <div className="flex items-center gap-2">
           <Badge className="text-xs px-3 py-1 border-0" style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}>
-            {quotes.filter(q => q.status === 'new').length} Nouveaux
+            {quotes.filter(q => q.statut === 'nouveau').length} Nouveaux
           </Badge>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40 h-8 rounded-lg text-xs">
@@ -1831,10 +1839,10 @@ function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => vo
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="new">{t('admin.quotes.new')}</SelectItem>
-              <SelectItem value="in_progress">{t('admin.quotes.inProgress')}</SelectItem>
-              <SelectItem value="processed">{t('admin.quotes.processed')}</SelectItem>
-              <SelectItem value="archived">{t('admin.quotes.archived')}</SelectItem>
+              <SelectItem value="nouveau">{t('admin.quotes.new')}</SelectItem>
+              <SelectItem value="en_cours">{t('admin.quotes.inProgress')}</SelectItem>
+              <SelectItem value="traite">{t('admin.quotes.processed')}</SelectItem>
+              <SelectItem value="archive">{t('admin.quotes.archived')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1850,7 +1858,7 @@ function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => vo
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredQuotes.map((quote, i) => {
-            const sc = statusConfig[quote.status] || statusConfig.new;
+            const sc = statusConfig[quote.statut] || statusConfig.nouveau;
             const StatusIcon = sc.icon;
             return (
               <motion.div
@@ -1911,20 +1919,20 @@ function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => vo
                     <div className="flex items-center justify-between">
                       <div className="text-[10px] text-gray-400 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {quote.created_at ? new Date(quote.created_at).toLocaleDateString('fr-FR') : ''}
+                        {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('fr-FR') : ''}
                       </div>
                       <Select
-                        value={quote.status}
+                        value={quote.statut}
                         onValueChange={(v) => updateStatus(quote.id, v)}
                       >
                         <SelectTrigger className="w-32 h-7 text-[10px] rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="new">{t('admin.quotes.new')}</SelectItem>
-                          <SelectItem value="in_progress">{t('admin.quotes.inProgress')}</SelectItem>
-                          <SelectItem value="processed">{t('admin.quotes.processed')}</SelectItem>
-                          <SelectItem value="archived">{t('admin.quotes.archived')}</SelectItem>
+                          <SelectItem value="nouveau">{t('admin.quotes.new')}</SelectItem>
+                          <SelectItem value="en_cours">{t('admin.quotes.inProgress')}</SelectItem>
+                          <SelectItem value="traite">{t('admin.quotes.processed')}</SelectItem>
+                          <SelectItem value="archive">{t('admin.quotes.archived')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
