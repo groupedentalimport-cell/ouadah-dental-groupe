@@ -3,7 +3,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingCart,
   Eye,
   GitCompareArrows,
   Check,
@@ -204,14 +203,6 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
               {/* Action buttons */}
               <div className="flex flex-col gap-2 mt-auto">
                 <div className="flex gap-2">
-                  <Button
-                    className="flex-1 gap-2 h-10 font-semibold shadow-sm"
-                    style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                    onClick={() => navigate('/contact')}
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    {t('products.quickView.addToQuote')}
-                  </Button>
                   <Button
                     variant="outline"
                     size="icon"

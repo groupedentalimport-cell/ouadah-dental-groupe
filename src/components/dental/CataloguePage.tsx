@@ -6,7 +6,7 @@ import {
   Search,
   SlidersHorizontal,
   Package,
-  ShoppingCart,
+
   Eye,
   ChevronDown,
   X,
@@ -1118,15 +1118,7 @@ function ProductCard({
                   >
                     {isInCompare(product.id) ? <Check className="w-3.5 h-3.5" /> : <GitCompareArrows className="w-3.5 h-3.5" />}
                   </Button>
-                  <Button
-                    size="sm"
-                    className="text-xs h-8 gap-1.5 shadow-sm min-h-[36px] font-semibold"
-                    style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                    onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
-                  </Button>
+
                 </div>
               </div>
             </CardContent>
@@ -1277,15 +1269,7 @@ function ProductCard({
                 <Eye className="w-3.5 h-3.5" />
                 {t('products.viewDetails')}
               </Button>
-              <Button
-                size="sm"
-                className="h-8 px-3 text-xs font-semibold shadow-lg gap-1"
-                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-                {t('products.addQuote')}
-              </Button>
+
             </div>
           </div>
         </div>
@@ -1371,16 +1355,7 @@ function ProductCard({
                   <GitCompareArrows className="w-3.5 h-3.5" />
                 )}
               </Button>
-              {/* Add to Quote button */}
-              <Button
-                size="sm"
-                className="text-xs h-8 gap-1.5 shadow-sm font-semibold min-h-[36px] transition-all hover:shadow-md"
-                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-                {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
-              </Button>
+
             </div>
           </div>
         </CardContent>

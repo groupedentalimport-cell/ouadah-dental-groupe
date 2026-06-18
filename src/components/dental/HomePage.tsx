@@ -460,17 +460,7 @@ export default function HomePage() {
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                onClick={() => navigate('/contact')}
-                size="lg"
-                variant="outline"
-                className="text-base font-semibold px-8 py-3.5 h-auto border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg shadow-[#F0C05A]/20 hover:shadow-xl hover:shadow-[#F0C05A]/30 bg-white/10 min-h-[44px] group"
-              >
-                {t('hero.cta.quote')}
-                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </Button>
-            </motion.div>
+
           </motion.div>
 
           {/* Trust badges */}
@@ -928,19 +918,7 @@ export default function HomePage() {
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                          <Button
-                            size="sm"
-                            className="text-xs h-7 px-2.5 border-0"
-                            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate('/contact');
-                            }}
-                          >
-                            {t('products.addQuote')}
-                          </Button>
-                        </motion.div>
+
                       </div>
                     </div>
                   </CardContent>
@@ -1460,8 +1438,8 @@ export default function HomePage() {
             </h2>
             <p className="text-blue-200/60 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
               {language === 'ar'
-                ? 'احصل على عرض سعر مخصص في أقل من 24 ساعة. فريقنا متاح لمساعدتك.'
-                : 'Obtenez un devis personnalisé en moins de 24h. Notre équipe est à votre disposition.'
+                ? 'فريقنا متاح لمساعدتك في تجهيز عيادتك.'
+                : 'Notre équipe est à votre disposition pour vous accompagner.'
               }
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -1469,22 +1447,11 @@ export default function HomePage() {
                 <Button
                   onClick={() => navigate('/contact')}
                   size="lg"
-                  className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
+                  className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10 transition-all duration-300 gap-2"
                   style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                 >
-                  {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
-                  <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                <Button
-                  onClick={() => navigate('/contact')}
-                  size="lg"
-                  variant="outline"
-                  className="text-base font-semibold px-8 h-13 border-white/30 text-white hover:bg-white/10 transition-all duration-300 gap-2"
-                >
                   {language === 'ar' ? 'اتصل بنا' : 'Nous contacter'}
-                  <ChevronRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </motion.div>
             </div>

@@ -2720,3 +2720,42 @@ Stage Summary:
 - Quote model removed from Prisma schema
 - AdminPanel quotes tab removed
 - Site fully functional without the quote module
+
+---
+Task ID: RemoveDevisButtons
+Agent: Subagent
+Task: Remove all devis/quote buttons from public-facing site
+
+Work Log:
+- Removed "Demander un devis" hero CTA button from HomePage.tsx (second hero button with t('hero.cta.quote'))
+- Removed "Ajouter au devis" button from product cards in HomePage.tsx
+- Removed entire bottom CTA section with "Obtenez un devis personnalisé en moins de 24h" from HomePage.tsx, replaced with simpler "Nous contacter" button
+- Removed "Ajouter au devis" buttons from list view, grid hover overlay, and grid card footer in CataloguePage.tsx (3 buttons total)
+- Removed ShoppingCart import from CataloguePage.tsx
+- Removed primary "Demander un devis" CTA button from ProductDetailPage.tsx
+- Removed secondary "Ajouter au devis" button from ProductDetailPage.tsx
+- Removed isOnQuote "Demander un devis" button from ProductDetailPage.tsx
+- Removed entire sticky mobile "Ajouter au devis" bar from ProductDetailPage.tsx
+- Removed ShoppingCart import from ProductDetailPage.tsx (FileText kept - still used for "Prix sur devis" display)
+- Removed entire TOP CTA BAR section with "Demander un devis" button from Footer.tsx
+- Removed "Ajouter au devis" button from QuickViewModal.tsx and cleaned up ShoppingCart import
+- Removed entire "Add to Quote" table row from CompareView.tsx and cleaned up ShoppingCart import
+- Removed "Tout ajouter au devis" button from WishlistPage.tsx
+- Removed per-product "Devis" buttons from WishlistPage.tsx
+- Removed handleAddAllToQuote function and ShoppingCart import from WishlistPage.tsx
+- Removed "Demander un devis" button from ServicesPage.tsx CTA section (kept phone link)
+- Removed unused ArrowRight and Button imports from ServicesPage.tsx
+- Removed "Demander un devis personnalisé" button from ClinicWizardPage.tsx
+- Removed unused ChevronRight import from ClinicWizardPage.tsx
+- Ran bun run lint — passed with zero errors
+- Verified no remaining "Demander un devis", "Ajouter au devis", or ShoppingCart references in dental components
+- Verified "Sur devis" / "Prix sur devis" informational text labels are preserved
+- Verified "Devis" service description section in ServicesPage.tsx is preserved
+- Verified ClinicWizardPage.tsx estimation text "le devis final peut varier" is preserved
+
+Stage Summary:
+- All 9 files successfully modified to remove devis/quote buttons
+- 15+ individual button elements removed across all components
+- 6 unused imports cleaned up (ShoppingCart ×5, ArrowRight, Button, ChevronRight)
+- Lint passes cleanly with zero errors
+- All informational "Sur devis"/"Prix sur devis" text labels preserved as intended

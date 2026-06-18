@@ -114,25 +114,6 @@ export default function Footer() {
       {/* ==================== DECORATIVE TOP GRADIENT BORDER ==================== */}
       <div className="h-1" style={{ background: 'linear-gradient(90deg, #1E3A5F, #F0C05A, #1E3A5F)' }} />
 
-      {/* ==================== TOP CTA BAR ==================== */}
-      <div className="dark:bg-[#0a1929] bg-[#0f2b47]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-blue-200 text-sm sm:text-base font-medium text-center sm:text-left">
-            {t('footer.cta')}
-          </p>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Button
-              onClick={() => navigate('/contact')}
-              className="font-semibold px-6 h-10 shadow-lg hover:shadow-xl transition-all text-sm whitespace-nowrap"
-              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-            >
-              {t('footer.requestQuote')}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </motion.div>
-        </div>
-      </div>
-
       {/* ==================== MAIN FOOTER ==================== */}
       <div className="dark:bg-[#0f1d2e] bg-[#1E3A5F] relative overflow-hidden">
         {/* Decorative tooth watermark */}

@@ -15,7 +15,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   ShoppingBag,
-  ChevronRight,
+
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
@@ -657,23 +657,7 @@ export default function ClinicWizardPage() {
                     </div>
                   </div>
 
-                  {/* CTA */}
-                  <div className="mt-6 text-center">
-                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                      <Button
-                        onClick={() => navigate('/contact')}
-                        className="h-12 px-8 font-semibold text-base text-white shadow-lg"
-                        style={{ backgroundColor: '#3B8C6E' }}
-                      >
-                        <ChevronRight
-                          className={`w-4 h-4 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`}
-                        />
-                        {language === 'ar'
-                          ? 'طلب عرض سعر مخصص'
-                          : 'Demander un devis personnalisé'}
-                      </Button>
-                    </motion.div>
-                  </div>
+
                 </CardContent>
               </Card>
             </motion.div>

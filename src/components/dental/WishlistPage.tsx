@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
   Trash2,
-  ShoppingCart,
+
   Package,
   ArrowRight,
   X,
@@ -88,10 +88,6 @@ export default function WishlistPage() {
   const formatPrice = (price: number | undefined) => {
     if (!price || price === 0) return null;
     return price.toLocaleString('fr-DZ') + ' DA';
-  };
-
-  const handleAddAllToQuote = () => {
-    navigate('/contact');
   };
 
   const handleRemoveItem = (slug: string, name: string) => {
@@ -260,15 +256,7 @@ export default function WishlistPage() {
               <Trash2 className="w-4 h-4" />
               {t('wishlist.clearAll')}
             </Button>
-            <Button
-              size="sm"
-              className="gap-2 font-semibold shadow-md"
-              style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-              onClick={handleAddAllToQuote}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {language === 'ar' ? 'أضف الكل للتسعير' : 'Tout ajouter au devis'}
-            </Button>
+
           </div>
         </motion.div>
 
@@ -397,18 +385,7 @@ export default function WishlistPage() {
                             {t('products.priceOnQuote')}
                           </span>
                         )}
-                        <Button
-                          size="sm"
-                          className="text-xs h-7 px-2.5 border-0 gap-1"
-                          style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate('/contact');
-                          }}
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          {language === 'ar' ? 'أضف' : 'Devis'}
-                        </Button>
+
                       </div>
                     </CardContent>
                   </Card>

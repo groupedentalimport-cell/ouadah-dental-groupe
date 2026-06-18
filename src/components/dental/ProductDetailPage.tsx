@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowLeft,
-  ShoppingCart,
+
   CheckCircle2,
   CheckCircle,
   Shield,
@@ -714,29 +714,8 @@ export default function ProductDetailPage() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              {/* Primary CTA: Demander un devis */}
-              <Button
-                size="lg"
-                className="w-full h-12 text-base font-bold shadow-lg gap-2"
-                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                onClick={() => navigate('/contact')}
-              >
-                <FileText className="w-5 h-5" />
-                {t('products.requestQuote')}
-              </Button>
-
-              {/* Secondary: Ajouter au devis + Wishlist + Compare */}
+              {/* Wishlist + Compare */}
               <div className="flex gap-2">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 h-12 text-sm font-semibold gap-2 dark:border-gray-600 dark:text-gray-300 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
-                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
-                  onClick={() => navigate('/contact')}
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  {t('products.addQuote')}
-                </Button>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     size="lg"
@@ -895,18 +874,7 @@ export default function ProductDetailPage() {
                 </Button>
               </div>
 
-              {isOnQuote && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full h-12 text-base font-semibold gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
-                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
-                  onClick={() => navigate('/contact')}
-                >
-                  <FileText className="w-5 h-5" />
-                  {t('products.requestQuote')}
-                </Button>
-              )}
+
 
               {/* Trust Badges Row */}
               <div className="flex flex-wrap gap-2 mt-4">
@@ -1663,35 +1631,7 @@ export default function ProductDetailPage() {
         </motion.div>
       )}
 
-      {/* Sticky Add-to-Quote Bar on Mobile */}
-      <motion.div
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#162236]/95 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
-      >
-        <div className="px-4 py-3 flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-              {getProductName(product, language)}
-            </p>
-            {priceDisplay ? (
-              <p className="text-xs font-semibold dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
-            ) : (
-              <p className="text-xs font-medium dark:text-blue-200" style={{ color: '#F0C05A' }}>
-                {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
-              </p>
-            )}
-          </div>
-          <Button
-            className="h-10 px-5 font-semibold shadow-md shrink-0"
-            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-            onClick={() => navigate('/contact')}
-          >
-            <ShoppingCart className="w-4 h-4 mr-1.5" />
-            {t('products.addToQuoteSticky')}
-          </Button>
-        </div>
-      </motion.div>
+
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   Building2,
   CreditCard,
   Phone,
-  ArrowRight,
+
   CheckCircle2,
   MessageCircle,
   ClipboardList,
@@ -20,7 +20,6 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 export default function ServicesPage() {
   const { t, isRTL, language } = useTranslation();
@@ -513,16 +512,6 @@ export default function ServicesPage() {
                   : 'Contactez-nous pour obtenir un devis personnalisé ou discuter de vos besoins'}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                  <Button
-                    onClick={() => navigate('/contact')}
-                    className="h-12 px-8 font-semibold text-base text-white shadow-lg"
-                    style={{ backgroundColor: '#1E3A5F' }}
-                  >
-                    <ArrowRight className={`w-4 h-4 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`} />
-                    {language === 'ar' ? 'طلب عرض سعر' : 'Demander un devis'}
-                  </Button>
-                </motion.div>
                 <motion.a
                   href="tel:+213555123456"
                   whileHover={{ scale: 1.03 }}

@@ -1,0 +1,728 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Armchair,
+     7→  Monitor,
+     8→  Scan,
+     9→  ShieldCheck,
+    10→  Wind,
+    11→  Package,
+    12→  Wrench,
+    13→  Lamp,
+    14→  ArrowRight,
+    15→  ArrowLeft,
+    16→  CheckCircle2,
+    17→  ShoppingBag,
+    18→  ChevronRight,
+    19→} from 'lucide-react';
+    20→import { useTranslation } from '@/lib/i18n';
+    21→import { useRouter } from '@/lib/router';
+    22→import { Card, CardContent } from '@/components/ui/card';
+    23→import { Button } from '@/components/ui/button';
+    24→import { Badge } from '@/components/ui/badge';
+    25→
+    26→// Category icon mapping
+    27→const categoryIcons: Record<string, React.ReactNode> = {
+    28→  Armchair: <Armchair className="w-5 h-5" />,
+    29→  Monitor: <Monitor className="w-5 h-5" />,
+    30→  Scan: <Scan className="w-5 h-5" />,
+    31→  Shield: <ShieldCheck className="w-5 h-5" />,
+    32→  Wind: <Wind className="w-5 h-5" />,
+    33→  Package: <Package className="w-5 h-5" />,
+    34→  Wrench: <Wrench className="w-5 h-5" />,
+    35→  Lamp: <Lamp className="w-5 h-5" />,
+    36→};
+    37→
+    38→// Budget ranges
+    39→const budgetRanges = [
+    40→  { id: 'low', labelFr: 'Moins de 5M DA', labelAr: 'أقل من 5M DA', min: 0, max: 5000000 },
+    41→  { id: 'mid', labelFr: '5 - 15M DA', labelAr: '5 - 15M DA', min: 5000000, max: 15000000 },
+    42→  { id: 'high', labelFr: '15 - 30M DA', labelAr: '15 - 30M DA', min: 15000000, max: 30000000 },
+    43→  { id: 'premium', labelFr: 'Plus de 30M DA', labelAr: 'أكثر من 30M DA', min: 30000000, max: null },
+    44→];
+    45→
+    46→// Operatories options
+    47→const operatoryOptions = [
+    48→  { id: '1-2', labelFr: '1-2', labelAr: '1-2', icon: '🏥' },
+    49→  { id: '3-5', labelFr: '3-5', labelAr: '3-5', icon: '🏥🏥' },
+    50→  { id: '6-10', labelFr: '6-10', labelAr: '6-10', icon: '🏥🏥🏥' },
+    51→  { id: '10+', labelFr: '10+', labelAr: '+10', icon: '🏥🏥🏥🏥' },
+    52→];
+    53→
+    54→// Specialty options
+    55→const specialtyOptions = [
+    56→  { id: 'general', labelFr: 'Généraliste', labelAr: 'طب أسنان عام', recommended: ['Armchair', 'Monitor', 'Wrench', 'Lamp'] },
+    57→  { id: 'ortho', labelFr: 'Orthodontie', labelAr: 'تقويم الأسنان', recommended: ['Armchair', 'Monitor', 'Scan'] },
+    58→  { id: 'pedo', labelFr: 'Pédodontie', labelAr: 'طب أسنان الأطفال', recommended: ['Armchair', 'Monitor', 'Lamp'] },
+    59→  { id: 'surgery', labelFr: 'Chirurgie', labelAr: 'جراحة الفم', recommended: ['Armchair', 'Shield', 'Wrench', 'Scan'] },
+    60→  { id: 'implant', labelFr: 'Implantologie', labelAr: 'زراعة الأسنان', recommended: ['Armchair', 'Scan', 'Shield', 'Wrench'] },
+    61→];
+    62→
+    63→// Equipment categories with estimated price ranges per unit
+    64→const equipmentCategories = [
+    65→  { id: 'Armchair', labelFr: 'Fauteuils dentaires', labelAr: 'كراسي الأسنان', icon: 'Armchair', priceMin: 1500000, priceMax: 5000000 },
+    66→  { id: 'Monitor', labelFr: 'Moniteurs intra-oraux', labelAr: 'كاميرات داخل الفم', icon: 'Monitor', priceMin: 300000, priceMax: 1500000 },
+    67→  { id: 'Scan', labelFr: 'Scanners / Radiologie', labelAr: 'أجهزة المسح / الأشعة', icon: 'Scan', priceMin: 2000000, priceMax: 8000000 },
+    68→  { id: 'Shield', labelFr: 'Stérilisation', labelAr: 'التعقيم', icon: 'Shield', priceMin: 500000, priceMax: 3000000 },
+    69→  { id: 'Wind', labelFr: 'Compresseurs', labelAr: 'الضواغط', icon: 'Wind', priceMin: 400000, priceMax: 2000000 },
+    70→  { id: 'Package', labelFr: 'Petit matériel', labelAr: 'معدات صغيرة', icon: 'Package', priceMin: 100000, priceMax: 800000 },
+    71→  { id: 'Wrench', labelFr: 'Instruments / Micromoteurs', labelAr: 'أدوات / محركات دقيقة', icon: 'Wrench', priceMin: 200000, priceMax: 2000000 },
+    72→  { id: 'Lamp', labelFr: 'Éclairage', labelAr: 'الإضاءة', icon: 'Lamp', priceMin: 150000, priceMax: 1000000 },
+    73→];
+    74→
+    75→export default function ClinicWizardPage() {
+    76→  const { t, isRTL, language } = useTranslation();
+    77→  const { navigate } = useRouter();
+    78→
+    79→  const [step, setStep] = useState(1);
+    80→  const totalSteps = 3;
+    81→
+    82→  // Step 1 state
+    83→  const [operatories, setOperatories] = useState<string>('');
+    84→  const [specialties, setSpecialties] = useState<string[]>([]);
+    85→  const [budget, setBudget] = useState<string>('');
+    86→
+    87→  // Step 2 state
+    88→  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    89→
+    90→  // Derived: operatories count
+    91→  const operatoryCount = useMemo(() => {
+    92→    if (operatories === '1-2') return 2;
+    93→    if (operatories === '3-5') return 5;
+    94→    if (operatories === '6-10') return 10;
+    95→    if (operatories === '10+') return 12;
+    96→    return 0;
+    97→  }, [operatories]);
+    98→
+    99→  // When specialties change, update recommended categories
+   100→  const recommendedCategories = useMemo(() => {
+   101→    const recs = new Set<string>();
+   102→    specialties.forEach((specId) => {
+   103→      const spec = specialtyOptions.find((s) => s.id === specId);
+   104→      if (spec) spec.recommended.forEach((r) => recs.add(r));
+   105→    });
+   106→    return Array.from(recs);
+   107→  }, [specialties]);
+   108→
+   109→  // When moving to step 2, pre-select recommended categories
+   110→  const handleNext = () => {
+   111→    if (step === 1) {
+   112→      // Auto-select recommended categories when moving to step 2
+   113→      if (selectedCategories.length === 0) {
+   114→        setSelectedCategories(recommendedCategories);
+   115→      }
+   116→    }
+   117→    setStep(Math.min(step + 1, totalSteps));
+   118→  };
+   119→
+   120→  const handlePrev = () => setStep(Math.max(step - 1, 1));
+   121→
+   122→  const toggleCategory = (catId: string) => {
+   123→    setSelectedCategories((prev) =>
+   124→      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+   125→    );
+   126→  };
+   127→
+   128→  const toggleSpecialty = (specId: string) => {
+   129→    setSpecialties((prev) =>
+   130→      prev.includes(specId) ? prev.filter((s) => s !== specId) : [...prev, specId]
+   131→    );
+   132→  };
+   133→
+   134→  // Calculate estimated price range
+   135→  const priceEstimate = useMemo(() => {
+   136→    let minTotal = 0;
+   137→    let maxTotal = 0;
+   138→    selectedCategories.forEach((catId) => {
+   139→      const cat = equipmentCategories.find((c) => c.id === catId);
+   140→      if (cat) {
+   141→        // Scale price by operatory count for certain categories
+   142→        const scale = cat.id === 'Armchair' ? operatoryCount : 1;
+   143→        minTotal += cat.priceMin * scale;
+   144→        maxTotal += cat.priceMax * scale;
+   145→      }
+   146→    });
+   147→    return { min: minTotal, max: maxTotal };
+   148→  }, [selectedCategories, operatoryCount]);
+   149→
+   150→  const formatPrice = (price: number) => {
+   151→    if (price >= 1000000) {
+   152→      return (price / 1000000).toFixed(1).replace('.0', '') + 'M DA';
+   153→    }
+   154→    return price.toLocaleString('fr-DZ') + ' DA';
+   155→  };
+   156→
+   157→  // Validation
+   158→  const canProceedStep1 = operatories !== '' && specialties.length > 0 && budget !== '';
+   159→  const canProceedStep2 = selectedCategories.length > 0;
+   160→
+   161→  // Animation variants
+   162→  const slideVariants = {
+   163→    enter: (direction: number) => ({
+   164→      x: direction > 0 ? (isRTL ? -300 : 300) : isRTL ? 300 : -300,
+   165→      opacity: 0,
+   166→    }),
+   167→    center: { x: 0, opacity: 1 },
+   168→    exit: (direction: number) => ({
+   169→      x: direction < 0 ? (isRTL ? -300 : 300) : isRTL ? 300 : -300,
+   170→      opacity: 0,
+   171→    }),
+   172→  };
+   173→
+   174→  const [direction, setDirection] = useState(0);
+   175→
+   176→  const goNext = () => {
+   177→    setDirection(1);
+   178→    handleNext();
+   179→  };
+   180→
+   181→  const goPrev = () => {
+   182→    setDirection(-1);
+   183→    handlePrev();
+   184→  };
+   185→
+   186→  return (
+   187→    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
+   188→      {/* Hero Header */}
+   189→      <div
+   190→        className="relative overflow-hidden"
+   191→        style={{
+   192→          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 50%, #1E3A5F 100%)',
+   193→        }}
+   194→      >
+   195→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   196→          <div
+   197→            className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-10"
+   198→            style={{ backgroundColor: '#F0C05A' }}
+   199→          />
+   200→          <div
+   201→            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10"
+   202→            style={{ backgroundColor: '#F0C05A' }}
+   203→          />
+   204→          <motion.div
+   205→            className="absolute top-10 right-1/4 w-2 h-2 rounded-full"
+   206→            style={{ backgroundColor: '#F0C05A' }}
+   207→            animate={{ opacity: [0.2, 0.6, 0.2], y: [0, -10, 0] }}
+   208→            transition={{ duration: 3, repeat: Infinity }}
+   209→          />
+   210→        </div>
+   211→
+   212→        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+   213→          <motion.div
+   214→            initial={{ opacity: 0, y: 20 }}
+   215→            animate={{ opacity: 1, y: 0 }}
+   216→            className="text-center"
+   217→          >
+   218→            <motion.div
+   219→              initial={{ width: 0 }}
+   220→              animate={{ width: 60 }}
+   221→              transition={{ duration: 0.8, delay: 0.2 }}
+   222→              className="h-1 mx-auto mb-6 rounded-full"
+   223→              style={{ backgroundColor: '#F0C05A' }}
+   224→            />
+   225→            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
+   226→              {t('wizard.title')}
+   227→            </h1>
+   228→            <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
+   229→              {t('wizard.subtitle')}
+   230→            </p>
+   231→          </motion.div>
+   232→        </div>
+   233→      </div>
+   234→
+   235→      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+   236→        {/* Step Indicator */}
+   237→        <div className="mb-8">
+   238→          <div className="flex items-center justify-center gap-0 mb-4">
+   239→            {[
+   240→              { num: 1, label: t('wizard.step1') },
+   241→              { num: 2, label: t('wizard.step2') },
+   242→              { num: 3, label: t('wizard.step3') },
+   243→            ].map((s, i) => (
+   244→              <React.Fragment key={s.num}>
+   245→                <div className="flex flex-col items-center">
+   246→                  <motion.div
+   247→                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+   248→                      step >= s.num
+   249→                        ? 'text-white shadow-lg'
+   250→                        : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400'
+   251→                    }`}
+   252→                    style={step >= s.num ? { backgroundColor: '#1E3A5F' } : {}}
+   253→                    animate={{ scale: step === s.num ? 1.1 : 1 }}
+   254→                  >
+   255→                    {step > s.num ? <CheckCircle2 className="w-5 h-5" /> : s.num}
+   256→                  </motion.div>
+   257→                  <span
+   258→                    className={`text-xs mt-1.5 font-medium ${
+   259→                      step >= s.num
+   260→                        ? 'dark:text-[#7AB0E0]'
+   261→                        : 'text-gray-400 dark:text-gray-500'
+   262→                    }`}
+   263→                    style={step >= s.num ? { color: '#1E3A5F' } : {}}
+   264→                  >
+   265→                    {s.label}
+   266→                  </span>
+   267→                </div>
+   268→                {i < 2 && (
+   269→                  <div
+   270→                    className={`h-0.5 w-12 sm:w-20 mx-2 mb-5 transition-all duration-500 ${
+   271→                      step > s.num ? 'bg-[#1E3A5F]' : 'bg-gray-200 dark:bg-white/10'
+   272→                    }`}
+   273→                  />
+   274→                )}
+   275→              </React.Fragment>
+   276→            ))}
+   277→          </div>
+   278→
+   279→          {/* Progress bar */}
+   280→          <div className="w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
+   281→            <motion.div
+   282→              className="h-full rounded-full"
+   283→              style={{ backgroundColor: '#F0C05A' }}
+   284→              animate={{ width: `${(step / totalSteps) * 100}%` }}
+   285→              transition={{ duration: 0.4 }}
+   286→            />
+   287→          </div>
+   288→        </div>
+   289→
+   290→        {/* Step Content */}
+   291→        <AnimatePresence mode="wait" custom={direction}>
+   292→          {step === 1 && (
+   293→            <motion.div
+   294→              key="step1"
+   295→              custom={direction}
+   296→              variants={slideVariants}
+   297→              initial="enter"
+   298→              animate="center"
+   299→              exit="exit"
+   300→              transition={{ duration: 0.3, ease: 'easeInOut' }}
+   301→            >
+   302→              <Card className="border-0 shadow-sm overflow-hidden">
+   303→                <div className="h-1" style={{ backgroundColor: '#1E3A5F' }} />
+   304→                <CardContent className="p-6 sm:p-8">
+   305→                  {/* Operatories */}
+   306→                  <div className="mb-8">
+   307→                    <h3
+   308→                      className="text-lg font-bold mb-4 dark:text-[#7AB0E0]"
+   309→                      style={{ color: '#1E3A5F' }}
+   310→                    >
+   311→                      {t('wizard.operatories')}
+   312→                    </h3>
+   313→                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+   314→                      {operatoryOptions.map((opt) => (
+   315→                        <motion.button
+   316→                          key={opt.id}
+   317→                          whileHover={{ scale: 1.03 }}
+   318→                          whileTap={{ scale: 0.97 }}
+   319→                          onClick={() => setOperatories(opt.id)}
+   320→                          className={`p-4 rounded-xl border-2 text-center transition-all duration-200 min-h-[44px] ${
+   321→                            operatories === opt.id
+   322→                              ? 'border-[#1E3A5F] dark:border-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+   323→                              : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+   324→                          }`}
+   325→                        >
+   326→                          <div className="text-2xl mb-1">{opt.icon}</div>
+   327→                          <span
+   328→                            className={`text-sm font-bold ${
+   329→                              operatories === opt.id
+   330→                                ? 'dark:text-[#7AB0E0]'
+   331→                                : 'text-gray-600 dark:text-gray-300'
+   332→                            }`}
+   333→                            style={operatories === opt.id ? { color: '#1E3A5F' } : {}}
+   334→                          >
+   335→                            {language === 'ar' ? opt.labelAr : opt.labelFr}
+   336→                          </span>
+   337→                        </motion.button>
+   338→                      ))}
+   339→                    </div>
+   340→                  </div>
+   341→
+   342→                  {/* Specialty */}
+   343→                  <div className="mb-8">
+   344→                    <h3
+   345→                      className="text-lg font-bold mb-4 dark:text-[#7AB0E0]"
+   346→                      style={{ color: '#1E3A5F' }}
+   347→                    >
+   348→                      {t('wizard.specialty')}
+   349→                    </h3>
+   350→                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+   351→                      {specialtyOptions.map((spec) => {
+   352→                        const isSelected = specialties.includes(spec.id);
+   353→                        return (
+   354→                          <motion.button
+   355→                            key={spec.id}
+   356→                            whileHover={{ scale: 1.03 }}
+   357→                            whileTap={{ scale: 0.97 }}
+   358→                            onClick={() => toggleSpecialty(spec.id)}
+   359→                            className={`p-4 rounded-xl border-2 text-center transition-all duration-200 min-h-[44px] ${
+   360→                              isSelected
+   361→                                ? 'border-[#1E3A5F] dark:border-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+   362→                                : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+   363→                            }`}
+   364→                          >
+   365→                            <span
+   366→                              className={`text-sm font-bold block ${
+   367→                                isSelected
+   368→                                  ? 'dark:text-[#7AB0E0]'
+   369→                                  : 'text-gray-600 dark:text-gray-300'
+   370→                              }`}
+   371→                              style={isSelected ? { color: '#1E3A5F' } : {}}
+   372→                            >
+   373→                              {language === 'ar' ? spec.labelAr : spec.labelFr}
+   374→                            </span>
+   375→                            {isSelected && (
+   376→                              <motion.div
+   377→                                initial={{ scale: 0 }}
+   378→                                animate={{ scale: 1 }}
+   379→                                className="mt-1"
+   380→                              >
+   381→                                <CheckCircle2
+   382→                                  className="w-4 h-4 mx-auto"
+   383→                                  style={{ color: '#3B8C6E' }}
+   384→                                />
+   385→                              </motion.div>
+   386→                            )}
+   387→                          </motion.button>
+   388→                        );
+   389→                      })}
+   390→                    </div>
+   391→                  </div>
+   392→
+   393→                  {/* Budget */}
+   394→                  <div>
+   395→                    <h3
+   396→                      className="text-lg font-bold mb-4 dark:text-[#7AB0E0]"
+   397→                      style={{ color: '#1E3A5F' }}
+   398→                    >
+   399→                      {t('wizard.budget')}
+   400→                    </h3>
+   401→                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+   402→                      {budgetRanges.map((b) => (
+   403→                        <motion.button
+   404→                          key={b.id}
+   405→                          whileHover={{ scale: 1.03 }}
+   406→                          whileTap={{ scale: 0.97 }}
+   407→                          onClick={() => setBudget(b.id)}
+   408→                          className={`p-4 rounded-xl border-2 text-center transition-all duration-200 min-h-[44px] ${
+   409→                            budget === b.id
+   410→                              ? 'border-[#1E3A5F] dark:border-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+   411→                              : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+   412→                          }`}
+   413→                        >
+   414→                          <span
+   415→                            className={`text-sm font-bold ${
+   416→                              budget === b.id
+   417→                                ? 'dark:text-[#7AB0E0]'
+   418→                                : 'text-gray-600 dark:text-gray-300'
+   419→                            }`}
+   420→                            style={budget === b.id ? { color: '#1E3A5F' } : {}}
+   421→                          >
+   422→                            {language === 'ar' ? b.labelAr : b.labelFr}
+   423→                          </span>
+   424→                        </motion.button>
+   425→                      ))}
+   426→                    </div>
+   427→                  </div>
+   428→                </CardContent>
+   429→              </Card>
+   430→            </motion.div>
+   431→          )}
+   432→
+   433→          {step === 2 && (
+   434→            <motion.div
+   435→              key="step2"
+   436→              custom={direction}
+   437→              variants={slideVariants}
+   438→              initial="enter"
+   439→              animate="center"
+   440→              exit="exit"
+   441→              transition={{ duration: 0.3, ease: 'easeInOut' }}
+   442→            >
+   443→              <Card className="border-0 shadow-sm overflow-hidden">
+   444→                <div className="h-1" style={{ backgroundColor: '#2A5F8F' }} />
+   445→                <CardContent className="p-6 sm:p-8">
+   446→                  <div className="flex items-center gap-2 mb-2">
+   447→                    <ShoppingBag
+   448→                      className="w-5 h-5"
+   449→                      style={{ color: '#1E3A5F' }}
+   450→                    />
+   451→                    <h3
+   452→                      className="text-lg font-bold dark:text-[#7AB0E0]"
+   453→                      style={{ color: '#1E3A5F' }}
+   454→                    >
+   455→                      {language === 'ar'
+   456→                        ? 'اختر فئات المعدات'
+   457→                        : 'Sélectionnez les catégories d\'équipement'}
+   458→                    </h3>
+   459→                  </div>
+   460→                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+   461→                    {language === 'ar'
+   462→                      ? 'الفئات الموصى بها بناءً على تخصصك محددة مسبقاً'
+   463→                      : 'Les catégories recommandées selon votre spécialité sont pré-sélectionnées'}
+   464→                  </p>
+   465→
+   466→                  {recommendedCategories.length > 0 && (
+   467→                    <div className="mb-4">
+   468→                      <Badge
+   469→                        className="text-xs"
+   470→                        style={{ backgroundColor: '#3B8C6E20', color: '#3B8C6E' }}
+   471→                      >
+   472→                        {language === 'ar'
+   473→                          ? `${recommendedCategories.length} فئات موصى بها`
+   474→                          : `${recommendedCategories.length} catégories recommandées`}
+   475→                      </Badge>
+   476→                    </div>
+   477→                  )}
+   478→
+   479→                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+   480→                    {equipmentCategories.map((cat) => {
+   481→                      const isSelected = selectedCategories.includes(cat.id);
+   482→                      const isRecommended = recommendedCategories.includes(cat.id);
+   483→                      return (
+   484→                        <motion.button
+   485→                          key={cat.id}
+   486→                          whileHover={{ scale: 1.03 }}
+   487→                          whileTap={{ scale: 0.97 }}
+   488→                          onClick={() => toggleCategory(cat.id)}
+   489→                          className={`p-4 rounded-xl border-2 text-center transition-all duration-200 min-h-[44px] relative ${
+   490→                            isSelected
+   491→                              ? 'border-[#1E3A5F] dark:border-[#7AB0E0] bg-[#1E3A5F]/5 dark:bg-white/5'
+   492→                              : isRecommended
+   493→                                ? 'border-dashed border-[#3B8C6E]/40 dark:border-[#3B8C6E]/30'
+   494→                                : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+   495→                          }`}
+   496→                        >
+   497→                          {isRecommended && !isSelected && (
+   498→                            <div
+   499→                              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+   500→                              style={{ backgroundColor: '#3B8C6E' }}
+   501→                            />
+   502→                          )}
+   503→                          {isSelected && (
+   504→                            <motion.div
+   505→                              initial={{ scale: 0 }}
+   506→                              animate={{ scale: 1 }}
+   507→                              className="absolute top-1.5 right-1.5"
+   508→                            >
+   509→                              <CheckCircle2
+   510→                                className="w-4 h-4"
+   511→                                style={{ color: '#3B8C6E' }}
+   512→                              />
+   513→                            </motion.div>
+   514→                          )}
+   515→                          <div className="text-gray-400 dark:text-gray-300 mb-2 flex justify-center">
+   516→                            {categoryIcons[cat.icon] || <Package className="w-5 h-5" />}
+   517→                          </div>
+   518→                          <span
+   519→                            className={`text-xs font-bold block ${
+   520→                              isSelected
+   521→                                ? 'dark:text-[#7AB0E0]'
+   522→                                : 'text-gray-600 dark:text-gray-300'
+   523→                            }`}
+   524→                            style={isSelected ? { color: '#1E3A5F' } : {}}
+   525→                          >
+   526→                            {language === 'ar' ? cat.labelAr : cat.labelFr}
+   527→                          </span>
+   528→                        </motion.button>
+   529→                      );
+   530→                    })}
+   531→                  </div>
+   532→                </CardContent>
+   533→              </Card>
+   534→            </motion.div>
+   535→          )}
+   536→
+   537→          {step === 3 && (
+   538→            <motion.div
+   539→              key="step3"
+   540→              custom={direction}
+   541→              variants={slideVariants}
+   542→              initial="enter"
+   543→              animate="center"
+   544→              exit="exit"
+   545→              transition={{ duration: 0.3, ease: 'easeInOut' }}
+   546→            >
+   547→              <Card className="border-0 shadow-sm overflow-hidden">
+   548→                <div className="h-1" style={{ backgroundColor: '#3A7CB8' }} />
+   549→                <CardContent className="p-6 sm:p-8">
+   550→                  <h3
+   551→                    className="text-lg font-bold mb-6 dark:text-[#7AB0E0]"
+   552→                    style={{ color: '#1E3A5F' }}
+   553→                  >
+   554→                    {t('wizard.step3')}
+   555→                  </h3>
+   556→
+   557→                  {/* Summary of selections */}
+   558→                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+   559→                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5">
+   560→                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+   561→                        {t('wizard.operatories')}
+   562→                      </div>
+   563→                      <div className="font-bold dark:text-white" style={{ color: '#1E3A5F' }}>
+   564→                        {operatoryOptions.find((o) => o.id === operatories)
+   565→                          ? language === 'ar'
+   566→                            ? operatoryOptions.find((o) => o.id === operatories)!.labelAr
+   567→                            : operatoryOptions.find((o) => o.id === operatories)!.labelFr
+   568→                          : '—'}
+   569→                      </div>
+   570→                    </div>
+   571→                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5">
+   572→                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+   573→                        {t('wizard.specialty')}
+   574→                      </div>
+   575→                      <div className="font-bold dark:text-white" style={{ color: '#1E3A5F' }}>
+   576→                        {specialties
+   577→                          .map(
+   578→                            (s) =>
+   579→                              language === 'ar'
+   580→                                ? specialtyOptions.find((o) => o.id === s)?.labelAr
+   581→                                : specialtyOptions.find((o) => o.id === s)?.labelFr
+   582→                          )
+   583→                          .join(', ') || '—'}
+   584→                      </div>
+   585→                    </div>
+   586→                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/5">
+   587→                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+   588→                        {t('wizard.budget')}
+   589→                      </div>
+   590→                      <div className="font-bold dark:text-white" style={{ color: '#1E3A5F' }}>
+   591→                        {budgetRanges.find((b) => b.id === budget)
+   592→                          ? language === 'ar'
+   593→                            ? budgetRanges.find((b) => b.id === budget)!.labelAr
+   594→                            : budgetRanges.find((b) => b.id === budget)!.labelFr
+   595→                          : '—'}
+   596→                      </div>
+   597→                    </div>
+   598→                  </div>
+   599→
+   600→                  {/* Recommended Package - Group by category */}
+   601→                  <div className="space-y-3 mb-6">
+   602→                    {selectedCategories.map((catId) => {
+   603→                      const cat = equipmentCategories.find((c) => c.id === catId);
+   604→                      if (!cat) return null;
+   605→                      const scale = cat.id === 'Armchair' ? operatoryCount : 1;
+   606→                      return (
+   607→                        <motion.div
+   608→                          key={catId}
+   609→                          initial={{ opacity: 0, x: -10 }}
+   610→                          animate={{ opacity: 1, x: 0 }}
+   611→                          className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5"
+   612→                        >
+   613→                          <div
+   614→                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white shrink-0"
+   615→                            style={{ backgroundColor: '#1E3A5F' }}
+   616→                          >
+   617→                            {categoryIcons[cat.icon] || <Package className="w-5 h-5" />}
+   618→                          </div>
+   619→                          <div className="flex-1 min-w-0">
+   620→                            <div className="font-bold text-sm dark:text-white" style={{ color: '#1E3A5F' }}>
+   621→                              {language === 'ar' ? cat.labelAr : cat.labelFr}
+   622→                              {cat.id === 'Armchair' && scale > 1 && (
+   623→                                <span className="text-gray-400 font-normal">
+   624→                                  {' '}× {scale}
+   625→                                </span>
+   626→                              )}
+   627→                            </div>
+   628→                          </div>
+   629→                          <div className="text-right shrink-0">
+   630→                            <div className="text-xs text-gray-500 dark:text-gray-400">
+   631→                              {language === 'ar' ? 'تقدير' : 'Estimation'}
+   632→                            </div>
+   633→                            <div className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   634→                              {formatPrice(cat.priceMin * scale)} - {formatPrice(cat.priceMax * scale)}
+   635→                            </div>
+   636→                          </div>
+   637→                        </motion.div>
+   638→                      );
+   639→                    })}
+   640→                  </div>
+   641→
+   642→                  {/* Total Estimate */}
+   643→                  <div
+   644→                    className="p-6 rounded-xl text-center"
+   645→                    style={{ backgroundColor: '#1E3A5F' }}
+   646→                  >
+   647→                    <div className="text-blue-200 text-sm mb-2">
+   648→                      {language === 'ar' ? 'التكلفة المقدرة الإجمالية' : 'Estimation totale'}
+   649→                    </div>
+   650→                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
+   651→                      {formatPrice(priceEstimate.min)} - {formatPrice(priceEstimate.max)}
+   652→                    </div>
+   653→                    <div className="text-blue-300 text-xs">
+   654→                      {language === 'ar'
+   655→                        ? '* هذا تقدير تقريبي، العرض الفعلي قد يختلف'
+   656→                        : '* Ceci est une estimation, le devis final peut varier'}
+   657→                    </div>
+   658→                  </div>
+   659→
+   660→                  {/* CTA */}
+   661→                  <div className="mt-6 text-center">
+   662→                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   663→                      <Button
+   664→                        onClick={() => navigate('/contact')}
+   665→                        className="h-12 px-8 font-semibold text-base text-white shadow-lg"
+   666→                        style={{ backgroundColor: '#3B8C6E' }}
+   667→                      >
+   668→                        <ChevronRight
+   669→                          className={`w-4 h-4 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`}
+   670→                        />
+   671→                        {language === 'ar'
+   672→                          ? 'طلب عرض سعر مخصص'
+   673→                          : 'Demander un devis personnalisé'}
+   674→                      </Button>
+   675→                    </motion.div>
+   676→                  </div>
+   677→                </CardContent>
+   678→              </Card>
+   679→            </motion.div>
+   680→          )}
+   681→        </AnimatePresence>
+   682→
+   683→        {/* Navigation Buttons */}
+   684→        <div className="flex items-center justify-between mt-6">
+   685→          <AnimatePresence>
+   686→            {step > 1 && (
+   687→              <motion.div
+   688→                initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+   689→                animate={{ opacity: 1, x: 0 }}
+   690→                exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
+   691→              >
+   692→                <Button
+   693→                  onClick={goPrev}
+   694→                  variant="outline"
+   695→                  className="h-11 px-6 font-medium border-gray-200 dark:border-white/10"
+   696→                >
+   697→                  <ArrowLeft
+   698→                    className={`w-4 h-4 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`}
+   699→                  />
+   700→                  {t('wizard.prev')}
+   701→                </Button>
+   702→              </motion.div>
+   703→            )}
+   704→          </AnimatePresence>
+   705→
+   706→          <div className="flex-1" />
+   707→
+   708→          {step < totalSteps && (
+   709→            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   710→              <Button
+   711→                onClick={goNext}
+   712→                disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
+   713→                className="h-11 px-6 font-semibold text-white"
+   714→                style={{ backgroundColor: '#1E3A5F' }}
+   715→              >
+   716→                {t('wizard.next')}
+   717→                <ArrowRight
+   718→                  className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`}
+   719→                />
+   720→              </Button>
+   721→            </motion.div>
+   722→          )}
+   723→        </div>
+   724→      </div>
+   725→    </div>
+   726→  );
+   727→}
+   728→

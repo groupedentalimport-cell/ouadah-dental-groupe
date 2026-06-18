@@ -6,7 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   GitCompareArrows,
-  ShoppingCart,
+
   Package,
   CheckCircle2,
   XCircle,
@@ -633,28 +633,6 @@ export default function CompareView() {
                       );
                     })}
 
-                    {/* Add to Quote row */}
-                    <tr className="border-t-2" style={{ backgroundColor: '#f8fafc' }}>
-                      <td
-                        className="p-4 text-sm font-semibold sticky left-0 z-10 border-r border-gray-100"
-                        style={{ backgroundColor: '#f8fafc', color: '#1E3A5F' }}
-                      >
-                        {t('products.addQuote')}
-                      </td>
-                      {compareProducts.map((product) => (
-                        <td key={product.id} className="p-4 text-center">
-                          <Button
-                            size="sm"
-                            className="gap-1.5 shadow-sm font-semibold"
-                            style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                            onClick={() => navigate('/contact')}
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                            {t('products.addQuote')}
-                          </Button>
-                        </td>
-                      ))}
-                    </tr>
                   </tbody>
                 </table>
               </div>
