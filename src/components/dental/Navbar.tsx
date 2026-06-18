@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Menu, X, ShoppingCart, ChevronDown, Search, XCircle, Sun, Moon, Clock, Tag, FileText, Package, ArrowRight, Armchair, Monitor, Scan, ShieldCheck, Wind, WrenchIcon, Lamp } from 'lucide-react';
+import { Globe, Menu, X, ChevronDown, Search, XCircle, Sun, Moon, Clock, Tag, FileText, Package, ArrowRight, Armchair, Monitor, Scan, ShieldCheck, Wind, WrenchIcon, Lamp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useSiteSettings } from '@/lib/site-settings';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useData } from '@/lib/data-service';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,7 +73,6 @@ export default function Navbar() {
   const { route } = useRouter();
   const { getText } = useSiteSettings();
   const { products, categories, blogPosts, getProductName, getCategoryName } = useData();
-  const totalItems = useQuoteCart((s) => s.totalItems());
   const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -533,40 +531,15 @@ export default function Navbar() {
               </span>
             </Button>
 
-            {/* Cart with badge */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleNav('/devis')}
-              className="relative text-gray-600 dark:text-gray-300 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
-              aria-label={t('accessibility.cart')}
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {totalItems > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Badge
-                    className="h-5 min-w-[20px] flex items-center justify-center p-0 text-[10px] font-bold"
-                    style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                  >
-                    {totalItems}
-                  </Badge>
-                </motion.div>
-              )}
-            </Button>
-
             {/* CTA */}
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Button
-                onClick={() => handleNav('/devis')}
+                onClick={() => handleNav('/contact')}
                 size="sm"
                 className="text-white font-semibold shadow-md hover:shadow-lg transition-all"
                 style={{ backgroundColor: '#1E3A5F' }}
               >
-                {t('nav.quote')}
+                {t('nav.contact')}
               </Button>
             </motion.div>
           </div>
@@ -603,25 +576,6 @@ export default function Navbar() {
                   <Moon className="w-5 h-5" />
                 ))}
               </motion.div>
-            </Button>
-
-            {/* Cart Mobile - 44px touch target */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleNav('/devis')}
-              className="relative text-gray-600 dark:text-gray-300 w-11 h-11 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
-              aria-label={t('accessibility.cart')}
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {totalItems > 0 && (
-                <Badge
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                >
-                  {totalItems}
-                </Badge>
-              )}
             </Button>
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -708,11 +662,11 @@ export default function Navbar() {
 
                 <div className="mt-auto px-4 pb-6">
                   <Button
-                    onClick={() => handleNav('/devis')}
+                    onClick={() => handleNav('/contact')}
                     className="w-full text-white font-semibold shadow-md min-h-[44px]"
                     style={{ backgroundColor: '#1E3A5F' }}
                   >
-                    {t('nav.quote')}
+                    {t('nav.contact')}
                   </Button>
                 </div>
               </SheetContent>

@@ -515,7 +515,7 @@ export default function ServicesPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                   <Button
-                    onClick={() => navigate('/devis')}
+                    onClick={() => navigate('/contact')}
                     className="h-12 px-8 font-semibold text-base text-white shadow-lg"
                     style={{ backgroundColor: '#1E3A5F' }}
                   >

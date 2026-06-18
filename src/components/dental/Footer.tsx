@@ -122,7 +122,7 @@ export default function Footer() {
           </p>
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Button
-              onClick={() => navigate('/devis')}
+              onClick={() => navigate('/contact')}
               className="font-semibold px-6 h-10 shadow-lg hover:shadow-xl transition-all text-sm whitespace-nowrap"
               style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
             >

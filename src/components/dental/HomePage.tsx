@@ -41,7 +41,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import QuickViewModal from '@/components/dental/QuickViewModal';
 import type { Product } from '@/lib/data-service';
@@ -175,7 +174,6 @@ export default function HomePage() {
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
   const { categories, products, getCategoryName, getProductName, getProductShortDescription } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
   const recentlyViewedItems = useRecentlyViewed((s) => s.items);
 
@@ -464,7 +462,7 @@ export default function HomePage() {
             </motion.div>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
               <Button
-                onClick={() => navigate('/devis')}
+                onClick={() => navigate('/contact')}
                 size="lg"
                 variant="outline"
                 className="text-base font-semibold px-8 py-3.5 h-auto border-2 border-white/80 text-white hover:bg-white/25 backdrop-blur-sm transition-all duration-300 gap-2 shadow-lg shadow-[#F0C05A]/20 hover:shadow-xl hover:shadow-[#F0C05A]/30 bg-white/10 min-h-[44px] group"
@@ -937,13 +935,7 @@ export default function HomePage() {
                             style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              addItem({
-                                id: product.id,
-                                slug: product.slug,
-                                name: getProductName(product, language),
-                                price: product.price,
-                                image: product.images?.[0] || '',
-                              });
+                              navigate('/contact');
                             }}
                           >
                             {t('products.addQuote')}
@@ -1475,7 +1467,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                 <Button
-                  onClick={() => navigate('/devis')}
+                  onClick={() => navigate('/contact')}
                   size="lg"
                   className="text-base font-semibold px-8 h-13 shadow-xl hover:shadow-2xl transition-all duration-300 gap-2 group"
                   style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}

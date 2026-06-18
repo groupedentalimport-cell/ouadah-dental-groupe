@@ -25,7 +25,6 @@ import { useRouter } from '@/lib/router';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import type { Product } from '@/lib/data-service';
 
 // Safely get a spec value from a Record
@@ -61,7 +60,6 @@ export default function CompareView() {
   const { navigate } = useRouter();
   const { productIds, removeProduct, clearCompare } = useCompare();
   const { products, categories, getProductName, getCategoryName } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
 
   const compareProducts = useMemo(
     () =>
@@ -649,15 +647,7 @@ export default function CompareView() {
                             size="sm"
                             className="gap-1.5 shadow-sm font-semibold"
                             style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                            onClick={() => {
-                              addItem({
-                                id: product.id,
-                                slug: product.slug,
-                                name: getProductName(product, language),
-                                price: product.price,
-                                image: product.images?.[0] || '',
-                              });
-                            }}
+                            onClick={() => navigate('/contact')}
                           >
                             <ShoppingCart className="w-4 h-4" />
                             {t('products.addQuote')}

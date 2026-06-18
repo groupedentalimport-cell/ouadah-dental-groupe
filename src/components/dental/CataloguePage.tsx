@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/sheet';
 import { Toggle } from '@/components/ui/toggle';
 import { Switch } from '@/components/ui/switch';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -155,7 +154,6 @@ export default function CataloguePage() {
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
   const { categories, products, getCategoryName, getProductName, getProductShortDescription, loading } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
   const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
 
@@ -918,7 +916,6 @@ export default function CataloguePage() {
                       formatPrice={formatPrice}
                       t={t}
                       navigate={navigate}
-                      addItem={addItem}
                       isInCompare={isInCompare}
                       addCompareProduct={addCompareProduct}
                       removeCompareProduct={removeCompareProduct}
@@ -959,7 +956,6 @@ function ProductCard({
   formatPrice,
   t,
   navigate,
-  addItem,
   isInCompare,
   addCompareProduct,
   removeCompareProduct,
@@ -977,7 +973,6 @@ function ProductCard({
   formatPrice: (p: number | undefined) => string | null;
   t: (k: string) => string;
   navigate: (p: string) => void;
-  addItem: (item: any) => void;
   isInCompare: (id: string) => boolean;
   addCompareProduct: (id: string) => void;
   removeCompareProduct: (id: string) => void;
@@ -1127,10 +1122,7 @@ function ProductCard({
                     size="sm"
                     className="text-xs h-8 gap-1.5 shadow-sm min-h-[36px] font-semibold"
                     style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
-                    }}
+                    onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
                     {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
@@ -1289,10 +1281,7 @@ function ProductCard({
                 size="sm"
                 className="h-8 px-3 text-xs font-semibold shadow-lg gap-1"
                 style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
-                }}
+                onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
                 {t('products.addQuote')}
@@ -1387,16 +1376,7 @@ function ProductCard({
                 size="sm"
                 className="text-xs h-8 gap-1.5 shadow-sm font-semibold min-h-[36px] transition-all hover:shadow-md"
                 style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addItem({
-                    id: product.id,
-                    slug: product.slug,
-                    name: getProductName(product, language),
-                    price: product.price,
-                    image: product.images?.[0] || '',
-                  });
-                }}
+                onClick={(e) => { e.stopPropagation(); navigate('/contact'); }}
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
                 {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}

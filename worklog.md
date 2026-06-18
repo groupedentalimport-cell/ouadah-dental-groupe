@@ -2629,3 +2629,94 @@ Stage Summary:
 - Admin panel fetches real quotes from Prisma API
 - Submit button no longer disabled when cart is empty
 - .env.local missing - Supabase sync is non-blocking fallback
+
+---
+Task ID: RemoveQuote
+Agent: Subagent
+Task: Remove quote cart references from all components
+
+Work Log:
+- Removed `useQuoteCart` import and `addItem` variable from CataloguePage.tsx
+- Removed `addItem` prop from ProductCard component interface and usage in CataloguePage.tsx
+- Changed 3 ShoppingCart buttons in CataloguePage.tsx to use `navigate('/contact')` instead of `addItem()`
+- Removed `useQuoteCart` import and `addItem` variable from ProductDetailPage.tsx (import/variable already removed in prior session)
+- Changed "Demander un devis" primary CTA to `navigate('/contact')` instead of `addItem()` + `navigate('/devis')`
+- Changed "Ajouter au devis" secondary button to `navigate('/contact')` instead of `addItem()`
+- Changed "Demander un devis" outline button for "Sur devis" products to `navigate('/contact')` instead of `navigate('/devis')`
+- Changed sticky bar "Ajouter au devis" button to `navigate('/contact')` instead of `addItem()`
+- Removed `useQuoteCart` import, `addItem` variable, and `handleAddToQuote` function from QuickViewModal.tsx
+- Changed add-to-quote button to `navigate('/contact')` instead of `handleAddToQuote()`
+- Removed `useQuoteCart` import and `addItem` variable from CompareView.tsx
+- Changed add-to-quote buttons in comparison table to `navigate('/contact')` instead of `addItem()`
+- Removed `useQuoteCart` import and `addItem` variable from WishlistPage.tsx
+- Changed `handleAddAllToQuote` to navigate to `/contact` instead of adding all items via `addItem()`
+- Changed per-product "Devis" buttons to `navigate('/contact')` instead of `addItem()` with toast
+- Changed `navigate('/devis')` to `navigate('/contact')` in ServicesPage.tsx
+- Changed `navigate('/devis')` to `navigate('/contact')` in ClinicWizardPage.tsx
+- Verified zero remaining references to `useQuoteCart`, `addItem`, or `navigate('/devis')` across all dental components
+- Confirmed ShoppingCart icon import retained where buttons still display the icon
+- TypeScript check shows no new errors from changes (pre-existing errors unrelated)
+
+Stage Summary:
+- All 7 files successfully updated with no remaining references to useQuoteCart, addItem, or /devis navigation
+- All "add to quote" / "demander un devis" buttons now navigate to /contact
+- "Sur devis" / "Prix sur devis" text labels preserved as-is
+- No styling or layout changes made
+
+---
+Task ID: RemoveAdminQuotes
+Agent: Subagent
+Task: Remove quotes tab from AdminPanel
+
+Work Log:
+- Removed 'quotes' from AdminTab type (now 'dashboard' | 'products' | 'blog' | 'settings')
+- Removed 'admin-quotes' route handling from getInitialTab()
+- Removed quotes sidebar navigation item from tabs array
+- Removed quotes description from top bar ("Suivez les demandes de devis")
+- Removed quotes tab rendering block (activeTab === 'quotes') from AnimatePresence
+- Removed QuotesTab component entirely (~190 lines including /api/quotes/list fetch and /api/quotes/update PATCH call)
+- Removed monthlyQuotesData mock data constant
+- Removed quote-related mock notifications ("Nouvelle demande de devis", "Devis #12 traité avec succès")
+- Removed totalQuotes and newQuotes dashboard stats
+- Removed "Voir les devis" quick action
+- Removed "Nouvelle demande de devis" recent activity item (replaced with "Nouveau message client")
+- Removed Monthly Quotes Chart section from dashboard
+- Removed unused imports: ClipboardList, DollarSign, FileCheck from lucide-react; AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer from recharts; Skeleton from ui/skeleton; Separator from ui/separator
+- Ran `bun run lint` — zero errors
+
+Stage Summary:
+- All 13 specified quote/devis-related items successfully removed from AdminPanel.tsx
+- File reduced from ~2151 lines to ~1879 lines
+- All other tabs (dashboard, products, blog, settings) remain intact
+- No styling changes made
+- Lint passes cleanly with no errors
+
+---
+Task ID: RemoveDevis-Complete
+Agent: Main
+Task: Completely remove the demande de devis (quote request) module as requested by user
+
+Work Log:
+- Deleted QuoteWizardPage.tsx component
+- Deleted useQuoteCart.ts hook
+- Deleted /api/quotes/ directory (route.ts, list/route.ts, update/route.ts)
+- Removed QuoteWizardPage import and 'devis' case from page.tsx
+- Removed 'devis' and 'admin-quotes' routes from router.tsx
+- Removed quote cart button and useQuoteCart from Navbar.tsx
+- Changed CTA buttons from /devis to /contact in Navbar, Footer, HomePage, ServicesPage, ClinicWizardPage
+- Changed add-to-quote buttons to navigate('/contact') in CataloguePage, ProductDetailPage, QuickViewModal, CompareView, WishlistPage
+- Removed QuotesTab and all quote-related content from AdminPanel
+- Removed Quote model from Prisma schema
+- Cleared Next.js cache (.next/) to remove stale import references
+- Restarted dev server with clean build
+- Verified with agent-browser: all pages load without errors
+- Lint passes cleanly
+
+Stage Summary:
+- Module "demande de devis" completely removed from the project
+- All /devis navigation now redirects to /contact
+- All "add to quote" buttons now navigate to contact page
+- No remaining references to QuoteWizardPage, useQuoteCart, /devis, or /api/quotes
+- Quote model removed from Prisma schema
+- AdminPanel quotes tab removed
+- Site fully functional without the quote module

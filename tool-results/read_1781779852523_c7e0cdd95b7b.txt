@@ -1,0 +1,1725 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+     4→import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+     5→import {
+     6→  ArrowLeft,
+     7→  ShoppingCart,
+     8→  CheckCircle2,
+     9→  CheckCircle,
+    10→  Shield,
+    11→  ShieldCheck,
+    12→  Wrench,
+    13→  GraduationCap,
+    14→  Truck,
+    15→  ChevronLeft,
+    16→  ChevronRight,
+    17→  X,
+    18→  Package,
+    19→  FileText,
+    20→  Tag,
+    21→  Hash,
+    22→  CircleDot,
+    23→  GitCompareArrows,
+    24→  Check,
+    25→  Share2,
+    26→  Printer,
+    27→  Home,
+    28→  ChevronDown,
+    29→  Link2,
+    30→  ZoomIn,
+    31→  Maximize2,
+    32→  Heart,
+    33→  Star,
+    34→  Copy,
+    35→  MessageCircle,
+    36→  Facebook,
+    37→  Linkedin,
+    38→  ClipboardList,
+    39→  Sparkles,
+    40→  Play,
+    41→  Globe,
+    42→} from 'lucide-react';
+    43→import { useTranslation } from '@/lib/i18n';
+    44→import { useRouter } from '@/lib/router';
+    45→import { useData } from '@/lib/data-service';
+    46→import { Button } from '@/components/ui/button';
+    47→import { Card, CardContent } from '@/components/ui/card';
+    48→import { Badge } from '@/components/ui/badge';
+    49→import {
+    50→  Dialog,
+    51→  DialogContent,
+    52→  DialogTitle,
+    53→} from '@/components/ui/dialog';
+    54→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    55→import { useCompare } from '@/hooks/useCompare';
+    56→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    57→import { useWishlist } from '@/hooks/useWishlist';
+    58→import type { Product } from '@/lib/data-service';
+    59→import { ProductDetailPageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+    60→import { toast } from 'sonner';
+    61→
+    62→// Decode double-encoded HTML entities
+    63→function decodeHtmlEntities(text: string): string {
+    64→  if (!text) return '';
+    65→  let decoded = text;
+    66→  for (let i = 0; i < 3; i++) {
+    67→    const prev = decoded;
+    68→    decoded = decoded
+    69→      .replace(/&amp;/g, '&')
+    70→      .replace(/&lt;/g, '<')
+    71→      .replace(/&gt;/g, '>')
+    72→      .replace(/&quot;/g, '"')
+    73→      .replace(/&#39;/g, "'")
+    74→      .replace(/&nbsp;/g, ' ');
+    75→    if (decoded === prev) break;
+    76→  }
+    77→  return decoded;
+    78→}
+    79→
+    80→// Parse YouTube URL to get embed URL
+    81→function getYouTubeEmbedUrl(url: string): string | null {
+    82→  try {
+    83→    const urlObj = new URL(url);
+    84→    // Standard youtube.com/watch?v=...
+    85→    if (urlObj.hostname.includes('youtube.com') && urlObj.searchParams.get('v')) {
+    86→      return `https://www.youtube.com/embed/${urlObj.searchParams.get('v')}`;
+    87→    }
+    88→    // youtu.be/...
+    89→    if (urlObj.hostname === 'youtu.be') {
+    90→      return `https://www.youtube.com/embed/${urlObj.pathname.slice(1)}`;
+    91→    }
+    92→    // youtube.com/embed/...
+    93→    if (urlObj.hostname.includes('youtube.com') && urlObj.pathname.startsWith('/embed/')) {
+    94→      return url;
+    95→    }
+    96→    // Vimeo
+    97→    if (urlObj.hostname.includes('vimeo.com')) {
+    98→      const videoId = urlObj.pathname.split('/').filter(Boolean).pop();
+    99→      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+   100→    }
+   101→    return null;
+   102→  } catch {
+   103→    return null;
+   104→  }
+   105→}
+   106→
+   107→function sanitizeHtml(html: string): string {
+   108→  if (!html) return '';
+   109→  let sanitized = decodeHtmlEntities(html);
+   110→  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+   111→  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+   112→  sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, '');
+   113→  return sanitized;
+   114→}
+   115→
+   116→// Scroll progress bar component
+   117→function ScrollProgressBar() {
+   118→  const { scrollYProgress } = useScroll();
+   119→  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+   120→
+   121→  return (
+   122→    <motion.div
+   123→      className="fixed top-0 left-0 right-0 h-1 z-50 origin-left"
+   124→      style={{
+   125→        scaleX,
+   126→        background: 'linear-gradient(90deg, #1E3A5F, #F0C05A)',
+   127→      }}
+   128→    />
+   129→  );
+   130→}
+   131→
+   132→// Star Rating component
+   133→function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+   134→  const stars = [];
+   135→  const fullStars = Math.floor(rating);
+   136→  const hasHalf = rating - fullStars >= 0.5;
+   137→  for (let i = 0; i < 5; i++) {
+   138→    if (i < fullStars) stars.push('full');
+   139→    else if (i === fullStars && hasHalf) stars.push('half');
+   140→    else stars.push('empty');
+   141→  }
+   142→  return (
+   143→    <div className="flex items-center gap-1">
+   144→      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+   145→        {stars.map((type, i) => (
+   146→          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`} />
+   147→        ))}
+   148→      </div>
+   149→      {count !== undefined && (
+   150→        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+   151→      )}
+   152→    </div>
+   153→  );
+   154→}
+   155→
+   156→export default function ProductDetailPage() {
+   157→  const { t, language, isRTL } = useTranslation();
+   158→  const { params, navigate, goBack } = useRouter();
+   159→  const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
+   160→  const addItem = useQuoteCart((s) => s.addItem);
+   161→  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+   162→  const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
+   163→  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
+   164→
+   165→  const product = useMemo(
+   166→    () => products.find((p) => p.slug === params.slug),
+   167→    [products, params.slug]
+   168→  );
+   169→
+   170→  const category = useMemo(
+   171→    () => categories.find((c) => c.id === product?.category_id),
+   172→    [categories, product]
+   173→  );
+   174→
+   175→  const relatedProducts = useMemo(
+   176→    () =>
+   177→      product
+   178→        ? products
+   179→            .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+   180→            .slice(0, 3)
+   181→        : [],
+   182→    [products, product]
+   183→  );
+   184→
+   185→  const youMayAlsoLike = useMemo(
+   186→    () =>
+   187→      product
+   188→        ? products
+   189→            .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+   190→            .slice(0, 4)
+   191→        : [],
+   192→    [products, product]
+   193→  );
+   194→
+   195→  const relatedCategories = useMemo(() => {
+   196→    if (!product || !categories.length) return [];
+   197→    const currentCatIndex = categories.findIndex((c) => c.id === product.category_id);
+   198→    if (currentCatIndex === -1) return [categories[0]].filter(Boolean);
+   199→    const result = [];
+   200→    // Current category
+   201→    result.push(categories[currentCatIndex]);
+   202→    // Adjacent category before
+   203→    if (currentCatIndex > 0) result.push(categories[currentCatIndex - 1]);
+   204→    // Adjacent category after
+   205→    if (currentCatIndex < categories.length - 1) result.push(categories[currentCatIndex + 1]);
+   206→    return result.filter(Boolean);
+   207→  }, [categories, product]);
+   208→
+   209→  const [currentImage, setCurrentImage] = useState(0);
+   210→  const [lightboxOpen, setLightboxOpen] = useState(false);
+   211→  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+   212→
+   213→  // Image zoom state
+   214→  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+   215→  const [isZooming, setIsZooming] = useState(false);
+   216→  const imageRef = useRef<HTMLDivElement>(null);
+   217→
+   218→  // Lightbox zoom state
+   219→  const [lightboxZoom, setLightboxZoom] = useState(false);
+   220→  const [lightboxZoomPos, setLightboxZoomPos] = useState({ x: 50, y: 50 });
+   221→  const lightboxImgRef = useRef<HTMLDivElement>(null);
+   222→
+   223→  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+   224→    if (!imageRef.current) return;
+   225→    const rect = imageRef.current.getBoundingClientRect();
+   226→    const x = ((e.clientX - rect.left) / rect.width) * 100;
+   227→    const y = ((e.clientY - rect.top) / rect.height) * 100;
+   228→    setZoomPosition({ x, y });
+   229→  }, []);
+   230→
+   231→  const handleLightboxMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+   232→    if (!lightboxImgRef.current) return;
+   233→    const rect = lightboxImgRef.current.getBoundingClientRect();
+   234→    const x = ((e.clientX - rect.left) / rect.width) * 100;
+   235→    const y = ((e.clientY - rect.top) / rect.height) * 100;
+   236→    setLightboxZoomPos({ x, y });
+   237→  }, []);
+   238→
+   239→  // Reset lightbox zoom when changing images - use event handler pattern
+   240→  const handleImageChange = useCallback((index: number) => {
+   241→    setCurrentImage(index);
+   242→    setLightboxZoom(false);
+   243→  }, []);
+   244→
+   245→  // Keyboard navigation for lightbox
+   246→  useEffect(() => {
+   247→    if (!lightboxOpen) return;
+   248→    const handleKeyDown = (e: KeyboardEvent) => {
+   249→      const images = product?.images || [];
+   250→      if (e.key === 'Escape') {
+   251→        setLightboxOpen(false);
+   252→        setLightboxZoom(false);
+   253→      } else if (e.key === 'ArrowLeft') {
+   254→        e.preventDefault();
+   255→        handleImageChange(currentImage > 0 ? currentImage - 1 : images.length - 1);
+   256→      } else if (e.key === 'ArrowRight') {
+   257→        e.preventDefault();
+   258→        handleImageChange(currentImage < images.length - 1 ? currentImage + 1 : 0);
+   259→      }
+   260→    };
+   261→    window.addEventListener('keydown', handleKeyDown);
+   262→    return () => window.removeEventListener('keydown', handleKeyDown);
+   263→  }, [lightboxOpen, product?.images, handleImageChange, currentImage]);
+   264→
+   265→  // Track recently viewed product
+   266→  useEffect(() => {
+   267→    if (product) {
+   268→      addRecentlyViewed(
+   269→        product.id,
+   270→        product.slug,
+   271→        getProductName(product, language),
+   272→        product.images?.[0] || '',
+   273→        product.price
+   274→      );
+   275→    }
+   276→  }, [product, addRecentlyViewed, getProductName, language]);
+   277→
+   278→  if (loading) {
+   279→    return <ProductDetailPageSkeleton />;
+   280→  }
+   281→
+   282→  if (!product) {
+   283→    return (
+   284→      <div className="min-h-screen flex items-center justify-center pt-20">
+   285→        <div className="text-center">
+   286→          <div
+   287→            className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center dark:bg-white/5"
+   288→            style={{ backgroundColor: '#f0f4f8' }}
+   289→          >
+   290→            <Package className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+   291→          </div>
+   292→          <p className="text-gray-500 dark:text-gray-300 mb-4">{t('common.noResults')}</p>
+   293→          <Button onClick={() => navigate('/catalogue')} style={{ backgroundColor: '#1E3A5F' }}>
+   294→            {t('common.back')}
+   295→          </Button>
+   296→        </div>
+   297→      </div>
+   298→    );
+   299→  }
+   300→
+   301→  const images = product.images && product.images.length > 0 ? product.images : [];
+   302→  const features = language === 'ar' ? product.features_ar : product.features_fr;
+   303→  const specs = product.specs || [];
+   304→  const priceDisplay = product.price && product.price > 0
+   305→    ? product.price.toLocaleString('fr-DZ') + ' DA'
+   306→    : null;
+   307→  const isOnQuote = !priceDisplay;
+   308→
+   309→  const descriptionHtml = sanitizeHtml(getProductDescription(product, language));
+   310→
+   311→  const hasWarranty = product.warranty && product.warranty.length > 0 && product.warranty !== '-';
+   312→  const hasInstallation = product.installation_included === true;
+   313→  const hasTraining = product.training_included === true;
+   314→  const hasDelivery = (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr) &&
+   315→    (language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr).length > 0;
+   316→
+   317→  const handleShare = async () => {
+   318→    const url = window.location.href;
+   319→    try {
+   320→      await navigator.clipboard.writeText(url);
+   321→      toast.success(t('products.linkCopied'), {
+   322→        icon: <Link2 className="w-4 h-4" />,
+   323→      });
+   324→    } catch {
+   325→      // Fallback
+   326→      const textArea = document.createElement('textarea');
+   327→      textArea.value = url;
+   328→      document.body.appendChild(textArea);
+   329→      textArea.select();
+   330→      document.execCommand('copy');
+   331→      document.body.removeChild(textArea);
+   332→      toast.success(t('products.linkCopied'), {
+   333→        icon: <Link2 className="w-4 h-4" />,
+   334→      });
+   335→    }
+   336→    setShareMenuOpen(false);
+   337→  };
+   338→
+   339→  const handlePrint = () => {
+   340→    window.print();
+   341→  };
+   342→
+   343→  const openLightbox = () => {
+   344→    if (images.length > 0) {
+   345→      setLightboxOpen(true);
+   346→      setLightboxZoom(false);
+   347→    }
+   348→  };
+   349→
+   350→  const goToPrevImage = () => {
+   351→    if (images.length <= 1) return;
+   352→    handleImageChange(currentImage > 0 ? currentImage - 1 : images.length - 1);
+   353→  };
+   354→
+   355→  const goToNextImage = () => {
+   356→    if (images.length <= 1) return;
+   357→    handleImageChange(currentImage < images.length - 1 ? currentImage + 1 : 0);
+   358→  };
+   359→
+   360→  return (
+   361→    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20 animate-in fade-in duration-500 relative">
+   362→      {/* Scroll Progress Bar */}
+   363→      <ScrollProgressBar />
+   364→      {/* Lightbox using Dialog */}
+   365→      <Dialog open={lightboxOpen} onOpenChange={(open) => { setLightboxOpen(open); if (!open) setLightboxZoom(false); }}>
+   366→        <DialogContent
+   367→          className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-black/95 backdrop-blur-sm sm:max-w-[90vw]"
+   368→          showCloseButton={false}
+   369→        >
+   370→          <DialogTitle className="sr-only">
+   371→            {getProductName(product, language)} - {t('products.gallery')}
+   372→          </DialogTitle>
+   373→          <div className="relative w-full h-[85vh] flex items-center justify-center">
+   374→            {/* Close button */}
+   375→            <button
+   376→              className="absolute top-3 right-3 z-10 text-white/70 hover:text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+   377→              onClick={() => { setLightboxOpen(false); setLightboxZoom(false); }}
+   378→              aria-label={t('products.close_gallery')}
+   379→            >
+   380→              <X className="w-6 h-6" />
+   381→            </button>
+   382→
+   383→            {/* Image counter */}
+   384→            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-medium">
+   385→              {currentImage + 1} / {images.length}
+   386→            </div>
+   387→
+   388→            {/* Prev/Next navigation */}
+   389→            {images.length > 1 && (
+   390→              <>
+   391→                <button
+   392→                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-2 sm:p-3 hover:bg-white/10 rounded-full transition-colors"
+   393→                  onClick={goToPrevImage}
+   394→                  aria-label={t('products.prev_image')}
+   395→                >
+   396→                  <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+   397→                </button>
+   398→                <button
+   399→                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 text-white/70 hover:text-white p-2 sm:p-3 hover:bg-white/10 rounded-full transition-colors"
+   400→                  onClick={goToNextImage}
+   401→                  aria-label={t('products.next_image')}
+   402→                >
+   403→                  <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+   404→                </button>
+   405→              </>
+   406→            )}
+   407→
+   408→            {/* Main image with zoom */}
+   409→            <div
+   410→              ref={lightboxImgRef}
+   411→              className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-crosshair"
+   412→              onMouseMove={handleLightboxMouseMove}
+   413→              onClick={() => setLightboxZoom(!lightboxZoom)}
+   414→            >
+   415→              <motion.img
+   416→                key={currentImage}
+   417→                initial={{ opacity: 0, scale: 0.95 }}
+   418→                animate={{ opacity: 1, scale: 1 }}
+   419→                transition={{ duration: 0.2 }}
+   420→                src={images[currentImage]}
+   421→                alt={getProductName(product, language)}
+   422→                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg transition-transform duration-200 select-none"
+   423→                style={{
+   424→                  transform: lightboxZoom ? 'scale(2.5)' : 'scale(1)',
+   425→                  transformOrigin: `${lightboxZoomPos.x}% ${lightboxZoomPos.y}%`,
+   426→                }}
+   427→                draggable={false}
+   428→              />
+   429→            </div>
+   430→
+   431→            {/* Zoom indicator */}
+   432→            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+   433→              <button
+   434→                className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/70 hover:text-white hover:bg-white/20 text-xs font-medium transition-colors flex items-center gap-1.5"
+   435→                onClick={() => setLightboxZoom(!lightboxZoom)}
+   436→              >
+   437→                <ZoomIn className="w-3.5 h-3.5" />
+   438→                {lightboxZoom
+   439→                  ? (language === 'ar' ? 'تصغير' : 'Réduire')
+   440→                  : (language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir')
+   441→                }
+   442→              </button>
+   443→            </div>
+   444→
+   445→            {/* Thumbnail strip in lightbox */}
+   446→            {images.length > 1 && (
+   447→              <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 px-3 py-2 rounded-xl bg-white/5 backdrop-blur-sm">
+   448→                {images.map((img, i) => (
+   449→                  <button
+   450→                    key={i}
+   451→                    onClick={(e) => { e.stopPropagation(); handleImageChange(i); }}
+   452→                    className={`w-12 h-12 rounded-md overflow-hidden shrink-0 border-2 transition-all duration-200 ${
+   453→                      i === currentImage
+   454→                        ? 'border-[#F0C05A] shadow-lg shadow-[#F0C05A]/30'
+   455→                        : 'border-white/20 opacity-50 hover:opacity-100'
+   456→                    }`}
+   457→                    aria-label={`${t('products.gallery')} ${i + 1}`}
+   458→                  >
+   459→                    <img src={img} alt={`${getProductName(product, language)} - ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
+   460→                  </button>
+   461→                ))}
+   462→              </div>
+   463→            )}
+   464→          </div>
+   465→        </DialogContent>
+   466→      </Dialog>
+   467→
+   468→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   469→        {/* Breadcrumbs */}
+   470→        <motion.div
+   471→          initial={{ opacity: 0, x: -10 }}
+   472→          animate={{ opacity: 1, x: 0 }}
+   473→          className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-300 mb-6 flex-wrap"
+   474→        >
+   475→          <button onClick={() => navigate('/')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1">
+   476→            <Home className="w-3.5 h-3.5" />
+   477→            {t('products.breadcrumb.home')}
+   478→          </button>
+   479→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
+   480→          <button onClick={() => navigate('/catalogue')} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
+   481→            {t('products.title')}
+   482→          </button>
+   483→          <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
+   484→          {category && (
+   485→            <>
+   486→              <button onClick={() => navigate(`/catalogue?category=${category.slug}`)} className="hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors">
+   487→                {getCategoryName(category, language)}
+   488→              </button>
+   489→              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-gray-300 dark:text-gray-400" />
+   490→            </>
+   491→          )}
+   492→          <span className="text-gray-500 dark:text-gray-200 font-medium truncate max-w-[200px]">
+   493→            {getProductName(product, language)}
+   494→          </span>
+   495→        </motion.div>
+   496→
+   497→        {/* Back Button */}
+   498→        <motion.div
+   499→          initial={{ opacity: 0, x: -10 }}
+   500→          animate={{ opacity: 1, x: 0 }}
+   501→        >
+   502→          <Button
+   503→            variant="outline"
+   504→            onClick={goBack}
+   505→            className="mb-6 gap-2 shadow-sm dark:border-gray-600 dark:text-gray-200"
+   506→            style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   507→          >
+   508→            <ArrowLeft className="w-4 h-4" />
+   509→            {t('common.back')}
+   510→          </Button>
+   511→        </motion.div>
+   512→
+   513→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+   514→          {/* Image Gallery with Zoom */}
+   515→          <motion.div
+   516→            initial={{ opacity: 0, x: -20 }}
+   517→            animate={{ opacity: 1, x: 0 }}
+   518→          >
+   519→            <div
+   520→              ref={imageRef}
+   521→              className="aspect-square rounded-2xl overflow-hidden bg-white dark:bg-[#162236] shadow-sm cursor-crosshair relative group transition-shadow duration-300 hover:shadow-[0_0_20px_rgba(240,192,90,0.3)] dark:hover:shadow-[0_0_20px_rgba(122,176,224,0.2)]"
+   522→              onMouseEnter={() => setIsZooming(true)}
+   523→              onMouseLeave={() => setIsZooming(false)}
+   524→              onMouseMove={handleMouseMove}
+   525→              onClick={openLightbox}
+   526→            >
+   527→              {images.length > 0 ? (
+   528→                <img
+   529→                  src={images[currentImage]}
+   530→                  alt={getProductName(product, language)}
+   531→                  loading="eager"
+   532→                  className="w-full h-full object-cover transition-transform duration-200"
+   533→                  style={{
+   534→                    transform: isZooming ? 'scale(1.5)' : 'scale(1)',
+   535→                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+   536→                  }}
+   537→                />
+   538→              ) : (
+   539→                <div
+   540→                  className="w-full h-full flex items-center justify-center"
+   541→                  style={{
+   542→                    background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+   543→                  }}
+   544→                >
+   545→                  <div className="text-center">
+   546→                    <Package className="w-24 h-24 text-white/30 mx-auto mb-3" />
+   547→                    <p className="text-white/25 text-sm font-medium tracking-wider uppercase">
+   548→                      {language === 'ar' ? 'صورة غير متوفرة' : 'Image non disponible'}
+   549→                    </p>
+   550→                  </div>
+   551→                </div>
+   552→              )}
+   553→              {/* Zoom indicator */}
+   554→              {isZooming && images.length > 0 && (
+   555→                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/50 text-white text-xs flex items-center gap-1 pointer-events-none">
+   556→                  <ZoomIn className="w-3 h-3" />
+   557→                  {language === 'ar' ? 'انقر للتكبير' : 'Cliquez pour agrandir'}
+   558→                </div>
+   559→              )}
+   560→              {/* Fullscreen indicator */}
+   561→              {!isZooming && images.length > 0 && (
+   562→                <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-black/30 text-white/70 text-xs flex items-center gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+   563→                  <Maximize2 className="w-3 h-3" />
+   564→                  {language === 'ar' ? 'عرض كامل' : 'Plein écran'}
+   565→                </div>
+   566→              )}
+   567→            </div>
+   568→            {/* Thumbnail strip */}
+   569→            {images.length > 1 && (
+   570→              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+   571→                {images.map((img, i) => (
+   572→                  <button
+   573→                    key={i}
+   574→                    onClick={() => handleImageChange(i)}
+   575→                    className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+   576→                      i === currentImage
+   577→                        ? 'border-[#1E3A5F] dark:border-[#7AB0E0] shadow-md'
+   578→                        : 'border-transparent opacity-60 hover:opacity-100 dark:opacity-40 dark:hover:opacity-80'
+   579→                    }`}
+   580→                    aria-label={`${t('products.gallery')} ${i + 1}`}
+   581→                  >
+   582→                    <img src={img} alt={`${getProductName(product, language)} - ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
+   583→                  </button>
+   584→                ))}
+   585→              </div>
+   586→            )}
+   587→          </motion.div>
+   588→
+   589→          {/* Product Info */}
+   590→          <motion.div
+   591→            initial={{ opacity: 0, x: 20 }}
+   592→            animate={{ opacity: 1, x: 0 }}
+   593→            className="lg:sticky lg:top-24 lg:self-start"
+   594→          >
+   595→            {/* Status Badges */}
+   596→            <div className="flex flex-wrap gap-2 mb-4">
+   597→              {product.is_new && (
+   598→                <Badge className="border-0" style={{ backgroundColor: '#1E3A5F' }}>
+   599→                  {t('products.new')}
+   600→                </Badge>
+   601→              )}
+   602→              {product.is_best_seller && (
+   603→                <Badge className="border-0" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+   604→                  {t('products.bestSeller')}
+   605→                </Badge>
+   606→              )}
+   607→            </div>
+   608→
+   609→            {/* Product Name */}
+   610→            <h1 className="text-2xl sm:text-3xl font-bold mb-2 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   611→              {getProductName(product, language)}
+   612→            </h1>
+   613→
+   614→            {/* Star Rating */}
+   615→            {product.rating && (
+   616→              <div className="mb-3">
+   617→                <StarRating rating={product.rating} count={product.reviewCount} size="md" />
+   618→              </div>
+   619→            )}
+   620→
+   621→            {/* Brand & Reference Badges */}
+   622→            <div className="flex flex-wrap gap-2 mb-5">
+   623→              {product.brand && (
+   624→                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full text-xs font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   625→                  <Tag className="w-3.5 h-3.5" />
+   626→                  {product.brand}
+   627→                </div>
+   628→              )}
+   629→              {product.ref && (
+   630→                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full text-xs font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   631→                  <Hash className="w-3.5 h-3.5" />
+   632→                  {product.ref}
+   633→                </div>
+   634→              )}
+   635→              <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${
+   636→                product.in_stock
+   637→                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+   638→                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 opacity-80'
+   639→              }`}>
+   640→                <span className="relative flex h-2.5 w-2.5">
+   641→                  {product.in_stock && (
+   642→                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-50" />
+   643→                  )}
+   644→                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`} />
+   645→                </span>
+   646→                {product.in_stock ? t('products.inStock') : t('products.outOfStock')}
+   647→              </div>
+   648→            </div>
+   649→
+   650→            {/* Price Display */}
+   651→            <div className="mb-6">
+   652→              {priceDisplay ? (
+   653→                <div className="flex items-baseline gap-2">
+   654→                  <span className="text-2xl sm:text-3xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   655→                    {priceDisplay}
+   656→                  </span>
+   657→                </div>
+   658→              ) : (
+   659→                <div
+   660→                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg dark:bg-blue-900/50"
+   661→                  style={{ backgroundColor: '#F0C05A20' }}
+   662→                >
+   663→                  <FileText className="w-5 h-5 dark:text-blue-200" style={{ color: '#F0C05A' }} />
+   664→                  <span className="text-lg font-semibold dark:text-blue-200" style={{ color: '#1E3A5F' }}>
+   665→                    {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+   666→                  </span>
+   667→                </div>
+   668→              )}
+   669→            </div>
+   670→
+   671→            {/* Meta Info Grid */}
+   672→            <div className="grid grid-cols-2 gap-3 mb-6">
+   673→              {product.origin && (
+   674→                <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+   675→                  <p className="text-xs text-gray-400 dark:text-gray-300 mb-0.5">{t('products.origin')}</p>
+   676→                  <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.origin}</p>
+   677→                </div>
+   678→              )}
+   679→              {hasWarranty && (
+   680→                <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+   681→                  <p className="text-xs text-gray-400 dark:text-gray-300 mb-0.5">{t('products.warranty')}</p>
+   682→                  <p className="font-semibold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
+   683→                </div>
+   684→              )}
+   685→            </div>
+   686→
+   687→            {/* Service Badges */}
+   688→            {(hasWarranty || hasInstallation || hasTraining || hasDelivery) && (
+   689→              <div className="flex flex-wrap gap-2 mb-6">
+   690→                {hasWarranty && (
+   691→                  <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   692→                    <Shield className="w-3.5 h-3.5" />
+   693→                    {product.warranty}
+   694→                  </div>
+   695→                )}
+   696→                {hasInstallation && (
+   697→                  <div className="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   698→                    <Wrench className="w-3.5 h-3.5" />
+   699→                    {t('products.installation')}
+   700→                  </div>
+   701→                )}
+   702→                {hasTraining && (
+   703→                  <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   704→                    <GraduationCap className="w-3.5 h-3.5" />
+   705→                    {t('products.training')}
+   706→                  </div>
+   707→                )}
+   708→                {hasDelivery && (
+   709→                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-full text-xs font-medium">
+   710→                    <Truck className="w-3.5 h-3.5" />
+   711→                    {language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr}
+   712→                  </div>
+   713→                )}
+   714→              </div>
+   715→            )}
+   716→
+   717→            {/* Action Buttons */}
+   718→            <div className="space-y-3">
+   719→              {/* Primary CTA: Demander un devis */}
+   720→              <Button
+   721→                size="lg"
+   722→                className="w-full h-12 text-base font-bold shadow-lg gap-2"
+   723→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   724→                onClick={() => {
+   725→                  addItem({
+   726→                    id: product.id,
+   727→                    slug: product.slug,
+   728→                    name: getProductName(product, language),
+   729→                    price: product.price,
+   730→                    image: product.images?.[0] || '',
+   731→                  });
+   732→                  navigate('/devis');
+   733→                }}
+   734→              >
+   735→                <FileText className="w-5 h-5" />
+   736→                {t('products.requestQuote')}
+   737→              </Button>
+   738→
+   739→              {/* Secondary: Ajouter au devis + Wishlist + Compare */}
+   740→              <div className="flex gap-2">
+   741→                <Button
+   742→                  size="lg"
+   743→                  variant="outline"
+   744→                  className="flex-1 h-12 text-sm font-semibold gap-2 dark:border-gray-600 dark:text-gray-300 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   745→                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   746→                  onClick={() => {
+   747→                    addItem({
+   748→                      id: product.id,
+   749→                      slug: product.slug,
+   750→                      name: getProductName(product, language),
+   751→                      price: product.price,
+   752→                      image: product.images?.[0] || '',
+   753→                    });
+   754→                  }}
+   755→                >
+   756→                  <ShoppingCart className="w-4 h-4" />
+   757→                  {t('products.addQuote')}
+   758→                </Button>
+   759→                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+   760→                  <Button
+   761→                    size="lg"
+   762→                    variant="outline"
+   763→                    className={`h-12 px-4 font-semibold focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+   764→                      isInWishlist(product.slug)
+   765→                        ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30'
+   766→                        : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:border-rose-400 dark:hover:border-rose-600 hover:text-rose-500 dark:hover:text-rose-400'
+   767→                    }`}
+   768→                    aria-label={isInWishlist(product.slug) ? t('products.removeFromWishlist') : t('products.addToWishlist')}
+   769→                    onClick={() => {
+   770→                      toggleWishlistItem(product.slug);
+   771→                      toast.success(
+   772→                        isInWishlist(product.slug)
+   773→                          ? t('wishlist.removed')
+   774→                          : t('wishlist.added')
+   775→                      );
+   776→                    }}
+   777→                  >
+   778→                    <Heart
+   779→                      className="w-5 h-5"
+   780→                      fill={isInWishlist(product.slug) ? 'currentColor' : 'none'}
+   781→                    />
+   782→                  </Button>
+   783→                </motion.div>
+   784→                <Button
+   785→                  size="lg"
+   786→                  variant="outline"
+   787→                  className={`h-12 px-4 font-semibold focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+   788→                    isInCompare(product.id)
+   789→                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+   790→                      : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:border-amber-400 dark:hover:border-amber-600 hover:text-amber-600 dark:hover:text-amber-400'
+   791→                  }`}
+   792→                  disabled={!isInCompare(product.id) && productIds.length >= 4}
+   793→                  aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
+   794→                  title={
+   795→                    isInCompare(product.id)
+   796→                      ? t('compare.remove')
+   797→                      : productIds.length >= 4
+   798→                      ? t('compare.maxReached')
+   799→                      : t('compare.add')
+   800→                  }
+   801→                  onClick={() => {
+   802→                    if (isInCompare(product.id)) {
+   803→                      removeCompareProduct(product.id);
+   804→                    } else {
+   805→                      addCompareProduct(product.id);
+   806→                    }
+   807→                  }}
+   808→                >
+   809→                  {isInCompare(product.id) ? (
+   810→                    <Check className="w-5 h-5" />
+   811→                  ) : (
+   812→                    <GitCompareArrows className="w-5 h-5" />
+   813→                  )}
+   814→                </Button>
+   815→              </div>
+   816→
+   817→              {/* Share & Print Buttons */}
+   818→              <div className="flex gap-2 relative">
+   819→                <div className="flex-1 relative">
+   820→                  <Button
+   821→                    variant="outline"
+   822→                    size="sm"
+   823→                    className="w-full gap-2 text-gray-600 dark:text-gray-300 dark:border-gray-600 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   824→                    aria-label={t('products.share')}
+   825→                    onClick={() => setShareMenuOpen(!shareMenuOpen)}
+   826→                  >
+   827→                    <Share2 className="w-4 h-4" />
+   828→                    {t('products.share')}
+   829→                  </Button>
+   830→                  <AnimatePresence>
+   831→                    {shareMenuOpen && (
+   832→                      <motion.div
+   833→                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+   834→                        animate={{ opacity: 1, y: 0, scale: 1 }}
+   835→                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+   836→                        transition={{ duration: 0.15 }}
+   837→                        className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-white dark:bg-[#162236] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden"
+   838→                      >
+   839→                        <div className="py-1">
+   840→                          <button
+   841→                            onClick={() => {
+   842→                              const url = window.location.origin + '/#/product/' + product.slug;
+   843→                              navigator.clipboard.writeText(url).then(() => {
+   844→                                toast.success(t('share.linkCopied'), {
+   845→                                  icon: <Copy className="w-4 h-4" />,
+   846→                                });
+   847→                              }).catch(() => {
+   848→                                const textArea = document.createElement('textarea');
+   849→                                textArea.value = url;
+   850→                                document.body.appendChild(textArea);
+   851→                                textArea.select();
+   852→                                document.execCommand('copy');
+   853→                                document.body.removeChild(textArea);
+   854→                                toast.success(t('share.linkCopied'), {
+   855→                                  icon: <Copy className="w-4 h-4" />,
+   856→                                });
+   857→                              });
+   858→                              setShareMenuOpen(false);
+   859→                            }}
+   860→                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+   861→                          >
+   862→                            <Copy className="w-4 h-4 text-gray-400" />
+   863→                            {t('share.copyLink')}
+   864→                          </button>
+   865→                          <button
+   866→                            onClick={() => {
+   867→                              const url = window.location.origin + '/#/product/' + product.slug;
+   868→                              const text = `${getProductName(product, language)} - ${url}`;
+   869→                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+   870→                              setShareMenuOpen(false);
+   871→                            }}
+   872→                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+   873→                          >
+   874→                            <MessageCircle className="w-4 h-4 text-green-500" />
+   875→                            {t('share.whatsapp')}
+   876→                          </button>
+   877→                          <button
+   878→                            onClick={() => {
+   879→                              const url = window.location.origin + '/#/product/' + product.slug;
+   880→                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+   881→                              setShareMenuOpen(false);
+   882→                            }}
+   883→                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+   884→                          >
+   885→                            <Facebook className="w-4 h-4 text-blue-600" />
+   886→                            {t('share.facebook')}
+   887→                          </button>
+   888→                          <button
+   889→                            onClick={() => {
+   890→                              const url = window.location.origin + '/#/product/' + product.slug;
+   891→                              const productName = getProductName(product, language);
+   892→                              window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(productName)}`, '_blank');
+   893→                              setShareMenuOpen(false);
+   894→                            }}
+   895→                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+   896→                          >
+   897→                            <Linkedin className="w-4 h-4 text-blue-700" />
+   898→                            {t('share.linkedin')}
+   899→                          </button>
+   900→                        </div>
+   901→                      </motion.div>
+   902→                    )}
+   903→                  </AnimatePresence>
+   904→                </div>
+   905→                <Button
+   906→                  variant="outline"
+   907→                  size="sm"
+   908→                  className="flex-1 gap-2 text-gray-600 dark:text-gray-300 dark:border-gray-600 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   909→                  aria-label={t('products.print')}
+   910→                  onClick={handlePrint}
+   911→                >
+   912→                  <Printer className="w-4 h-4" />
+   913→                  {t('products.print')}
+   914→                </Button>
+   915→              </div>
+   916→
+   917→              {isOnQuote && (
+   918→                <Button
+   919→                  size="lg"
+   920→                  variant="outline"
+   921→                  className="w-full h-12 text-base font-semibold gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
+   922→                  style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   923→                  onClick={() => navigate('/devis')}
+   924→                >
+   925→                  <FileText className="w-5 h-5" />
+   926→                  {t('products.requestQuote')}
+   927→                </Button>
+   928→              )}
+   929→
+   930→              {/* Trust Badges Row */}
+   931→              <div className="flex flex-wrap gap-2 mt-4">
+   932→                {product.in_stock && (
+   933→                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+   934→                    <Truck className="w-3.5 h-3.5 text-amber-500" />
+   935→                    {t('product.delivery48h')}
+   936→                  </div>
+   937→                )}
+   938→                {hasInstallation && (
+   939→                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+   940→                    <Wrench className="w-3.5 h-3.5 text-purple-500" />
+   941→                    {t('products.installation')}
+   942→                  </div>
+   943→                )}
+   944→                {hasTraining && (
+   945→                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+   946→                    <GraduationCap className="w-3.5 h-3.5 text-green-500" />
+   947→                    {t('products.training')}
+   948→                  </div>
+   949→                )}
+   950→                {hasWarranty && (
+   951→                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-medium text-gray-600 dark:text-gray-300">
+   952→                    <Shield className="w-3.5 h-3.5 text-blue-500" />
+   953→                    {t('products.warranty')}
+   954→                  </div>
+   955→                )}
+   956→              </div>
+   957→            </div>
+   958→          </motion.div>
+   959→        </div>
+   960→
+   961→        {/* Product Info Cards */}
+   962→        <motion.div
+   963→          initial={{ opacity: 0, y: 20 }}
+   964→          whileInView={{ opacity: 1, y: 0 }}
+   965→          viewport={{ once: true }}
+   966→          transition={{ duration: 0.5 }}
+   967→          className="mt-10"
+   968→        >
+   969→          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+   970→            {hasWarranty && (
+   971→              <motion.div
+   972→                initial={{ opacity: 0, scale: 0.9 }}
+   973→                whileInView={{ opacity: 1, scale: 1 }}
+   974→                viewport={{ once: true }}
+   975→                transition={{ delay: 0, duration: 0.3 }}
+   976→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+   977→              >
+   978→                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-2">
+   979→                  <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+   980→                </div>
+   981→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.warranty')}</p>
+   982→                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.warranty}</p>
+   983→              </motion.div>
+   984→            )}
+   985→            {hasDelivery && (
+   986→              <motion.div
+   987→                initial={{ opacity: 0, scale: 0.9 }}
+   988→                whileInView={{ opacity: 1, scale: 1 }}
+   989→                viewport={{ once: true }}
+   990→                transition={{ delay: 0.05, duration: 0.3 }}
+   991→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+   992→              >
+   993→                <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mx-auto mb-2">
+   994→                  <Truck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+   995→                </div>
+   996→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.delivery')}</p>
+   997→                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   998→                  {language === 'ar' ? product.delivery_time_ar : product.delivery_time_fr}
+   999→                </p>
+  1000→              </motion.div>
+  1001→            )}
+  1002→            {hasInstallation && (
+  1003→              <motion.div
+  1004→                initial={{ opacity: 0, scale: 0.9 }}
+  1005→                whileInView={{ opacity: 1, scale: 1 }}
+  1006→                viewport={{ once: true }}
+  1007→                transition={{ delay: 0.1, duration: 0.3 }}
+  1008→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+  1009→              >
+  1010→                <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mx-auto mb-2">
+  1011→                  <Wrench className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+  1012→                </div>
+  1013→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.installation')}</p>
+  1014→                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+  1015→                  {language === 'ar' ? 'نعم' : 'Oui'}
+  1016→                </p>
+  1017→              </motion.div>
+  1018→            )}
+  1019→            {hasTraining && (
+  1020→              <motion.div
+  1021→                initial={{ opacity: 0, scale: 0.9 }}
+  1022→                whileInView={{ opacity: 1, scale: 1 }}
+  1023→                viewport={{ once: true }}
+  1024→                transition={{ delay: 0.15, duration: 0.3 }}
+  1025→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+  1026→              >
+  1027→                <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mx-auto mb-2">
+  1028→                  <GraduationCap className="w-5 h-5 text-green-600 dark:text-green-400" />
+  1029→                </div>
+  1030→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.training')}</p>
+  1031→                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+  1032→                  {language === 'ar' ? 'نعم' : 'Oui'}
+  1033→                </p>
+  1034→              </motion.div>
+  1035→            )}
+  1036→            {product.origin && (
+  1037→              <motion.div
+  1038→                initial={{ opacity: 0, scale: 0.9 }}
+  1039→                whileInView={{ opacity: 1, scale: 1 }}
+  1040→                viewport={{ once: true }}
+  1041→                transition={{ delay: 0.2, duration: 0.3 }}
+  1042→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+  1043→              >
+  1044→                <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center mx-auto mb-2">
+  1045→                  <Globe className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+  1046→                </div>
+  1047→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.origin')}</p>
+  1048→                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.origin}</p>
+  1049→              </motion.div>
+  1050→            )}
+  1051→            {product.ref && (
+  1052→              <motion.div
+  1053→                initial={{ opacity: 0, scale: 0.9 }}
+  1054→                whileInView={{ opacity: 1, scale: 1 }}
+  1055→                viewport={{ once: true }}
+  1056→                transition={{ delay: 0.25, duration: 0.3 }}
+  1057→                className="bg-white dark:bg-[#162236] rounded-xl p-4 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-all text-center"
+  1058→              >
+  1059→                <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-2">
+  1060→                  <Hash className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+  1061→                </div>
+  1062→                <p className="text-[11px] text-gray-400 dark:text-gray-300 mb-0.5">{t('product.reference')}</p>
+  1063→                <p className="text-sm font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{product.ref}</p>
+  1064→              </motion.div>
+  1065→            )}
+  1066→          </div>
+  1067→        </motion.div>
+  1068→
+  1069→        {/* Description */}
+  1070→        {descriptionHtml && (
+  1071→          <motion.div
+  1072→            initial={{ opacity: 0, y: 20 }}
+  1073→            whileInView={{ opacity: 1, y: 0 }}
+  1074→            viewport={{ once: true }}
+  1075→            transition={{ duration: 0.5 }}
+  1076→            className="mt-12 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+  1077→          >
+  1078→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+  1079→              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #1E3A5F, #F0C05A, #3A7CB8)' }} />
+  1080→              <CardContent className="p-6">
+  1081→                <h2 className="text-xl font-bold mb-4 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1082→                  {t('products.description')}
+  1083→                </h2>
+  1084→                <div
+  1085→                  className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300
+  1086→                    prose-headings:font-bold prose-headings:text-[#1E3A5F] dark:prose-headings:text-[#7AB0E0]
+  1087→                    prose-a:text-[#2A5F8F] dark:prose-a:text-[#7AB0E0] prose-a:no-underline hover:prose-a:underline
+  1088→                    prose-ul:list-disc prose-ol:list-decimal
+  1089→                    prose-li:marker:text-[#F0C05A]
+  1090→                    prose-strong:text-[#1E3A5F] dark:prose-strong:text-[#7AB0E0]
+  1091→                    prose-table:border-collapse
+  1092→                    prose-th:bg-gray-50 dark:prose-th:bg-white/5 prose-th:p-2 prose-th:border prose-th:border-gray-200 dark:prose-th:border-white/10
+  1093→                    prose-td:p-2 prose-td:border prose-td:border-gray-200 dark:prose-td:border-white/10"
+  1094→                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+  1095→                />
+  1096→              </CardContent>
+  1097→            </Card>
+  1098→          </motion.div>
+  1099→        )}
+  1100→
+  1101→        {/* Specifications Table Section */}
+  1102→        {specs.length > 0 && (
+  1103→          <motion.div
+  1104→            initial={{ opacity: 0, y: 20 }}
+  1105→            whileInView={{ opacity: 1, y: 0 }}
+  1106→            viewport={{ once: true }}
+  1107→            transition={{ duration: 0.5 }}
+  1108→            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+  1109→          >
+  1110→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+  1111→              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #2A5F8F, #F0C05A, #1E3A5F)' }} />
+  1112→              <CardContent className="p-6">
+  1113→                <div className="flex items-center gap-3 mb-5">
+  1114→                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(30,58,95,0.1)' }}>
+  1115→                    <ClipboardList className="w-5 h-5" style={{ color: '#1E3A5F' }} />
+  1116→                  </div>
+  1117→                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1118→                    {t('product.specifications')}
+  1119→                  </h2>
+  1120→                </div>
+  1121→                {/* Desktop: Table view */}
+  1122→                <div className="hidden sm:block overflow-hidden rounded-lg border border-gray-200 dark:border-white/10">
+  1123→                  <table className="w-full">
+  1124→                    <thead>
+  1125→                      <tr className="bg-gray-50 dark:bg-white/5">
+  1126→                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300" style={{ color: '#1E3A5F' }}>
+  1127→                          {t('product.spec')}
+  1128→                        </th>
+  1129→                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300" style={{ color: '#1E3A5F' }}>
+  1130→                          {t('product.value')}
+  1131→                        </th>
+  1132→                      </tr>
+  1133→                    </thead>
+  1134→                    <tbody>
+  1135→                      {specs.map((spec, i) => (
+  1136→                        <tr
+  1137→                          key={i}
+  1138→                          className={`${
+  1139→                            i % 2 === 0
+  1140→                              ? 'bg-white dark:bg-[#162236]'
+  1141→                              : 'bg-gray-50 dark:bg-white/[0.03]'
+  1142→                          } transition-colors hover:bg-[#1E3A5F]/[0.03] dark:hover:bg-white/[0.06]`}
+  1143→                        >
+  1144→                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+  1145→                            {language === 'ar' ? spec.label_ar : spec.label_fr}
+  1146→                          </td>
+  1147→                          <td className="px-4 py-3 text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1148→                            {spec.value}
+  1149→                          </td>
+  1150→                        </tr>
+  1151→                      ))}
+  1152→                    </tbody>
+  1153→                  </table>
+  1154→                </div>
+  1155→                {/* Mobile: Key-value pairs */}
+  1156→                <div className="sm:hidden space-y-3">
+  1157→                  {specs.map((spec, i) => (
+  1158→                    <motion.div
+  1159→                      key={i}
+  1160→                      initial={{ opacity: 0, x: -10 }}
+  1161→                      whileInView={{ opacity: 1, x: 0 }}
+  1162→                      viewport={{ once: true }}
+  1163→                      transition={{ delay: i * 0.05 }}
+  1164→                      className="bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3"
+  1165→                    >
+  1166→                      <p className="text-xs text-gray-500 dark:text-gray-300 mb-1">
+  1167→                        {language === 'ar' ? spec.label_ar : spec.label_fr}
+  1168→                      </p>
+  1169→                      <p className="text-sm font-medium dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1170→                        {spec.value}
+  1171→                      </p>
+  1172→                    </motion.div>
+  1173→                  ))}
+  1174→                </div>
+  1175→              </CardContent>
+  1176→            </Card>
+  1177→          </motion.div>
+  1178→        )}
+  1179→
+  1180→        {/* Key Features Section */}
+  1181→        {features && features.length > 0 && (
+  1182→          <motion.div
+  1183→            initial={{ opacity: 0, y: 20 }}
+  1184→            whileInView={{ opacity: 1, y: 0 }}
+  1185→            viewport={{ once: true }}
+  1186→            transition={{ duration: 0.5 }}
+  1187→            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+  1188→          >
+  1189→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+  1190→              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #10B981, #F0C05A, #10B981)' }} />
+  1191→              <CardContent className="p-6">
+  1192→                <div className="flex items-center gap-3 mb-5">
+  1193→                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+  1194→                    <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+  1195→                  </div>
+  1196→                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1197→                    {t('product.keyFeatures')}
+  1198→                  </h2>
+  1199→                </div>
+  1200→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  1201→                  {features.map((feat, i) => (
+  1202→                    <motion.div
+  1203→                      key={i}
+  1204→                      initial={{ opacity: 0, y: 10 }}
+  1205→                      whileInView={{ opacity: 1, y: 0 }}
+  1206→                      viewport={{ once: true }}
+  1207→                      transition={{ delay: i * 0.07, duration: 0.3 }}
+  1208→                      className="flex items-start gap-3 bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3 hover:shadow-sm dark:hover:shadow-none transition-shadow"
+  1209→                    >
+  1210→                      <div className="mt-0.5 shrink-0 p-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+  1211→                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+  1212→                      </div>
+  1213→                      <span className="text-sm text-gray-700 dark:text-gray-300">{feat}</span>
+  1214→                    </motion.div>
+  1215→                  ))}
+  1216→                </div>
+  1217→              </CardContent>
+  1218→            </Card>
+  1219→          </motion.div>
+  1220→        )}
+  1221→
+  1222→        {/* Customer Reviews Section */}
+  1223→        {product.rating && (
+  1224→          <motion.div
+  1225→            initial={{ opacity: 0, y: 20 }}
+  1226→            whileInView={{ opacity: 1, y: 0 }}
+  1227→            viewport={{ once: true }}
+  1228→            transition={{ duration: 0.5 }}
+  1229→            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+  1230→          >
+  1231→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+  1232→              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #F0C05A, #3A7CB8, #F0C05A)' }} />
+  1233→              <CardContent className="p-6">
+  1234→                <div className="flex items-center gap-3 mb-6">
+  1235→                  <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+  1236→                    <Star className="w-5 h-5 text-amber-500 dark:text-amber-400 fill-amber-500" />
+  1237→                  </div>
+  1238→                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1239→                    {t('product.reviews')}
+  1240→                  </h2>
+  1241→                </div>
+  1242→
+  1243→                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  1244→                  {/* Rating Summary Card */}
+  1245→                  <div className="md:col-span-1 bg-gray-50 dark:bg-white/[0.03] rounded-xl p-5 flex flex-col items-center justify-center text-center">
+  1246→                    <span className="text-5xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1247→                      {product.rating.toFixed(1)}
+  1248→                    </span>
+  1249→                    <div className="mt-2">
+  1250→                      <StarRating rating={product.rating} size="md" />
+  1251→                    </div>
+  1252→                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-2">
+  1253→                      {product.reviewCount || 0} {language === 'ar' ? 'تقييم' : 'avis'}
+  1254→                    </p>
+  1255→
+  1256→                    {/* Rating Distribution */}
+  1257→                    <div className="w-full mt-4 space-y-1.5">
+  1258→                      {[
+  1259→                        { stars: 5, pct: 80 },
+  1260→                        { stars: 4, pct: 15 },
+  1261→                        { stars: 3, pct: 3 },
+  1262→                        { stars: 2, pct: 1 },
+  1263→                        { stars: 1, pct: 1 },
+  1264→                      ].map((row) => (
+  1265→                        <div key={row.stars} className="flex items-center gap-2 text-xs">
+  1266→                          <span className="w-3 text-gray-500 dark:text-gray-300">{row.stars}</span>
+  1267→                          <Star className="w-3 h-3 text-[#F0C05A] fill-[#F0C05A]" />
+  1268→                          <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
+  1269→                            <div
+  1270→                              className="h-full rounded-full bg-[#F0C05A]"
+  1271→                              style={{ width: `${row.pct}%` }}
+  1272→                            />
+  1273→                          </div>
+  1274→                          <span className="w-8 text-right text-gray-400 dark:text-gray-300">{row.pct}%</span>
+  1275→                        </div>
+  1276→                      ))}
+  1277→                    </div>
+  1278→                  </div>
+  1279→
+  1280→                  {/* Sample Reviews */}
+  1281→                  <div className="md:col-span-2 space-y-4">
+  1282→                    {[
+  1283→                      {
+  1284→                        name: 'Dr. Benali',
+  1285→                        rating: 5,
+  1286→                        date: language === 'ar' ? t('product.monthsAgo').replace('{n}', '2') : 'Il y a 2 mois',
+  1287→                        text: language === 'ar'
+  1288→                          ? 'جهاز ممتاز، التركيب كان احترافياً والفريق التقني متاح دائماً. أنصح بشدة بهذا المنتج لزملائي.'
+  1289→                          : 'Équipement excellent, l\'installation a été professionnelle et l\'équipe technique toujours disponible. Je recommande vivement ce produit à mes confrères.',
+  1290→                        verified: true,
+  1291→                      },
+  1292→                      {
+  1293→                        name: 'Dr. Meziane',
+  1294→                        rating: 4,
+  1295→                        date: language === 'ar' ? t('product.weeksAgo').replace('{n}', '1') : 'Il y a 1 semaine',
+  1296→                        text: language === 'ar'
+  1297→                          ? 'جودة التصنيع ممتازة. تكوين الفريق كان مفيداً جداً. راضٍ تماماً عن الشراء.'
+  1298→                          : 'Qualité de fabrication au rendez-vous. La formation de l\'équipe a été très utile. Très satisfait de mon achat.',
+  1299→                        verified: true,
+  1300→                      },
+  1301→                      {
+  1302→                        name: 'Dr. Khelifi',
+  1303→                        rating: 5,
+  1304→                        date: language === 'ar' ? t('product.monthsAgo').replace('{n}', '3') : 'Il y a 3 mois',
+  1305→                        text: language === 'ar'
+  1306→                          ? 'استخدام يومي منذ 3 أشهر بدون أي مشكلة. خدمة ما بعد البيع استثنائية. شكراً لفريق ODG.'
+  1307→                          : 'Utilisation quotidienne depuis 3 mois sans aucun problème. SAV exceptionnel. Merci à l\'équipe ODG.',
+  1308→                        verified: true,
+  1309→                      },
+  1310→                    ].map((review, i) => (
+  1311→                      <motion.div
+  1312→                        key={i}
+  1313→                        initial={{ opacity: 0, y: 15 }}
+  1314→                        whileInView={{ opacity: 1, y: 0 }}
+  1315→                        viewport={{ once: true }}
+  1316→                        transition={{ delay: i * 0.1, duration: 0.4 }}
+  1317→                        className="bg-gray-50 dark:bg-white/[0.03] rounded-lg p-4"
+  1318→                      >
+  1319→                        <div className="flex items-center justify-between mb-2">
+  1320→                          <div className="flex items-center gap-2">
+  1321→                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#1E3A5F' }}>
+  1322→                              {review.name.charAt(review.name.lastIndexOf(' ') + 1)}
+  1323→                            </div>
+  1324→                            <div>
+  1325→                              <p className="text-sm font-semibold dark:text-white" style={{ color: '#1E3A5F' }}>{review.name}</p>
+  1326→                              <div className="flex items-center gap-1.5">
+  1327→                                <div className="flex">
+  1328→                                  {[1, 2, 3, 4, 5].map((s) => (
+  1329→                                    <Star
+  1330→                                      key={s}
+  1331→                                      className={`w-3 h-3 ${s <= review.rating ? 'text-[#F0C05A] fill-[#F0C05A]' : 'text-gray-300 dark:text-gray-600'}`}
+  1332→                                    />
+  1333→                                  ))}
+  1334→                                </div>
+  1335→                                {review.verified && (
+  1336→                                  <span className="flex items-center gap-0.5 text-[10px] text-green-600 dark:text-green-400 font-medium">
+  1337→                                    <CheckCircle className="w-3 h-3" />
+  1338→                                    {t('product.verifiedPurchase')}
+  1339→                                  </span>
+  1340→                                )}
+  1341→                              </div>
+  1342→                            </div>
+  1343→                          </div>
+  1344→                          <span className="text-xs text-gray-400 dark:text-gray-300">{review.date}</span>
+  1345→                        </div>
+  1346→                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{review.text}</p>
+  1347→                      </motion.div>
+  1348→                    ))}
+  1349→
+  1350→                    {/* See All Reviews Button */}
+  1351→                    <Button
+  1352→                      variant="outline"
+  1353→                      className="w-full mt-2 gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
+  1354→                      style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+  1355→                      onClick={() => {}}
+  1356→                    >
+  1357→                      {t('product.seeAllReviews')}
+  1358→                    </Button>
+  1359→                  </div>
+  1360→                </div>
+  1361→              </CardContent>
+  1362→            </Card>
+  1363→          </motion.div>
+  1364→        )}
+  1365→
+  1366→        {/* Product Videos Section */}
+  1367→        {product.videos && product.videos.length > 0 && (
+  1368→          <motion.div
+  1369→            initial={{ opacity: 0, y: 20 }}
+  1370→            whileInView={{ opacity: 1, y: 0 }}
+  1371→            viewport={{ once: true }}
+  1372→            transition={{ duration: 0.5 }}
+  1373→            className="mt-8 border-b border-gray-100 dark:border-white/5 pb-8 mb-8"
+  1374→          >
+  1375→            <Card className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] overflow-hidden">
+  1376→              <div className="h-1 gradient-border-animated" style={{ background: 'linear-gradient(90deg, #EF4444, #F0C05A, #EF4444)' }} />
+  1377→              <CardContent className="p-6">
+  1378→                <div className="flex items-center gap-3 mb-5">
+  1379→                  <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
+  1380→                    <Play className="w-5 h-5 text-red-500 dark:text-red-400" />
+  1381→                  </div>
+  1382→                  <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1383→                    {t('product.videos')}
+  1384→                  </h2>
+  1385→                </div>
+  1386→                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  1387→                  {product.videos.map((video, i) => {
+  1388→                    const embedUrl = getYouTubeEmbedUrl(video.url);
+  1389→                    const videoTitle = language === 'ar' ? video.title_ar : video.title_fr;
+  1390→                    return (
+  1391→                      <motion.div
+  1392→                        key={i}
+  1393→                        initial={{ opacity: 0, scale: 0.95 }}
+  1394→                        whileInView={{ opacity: 1, scale: 1 }}
+  1395→                        viewport={{ once: true }}
+  1396→                        transition={{ delay: i * 0.1, duration: 0.4 }}
+  1397→                        className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10"
+  1398→                      >
+  1399→                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+  1400→                          {embedUrl ? (
+  1401→                            <iframe
+  1402→                              src={embedUrl}
+  1403→                              title={videoTitle}
+  1404→                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  1405→                              allowFullScreen
+  1406→                              className="absolute inset-0 w-full h-full"
+  1407→                            />
+  1408→                          ) : (
+  1409→                            <a
+  1410→                              href={video.url}
+  1411→                              target="_blank"
+  1412→                              rel="noopener noreferrer"
+  1413→                              className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100 dark:bg-[#0f1d2e] hover:bg-gray-200 dark:hover:bg-[#162236] transition-colors"
+  1414→                            >
+  1415→                              <div className="text-center">
+  1416→                                <div className="w-14 h-14 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-2">
+  1417→                                  <Play className="w-7 h-7 text-red-500 dark:text-red-400" />
+  1418→                                </div>
+  1419→                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+  1420→                                  {t('product.watchVideo')}
+  1421→                                </p>
+  1422→                              </div>
+  1423→                            </a>
+  1424→                          )}
+  1425→                        </div>
+  1426→                        {videoTitle && (
+  1427→                          <div className="px-4 py-3 bg-gray-50 dark:bg-white/[0.03]">
+  1428→                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+  1429→                              {videoTitle}
+  1430→                            </p>
+  1431→                          </div>
+  1432→                        )}
+  1433→                      </motion.div>
+  1434→                    );
+  1435→                  })}
+  1436→                </div>
+  1437→              </CardContent>
+  1438→            </Card>
+  1439→          </motion.div>
+  1440→        )}
+  1441→
+  1442→        {/* Related Products - Prominent heading */}
+  1443→        {relatedProducts.length > 0 && (
+  1444→          <motion.div
+  1445→            initial={{ opacity: 0, y: 20 }}
+  1446→            whileInView={{ opacity: 1, y: 0 }}
+  1447→            viewport={{ once: true }}
+  1448→            className="mt-12"
+  1449→          >
+  1450→            <div className="flex items-center gap-3 mb-6">
+  1451→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+  1452→              <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1453→                {t('products.relatedProducts')}
+  1454→              </h2>
+  1455→            </div>
+  1456→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  1457→              {relatedProducts.map((rp) => (
+  1458→                <Card
+  1459→                  key={rp.id}
+  1460→                  className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+  1461→                  onClick={() => {
+  1462→                    handleImageChange(0);
+  1463→                    navigate(`/product/${rp.slug}`);
+  1464→                  }}
+  1465→                >
+  1466→                  <div className="h-36 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+  1467→                    {rp.images?.[0] ? (
+  1468→                      <img
+  1469→                        src={rp.images[0]}
+  1470→                        alt={getProductName(rp, language)}
+  1471→                        loading="lazy"
+  1472→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+  1473→                      />
+  1474→                    ) : (
+  1475→                      <div
+  1476→                        className="w-full h-full flex items-center justify-center"
+  1477→                        style={{
+  1478→                          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+  1479→                        }}
+  1480→                      >
+  1481→                        <Package className="w-10 h-10 text-white/30" />
+  1482→                      </div>
+  1483→                    )}
+  1484→                  </div>
+  1485→                  <CardContent className="p-3">
+  1486→                    {rp.brand && (
+  1487→                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+  1488→                        {rp.brand}
+  1489→                      </span>
+  1490→                    )}
+  1491→                    <h3 className="font-semibold text-sm line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+  1492→                      {getProductName(rp, language)}
+  1493→                    </h3>
+  1494→                  </CardContent>
+  1495→                </Card>
+  1496→              ))}
+  1497→            </div>
+  1498→          </motion.div>
+  1499→        )}
+  1500→      </div>
+  1501→
+  1502→      {/* Recently Viewed Products Section */}
+  1503→      {recentlyViewedItems.length > 0 && (
+  1504→        <motion.div
+  1505→          initial={{ opacity: 0, y: 20 }}
+  1506→          whileInView={{ opacity: 1, y: 0 }}
+  1507→          viewport={{ once: true }}
+  1508→          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+  1509→        >
+  1510→          <div className="flex items-center justify-between mb-4">
+  1511→            <div className="flex items-center gap-3">
+  1512→              <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+  1513→              <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1514→                {t('products.recentlyViewed')}
+  1515→              </h2>
+  1516→            </div>
+  1517→            <Button
+  1518→              variant="ghost"
+  1519→              size="sm"
+  1520→              className="text-xs text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400"
+  1521→              onClick={clearRecentlyViewed}
+  1522→            >
+  1523→              {t('products.recentlyViewed.clear')}
+  1524→            </Button>
+  1525→          </div>
+  1526→          <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  1527→            {recentlyViewedItems
+  1528→              .filter((rv) => rv.id !== product.id)
+  1529→              .map((rv) => {
+  1530→                const rvProduct = products.find((p) => p.id === rv.id);
+  1531→                return (
+  1532→                  <motion.div
+  1533→                    key={rv.id}
+  1534→                    whileHover={{ y: -4 }}
+  1535→                    className="min-w-[160px] sm:min-w-[180px] shrink-0"
+  1536→                  >
+  1537→                    <Card
+  1538→                      className="border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+  1539→                      onClick={() => navigate(`/product/${rv.slug}`)}
+  1540→                    >
+  1541→                      <div className="h-28 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+  1542→                        {rv.image ? (
+  1543→                          <img
+  1544→                            src={rv.image}
+  1545→                            alt={rv.name}
+  1546→                            loading="lazy"
+  1547→                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+  1548→                          />
+  1549→                        ) : (
+  1550→                          <div
+  1551→                            className="w-full h-full flex items-center justify-center"
+  1552→                            style={{
+  1553→                              background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+  1554→                            }}
+  1555→                          >
+  1556→                            <Package className="w-8 h-8 text-white/30" />
+  1557→                          </div>
+  1558→                        )}
+  1559→                      </div>
+  1560→                      <CardContent className="p-2.5">
+  1561→                        {rvProduct?.brand && (
+  1562→                          <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+  1563→                            {rvProduct.brand}
+  1564→                          </span>
+  1565→                        )}
+  1566→                        <h3 className="font-semibold text-xs line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+  1567→                          {rv.name}
+  1568→                        </h3>
+  1569→                        <p className="text-[10px] font-medium mt-1 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1570→                          {rv.price && rv.price > 0
+  1571→                            ? `${rv.price.toLocaleString('fr-DZ')} DA`
+  1572→                            : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+  1573→                          }
+  1574→                        </p>
+  1575→                      </CardContent>
+  1576→                    </Card>
+  1577→                  </motion.div>
+  1578→                );
+  1579→              })}
+  1580→          </div>
+  1581→        </motion.div>
+  1582→      )}
+  1583→
+  1584→      {/* Related Categories Section */}
+  1585→      {relatedCategories.length > 0 && (
+  1586→        <motion.div
+  1587→          initial={{ opacity: 0, y: 20 }}
+  1588→          whileInView={{ opacity: 1, y: 0 }}
+  1589→          viewport={{ once: true }}
+  1590→          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-8"
+  1591→        >
+  1592→          <div className="flex items-center gap-3 mb-4">
+  1593→            <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#3B8C6E' }} />
+  1594→            <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1595→              {t('products.relatedCategories')}
+  1596→            </h2>
+  1597→          </div>
+  1598→          <div className="flex gap-3 flex-wrap">
+  1599→            {relatedCategories.map((cat) => (
+  1600→              <button
+  1601→                key={cat.id}
+  1602→                onClick={() => navigate('/catalogue')}
+  1603→                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 hover:border-[#1E3A5F] dark:hover:border-[#7AB0E0] hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200 group"
+  1604→                style={{ backgroundColor: 'rgba(30,58,95,0.03)' }}
+  1605→              >
+  1606→                {cat.icon && (
+  1607→                  <span className="text-lg" dangerouslySetInnerHTML={{ __html: cat.icon }} />
+  1608→                )}
+  1609→                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
+  1610→                  {getCategoryName(cat, language)}
+  1611→                </span>
+  1612→              </button>
+  1613→            ))}
+  1614→          </div>
+  1615→        </motion.div>
+  1616→      )}
+  1617→
+  1618→      {/* You May Also Like Section */}
+  1619→      {youMayAlsoLike.length > 0 && (
+  1620→        <motion.div
+  1621→          initial={{ opacity: 0, y: 20 }}
+  1622→          whileInView={{ opacity: 1, y: 0 }}
+  1623→          viewport={{ once: true }}
+  1624→          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-4"
+  1625→        >
+  1626→          <div className="flex items-center gap-3 mb-6">
+  1627→            <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: '#F0C05A' }} />
+  1628→            <h2 className="text-xl font-bold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1629→              {t('products.youMayAlsoLike')}
+  1630→            </h2>
+  1631→          </div>
+  1632→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  1633→            {youMayAlsoLike.map((rp) => (
+  1634→              <Card
+  1635→                key={rp.id}
+  1636→                className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+  1637→                onClick={() => {
+  1638→                  handleImageChange(0);
+  1639→                  navigate(`/product/${rp.slug}`);
+  1640→                }}
+  1641→              >
+  1642→                <div className="flex sm:flex-col">
+  1643→                  <div className="w-24 sm:w-full h-24 sm:h-36 shrink-0 overflow-hidden bg-[#f0f4f8] dark:bg-[#0f1d2e]">
+  1644→                    {rp.images?.[0] ? (
+  1645→                      <img
+  1646→                        src={rp.images[0]}
+  1647→                        alt={getProductName(rp, language)}
+  1648→                        loading="lazy"
+  1649→                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+  1650→                      />
+  1651→                    ) : (
+  1652→                      <div
+  1653→                        className="w-full h-full flex items-center justify-center"
+  1654→                        style={{
+  1655→                          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+  1656→                        }}
+  1657→                      >
+  1658→                        <Package className="w-8 h-8 text-white/30" />
+  1659→                      </div>
+  1660→                    )}
+  1661→                  </div>
+  1662→                  <CardContent className="p-3 flex-1 min-w-0">
+  1663→                    {rp.brand && (
+  1664→                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#F0C05A' }}>
+  1665→                        {rp.brand}
+  1666→                      </span>
+  1667→                    )}
+  1668→                    <h3 className="font-semibold text-sm line-clamp-1 mt-0.5 dark:text-white" style={{ color: '#1E3A5F' }}>
+  1669→                      {getProductName(rp, language)}
+  1670→                    </h3>
+  1671→                    <p className="text-xs font-medium mt-1 dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>
+  1672→                      {rp.price && rp.price > 0
+  1673→                        ? `${rp.price.toLocaleString('fr-DZ')} DA`
+  1674→                        : (language === 'ar' ? 'عند الطلب' : 'Sur devis')
+  1675→                      }
+  1676→                    </p>
+  1677→                  </CardContent>
+  1678→                </div>
+  1679→              </Card>
+  1680→            ))}
+  1681→          </div>
+  1682→        </motion.div>
+  1683→      )}
+  1684→
+  1685→      {/* Sticky Add-to-Quote Bar on Mobile */}
+  1686→      <motion.div
+  1687→        initial={{ y: 100 }}
+  1688→        animate={{ y: 0 }}
+  1689→        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#162236]/95 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+  1690→      >
+  1691→        <div className="px-4 py-3 flex items-center gap-3">
+  1692→          <div className="flex-1 min-w-0">
+  1693→            <p className="text-sm font-bold truncate dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1694→              {getProductName(product, language)}
+  1695→            </p>
+  1696→            {priceDisplay ? (
+  1697→              <p className="text-xs font-semibold dark:text-[#7AB0E0]" style={{ color: '#2A5F8F' }}>{priceDisplay}</p>
+  1698→            ) : (
+  1699→              <p className="text-xs font-medium dark:text-blue-200" style={{ color: '#F0C05A' }}>
+  1700→                {language === 'ar' ? 'السعر على أساس التسعير' : 'Prix sur devis'}
+  1701→              </p>
+  1702→            )}
+  1703→          </div>
+  1704→          <Button
+  1705→            className="h-10 px-5 font-semibold shadow-md shrink-0"
+  1706→            style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+  1707→            onClick={() => {
+  1708→              addItem({
+  1709→                id: product.id,
+  1710→                slug: product.slug,
+  1711→                name: getProductName(product, language),
+  1712→                price: product.price,
+  1713→                image: product.images?.[0] || '',
+  1714→              });
+  1715→            }}
+  1716→          >
+  1717→            <ShoppingCart className="w-4 h-4 mr-1.5" />
+  1718→            {t('products.addToQuoteSticky')}
+  1719→          </Button>
+  1720→        </div>
+  1721→      </motion.div>
+  1722→    </div>
+  1723→  );
+  1724→}
+  1725→

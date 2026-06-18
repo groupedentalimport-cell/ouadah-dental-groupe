@@ -22,7 +22,6 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useData } from '@/lib/data-service';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import type { Product } from '@/lib/data-service';
@@ -37,7 +36,6 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
   const { t, language, isRTL } = useTranslation();
   const { navigate } = useRouter();
   const { categories, getProductName, getProductShortDescription, getCategoryName } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
   const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
 
@@ -54,15 +52,6 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
   const inCompare = isInCompare(product.id);
   const compareFull = productIds.length >= 4;
 
-  const handleAddToQuote = () => {
-    addItem({
-      id: product.id,
-      slug: product.slug,
-      name,
-      price: product.price,
-      image: product.images?.[0] || '',
-    });
-  };
 
   const handleCompareToggle = () => {
     if (inCompare) {
@@ -218,7 +207,7 @@ export default function QuickViewModal({ product, open, onClose }: QuickViewModa
                   <Button
                     className="flex-1 gap-2 h-10 font-semibold shadow-sm"
                     style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
-                    onClick={handleAddToQuote}
+                    onClick={() => navigate('/contact')}
                   >
                     <ShoppingCart className="w-4 h-4" />
                     {t('products.quickView.addToQuote')}

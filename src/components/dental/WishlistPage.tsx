@@ -15,7 +15,6 @@ import { useTranslation } from '@/lib/i18n';
 import { useRouter } from '@/lib/router';
 import { useData } from '@/lib/data-service';
 import { useWishlist } from '@/hooks/useWishlist';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -81,7 +80,6 @@ export default function WishlistPage() {
   const { navigate } = useRouter();
   const { items, removeItem, clearAll } = useWishlist();
   const { products, getProductName, getCategoryName, categories } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
 
   const wishlistProducts = items
     .map((slug) => products.find((p) => p.slug === slug))
@@ -93,23 +91,7 @@ export default function WishlistPage() {
   };
 
   const handleAddAllToQuote = () => {
-    wishlistProducts.forEach((product) => {
-      addItem({
-        id: product.id,
-        slug: product.slug,
-        name: getProductName(product, language),
-        price: product.price,
-        image: product.images?.[0] || '',
-      });
-    });
-    toast.success(
-      language === 'ar'
-        ? `تمت إضافة ${wishlistProducts.length} منتج إلى سلة التسعير`
-        : `${wishlistProducts.length} produit(s) ajouté(s) au devis`,
-      {
-        icon: <ShoppingCart className="w-4 h-4" />,
-      }
-    );
+    navigate('/contact');
   };
 
   const handleRemoveItem = (slug: string, name: string) => {
@@ -421,19 +403,7 @@ export default function WishlistPage() {
                           style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            addItem({
-                              id: product.id,
-                              slug: product.slug,
-                              name: productName,
-                              price: product.price,
-                              image: product.images?.[0] || '',
-                            });
-                            toast.success(
-                              language === 'ar'
-                                ? 'تمت الإضافة إلى سلة التسعير'
-                                : 'Ajouté au devis',
-                              { icon: <ShoppingCart className="w-4 h-4" /> }
-                            );
+                            navigate('/contact');
                           }}
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />

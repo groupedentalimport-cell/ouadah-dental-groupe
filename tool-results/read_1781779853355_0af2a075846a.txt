@@ -1,0 +1,1412 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Search,
+     7→  SlidersHorizontal,
+     8→  Package,
+     9→  ShoppingCart,
+    10→  Eye,
+    11→  ChevronDown,
+    12→  X,
+    13→  RotateCcw,
+    14→  Stethoscope,
+    15→  GitCompareArrows,
+    16→  Check,
+    17→  FileText,
+    18→  Heart,
+    19→  Star,
+    20→  LayoutGrid,
+    21→  List,
+    22→  Filter,
+    23→} from 'lucide-react';
+    24→import { useTranslation } from '@/lib/i18n';
+    25→import { useRouter } from '@/lib/router';
+    26→import { useData } from '@/lib/data-service';
+    27→import { Button } from '@/components/ui/button';
+    28→import { Card, CardContent } from '@/components/ui/card';
+    29→import { Badge } from '@/components/ui/badge';
+    30→import { Input } from '@/components/ui/input';
+    31→import { Slider } from '@/components/ui/slider';
+    32→import {
+    33→  Sheet,
+    34→  SheetContent,
+    35→  SheetHeader,
+    36→  SheetTitle,
+    37→  SheetTrigger,
+    38→  SheetFooter,
+    39→} from '@/components/ui/sheet';
+    40→import { Toggle } from '@/components/ui/toggle';
+    41→import { Switch } from '@/components/ui/switch';
+    42→import { useQuoteCart } from '@/hooks/useQuoteCart';
+    43→import { useCompare } from '@/hooks/useCompare';
+    44→import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+    45→import { useWishlist } from '@/hooks/useWishlist';
+    46→import type { Product } from '@/lib/data-service';
+    47→import { CataloguePageSkeleton, ContentWithLoading } from '@/components/dental/Skeletons';
+    48→import QuickViewModal from '@/components/dental/QuickViewModal';
+    49→
+    50→type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'name';
+    51→type ViewMode = 'grid' | 'list';
+    52→
+    53→// Star Rating component
+    54→function StarRating({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+    55→  const stars = [];
+    56→  const fullStars = Math.floor(rating);
+    57→  const hasHalf = rating - fullStars >= 0.5;
+    58→  for (let i = 0; i < 5; i++) {
+    59→    if (i < fullStars) stars.push('full');
+    60→    else if (i === fullStars && hasHalf) stars.push('half');
+    61→    else stars.push('empty');
+    62→  }
+    63→  return (
+    64→    <div className="flex items-center gap-1">
+    65→      <div className={`flex ${size === 'sm' ? 'gap-0.5' : 'gap-1'}`}>
+    66→        {stars.map((type, i) => (
+    67→          <Star key={i} className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} ${type === 'full' ? 'text-[#F0C05A] fill-[#F0C05A]' : type === 'half' ? 'text-[#F0C05A]' : 'text-gray-300 dark:text-gray-500'}`} />
+    68→        ))}
+    69→      </div>
+    70→      {count !== undefined && (
+    71→        <span className={`text-gray-500 dark:text-gray-300 ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>({count})</span>
+    72→      )}
+    73→    </div>
+    74→  );
+    75→}
+    76→
+    77→// Category accent colors for left borders
+    78→const categoryColors = [
+    79→  '#1E3A5F', '#2A5F8F', '#3A7CB8', '#F0C05A', '#E8963E',
+    80→  '#4A9D7C', '#6B5CE7', '#D94F7B',
+    81→];
+    82→
+    83→// Extracted PriceRangeFilter as a separate component to avoid render-time component creation
+    84→function PriceRangeFilterSection({ t, priceRange, setPriceRange, priceMax, includeOnQuote, setIncludeOnQuote }: {
+    85→  t: (key: string) => string;
+    86→  priceRange: [number, number];
+    87→  setPriceRange: (val: [number, number]) => void;
+    88→  priceMax: number;
+    89→  includeOnQuote: boolean;
+    90→  setIncludeOnQuote: (val: boolean) => void;
+    91→}) {
+    92→  return (
+    93→    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+    94→      <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+    95→        {t('products.priceRange')}
+    96→      </h4>
+    97→      <div className="px-1">
+    98→        <Slider
+    99→          value={priceRange}
+   100→          onValueChange={(val) => setPriceRange([val[0], val[1]])}
+   101→          min={0}
+   102→          max={priceMax || 10000000}
+   103→          step={Math.max(1, Math.floor((priceMax || 10000000) / 100))}
+   104→          className="mb-3"
+   105→        />
+   106→        <div className="flex items-center gap-2">
+   107→          <div className="flex-1">
+   108→            <label className="text-[10px] text-gray-400 dark:text-gray-300 uppercase">{t('products.priceRange.min')}</label>
+   109→            <Input
+   110→              type="number"
+   111→              value={priceRange[0]}
+   112→              onChange={(e) => {
+   113→                const val = parseInt(e.target.value) || 0;
+   114→                setPriceRange([Math.min(val, priceRange[1]), priceRange[1]]);
+   115→              }}
+   116→              className="h-8 text-xs mt-0.5 dark:bg-white/5 dark:border-white/10 dark:text-white"
+   117→              min={0}
+   118→              max={priceRange[1]}
+   119→            />
+   120→          </div>
+   121→          <span className="text-gray-300 dark:text-gray-500 mt-4">—</span>
+   122→          <div className="flex-1">
+   123→            <label className="text-[10px] text-gray-400 dark:text-gray-300 uppercase">{t('products.priceRange.max')}</label>
+   124→            <Input
+   125→              type="number"
+   126→              value={priceRange[1]}
+   127→              onChange={(e) => {
+   128→                const val = parseInt(e.target.value) || priceMax;
+   129→                setPriceRange([priceRange[0], Math.max(val, priceRange[0])]);
+   130→              }}
+   131→              className="h-8 text-xs mt-0.5 dark:bg-white/5 dark:border-white/10 dark:text-white"
+   132→              min={priceRange[0]}
+   133→              max={priceMax}
+   134→            />
+   135→          </div>
+   136→        </div>
+   137→        {/* Include "Sur devis" toggle */}
+   138→        <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+   139→          <input
+   140→            type="checkbox"
+   141→            checked={includeOnQuote}
+   142→            onChange={(e) => setIncludeOnQuote(e.target.checked)}
+   143→            className="w-4 h-4 rounded border-gray-300 dark:border-white/20 accent-[#1E3A5F]"
+   144→          />
+   145→          <span className="text-xs text-gray-600 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors">
+   146→            {t('products.priceRange.includeOnQuote')}
+   147→          </span>
+   148→        </label>
+   149→      </div>
+   150→    </div>
+   151→  );
+   152→}
+   153→
+   154→export default function CataloguePage() {
+   155→  const { t, language, isRTL } = useTranslation();
+   156→  const { navigate } = useRouter();
+   157→  const { categories, products, getCategoryName, getProductName, getProductShortDescription, loading } = useData();
+   158→  const addItem = useQuoteCart((s) => s.addItem);
+   159→  const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
+   160→  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
+   161→
+   162→  const [search, setSearch] = useState('');
+   163→  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+   164→  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+   165→  const [sort, setSort] = useState<SortOption>('newest');
+   166→  const [showFilters, setShowFilters] = useState(false);
+   167→  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+   168→  const [quickViewOpen, setQuickViewOpen] = useState(false);
+   169→  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+   170→  const addRecentlyViewed = useRecentlyViewed((s) => s.addProduct);
+   171→
+   172→  // Price range filter state
+   173→  const pricesWithValues = useMemo(() => products.map(p => p.price).filter((p): p is number => !!p && p > 0), [products]);
+   174→  const priceMin = useMemo(() => pricesWithValues.length > 0 ? Math.min(...pricesWithValues) : 0, [pricesWithValues]);
+   175→  const priceMax = useMemo(() => pricesWithValues.length > 0 ? Math.max(...pricesWithValues) : 10000000, [pricesWithValues]);
+   176→  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+   177→  const [includeOnQuote, setIncludeOnQuote] = useState(true);
+   178→  const [inStockOnly, setInStockOnly] = useState(false);
+   179→
+   180→  // Brand extraction with product counts (case-insensitive normalization)
+   181→  const brandsWithCounts = useMemo(() => {
+   182→    const brandMap = new Map<string, { display: string; count: number }>();
+   183→    products.forEach((p) => {
+   184→      if (p.brand) {
+   185→        const key = p.brand.toLowerCase().trim();
+   186→        const existing = brandMap.get(key);
+   187→        if (existing) {
+   188→          // Prefer the properly-cased version
+   189→          const display = p.brand.trim().charAt(0).toUpperCase() + p.brand.trim().slice(1);
+   190→          if (display === p.brand.trim()) {
+   191→            existing.display = p.brand.trim();
+   192→          }
+   193→          existing.count += 1;
+   194→        } else {
+   195→          brandMap.set(key, { display: p.brand.trim(), count: 1 });
+   196→        }
+   197→      }
+   198→    });
+   199→    return Array.from(brandMap.entries())
+   200→      .map(([key, data]) => ({ brand: data.display, key, count: data.count }))
+   201→      .sort((a, b) => a.brand.localeCompare(b.brand));
+   202→  }, [products]);
+   203→
+   204→  const toggleBrand = (brand: string) => {
+   205→    setSelectedBrands((prev) => {
+   206→      const next = new Set(prev);
+   207→      if (next.has(brand)) {
+   208→        next.delete(brand);
+   209→      } else {
+   210→        next.add(brand);
+   211→      }
+   212→      return next;
+   213→    });
+   214→  };
+   215→
+   216→  // Parse category from URL hash if present
+   217→  React.useEffect(() => {
+   218→    const hash = window.location.hash;
+   219→    const parts = hash.split('?');
+   220→    if (parts.length > 1) {
+   221→      const params = new URLSearchParams(parts[1]);
+   222→      const cat = params.get('category');
+   223→      if (cat) setSelectedCategory(cat);
+   224→    }
+   225→  }, []);
+   226→
+   227→  const filteredProducts = useMemo(() => {
+   228→    let result = [...products];
+   229→
+   230→    // Filter by category
+   231→    if (selectedCategory !== 'all') {
+   232→      const cat = categories.find((c) => c.slug === selectedCategory);
+   233→      if (cat) result = result.filter((p) => p.category_id === cat.id);
+   234→    }
+   235→
+   236→    // Filter by brands (case-insensitive matching)
+   237→    if (selectedBrands.size > 0) {
+   238→      const lowerBrands = new Set(Array.from(selectedBrands).map(b => b.toLowerCase()));
+   239→      result = result.filter((p) => p.brand && lowerBrands.has(p.brand.toLowerCase()));
+   240→    }
+   241→
+   242→    // Filter by search
+   243→    if (search) {
+   244→      const q = search.toLowerCase();
+   245→      result = result.filter(
+   246→        (p) =>
+   247→          p.name_fr.toLowerCase().includes(q) ||
+   248→          p.name_ar.includes(q) ||
+   249→          p.brand.toLowerCase().includes(q) ||
+   250→          p.ref.toLowerCase().includes(q)
+   251→      );
+   252→    }
+   253→
+   254→    // Filter by in-stock only
+   255→    if (inStockOnly) {
+   256→      result = result.filter((p) => p.in_stock);
+   257→    }
+   258→
+   259→    // Filter by price range
+   260→    result = result.filter((p) => {
+   261→      const hasPrice = p.price && p.price > 0;
+   262→      if (hasPrice) {
+   263→        return p.price >= priceRange[0] && p.price <= priceRange[1];
+   264→      }
+   265→      // Products without price ("Sur devis") are included only if includeOnQuote is true
+   266→      return includeOnQuote;
+   267→    });
+   268→
+   269→    // Sort
+   270→    switch (sort) {
+   271→      case 'newest':
+   272→        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+   273→        break;
+   274→      case 'priceAsc':
+   275→        result.sort((a, b) => (a.price || 0) - (b.price || 0));
+   276→        break;
+   277→      case 'priceDesc':
+   278→        result.sort((a, b) => (b.price || 0) - (a.price || 0));
+   279→        break;
+   280→      case 'name':
+   281→        result.sort((a, b) =>
+   282→          language === 'ar'
+   283→            ? a.name_ar.localeCompare(b.name_ar)
+   284→            : a.name_fr.localeCompare(b.name_fr)
+   285→        );
+   286→        break;
+   287→    }
+   288→
+   289→    return result;
+   290→  }, [products, categories, selectedCategory, selectedBrands, search, sort, language, priceRange, includeOnQuote, inStockOnly]);
+   291→
+   292→  const formatPrice = (price: number | undefined) => {
+   293→    if (price == null || isNaN(price) || price === 0) return null;
+   294→    return price.toLocaleString('fr-DZ') + ' DA';
+   295→  };
+   296→
+   297→  const isFiltering = selectedCategory !== 'all' || selectedBrands.size > 0 || search.length > 0 || priceRange[0] > 0 || priceRange[1] < priceMax || !includeOnQuote || inStockOnly;
+   298→
+   299→  const activeFilterCount = useMemo(() => {
+   300→    let count = 0;
+   301→    if (selectedCategory !== 'all') count++;
+   302→    count += selectedBrands.size;
+   303→    if (search.length > 0) count++;
+   304→    if (priceRange[0] > 0 || priceRange[1] < priceMax) count++;
+   305→    if (!includeOnQuote) count++;
+   306→    if (inStockOnly) count++;
+   307→    return count;
+   308→  }, [selectedCategory, selectedBrands, search, priceRange, priceMax, includeOnQuote, inStockOnly]);
+   309→
+   310→  const handleClearFilters = () => {
+   311→    setSearch('');
+   312→    setSelectedCategory('all');
+   313→    setSelectedBrands(new Set());
+   314→    setSort('newest');
+   315→    setPriceRange([0, priceMax]);
+   316→    setIncludeOnQuote(true);
+   317→    setInStockOnly(false);
+   318→  };
+   319→
+   320→  return (
+   321→    <ContentWithLoading loading={loading} skeleton={<CataloguePageSkeleton />}>
+   322→    <div className="min-h-screen bg-gray-50 dark:bg-[#0c1622] pt-20">
+   323→      {/* Header Banner */}
+   324→      <div
+   325→        className="relative overflow-hidden"
+   326→        style={{
+   327→          background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 50%, #1E3A5F 100%)',
+   328→        }}
+   329→      >
+   330→        {/* Decorative shapes */}
+   331→        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   332→          <div
+   333→            className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-10"
+   334→            style={{ backgroundColor: '#F0C05A' }}
+   335→          />
+   336→          <div
+   337→            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10"
+   338→            style={{ backgroundColor: '#F0C05A' }}
+   339→          />
+   340→          <div
+   341→            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-5"
+   342→            style={{ backgroundColor: '#F0C05A' }}
+   343→          />
+   344→        </div>
+   345→
+   346→        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+   347→          <motion.div
+   348→            initial={{ opacity: 0, y: 20 }}
+   349→            animate={{ opacity: 1, y: 0 }}
+   350→            className="text-center mb-8"
+   351→          >
+   352→            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 gradient-border-animated inline-block px-6 py-2">
+   353→              {t('products.title')}
+   354→            </h1>
+   355→            <p className="text-blue-200 text-base sm:text-lg max-w-2xl mx-auto">
+   356→              {t('products.subtitle')}
+   357→            </p>
+   358→          </motion.div>
+   359→
+   360→          {/* Search & Sort inside the header */}
+   361→          <motion.div
+   362→            initial={{ opacity: 0, y: 10 }}
+   363→            animate={{ opacity: 1, y: 0 }}
+   364→            transition={{ delay: 0.15 }}
+   365→            className="max-w-2xl mx-auto"
+   366→          >
+   367→            <div className="bg-white/95 dark:bg-[#1a2d45]/95 backdrop-blur-sm rounded-xl shadow-lg p-3 flex flex-col sm:flex-row gap-3">
+   368→              <div className="relative flex-1">
+   369→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+   370→                <Input
+   371→                  placeholder={t('nav.search')}
+   372→                  value={search}
+   373→                  onChange={(e) => setSearch(e.target.value)}
+   374→                  className="pl-10 border-0 bg-gray-50 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-400 focus-visible:ring-1"
+   375→                />
+   376→                {search && (
+   377→                  <button
+   378→                    onClick={() => setSearch('')}
+   379→                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+   380→                  >
+   381→                    <X className="w-4 h-4" />
+   382→                  </button>
+   383→                )}
+   384→              </div>
+   385→              <div className="relative">
+   386→                <select
+   387→                  value={sort}
+   388→                  onChange={(e) => setSort(e.target.value as SortOption)}
+   389→                  className="h-9 w-full sm:w-44 rounded-md border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 dark:text-white px-3 pr-8 text-sm appearance-none cursor-pointer"
+   390→                >
+   391→                  <option value="newest">{t('products.sort.newest')}</option>
+   392→                  <option value="priceAsc">{t('products.sort.priceAsc')}</option>
+   393→                  <option value="priceDesc">{t('products.sort.priceDesc')}</option>
+   394→                  <option value="name">{t('products.sort.name')}</option>
+   395→                </select>
+   396→                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+   397→              </div>
+   398→            </div>
+   399→          </motion.div>
+   400→        </div>
+   401→      </div>
+   402→
+   403→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   404→        {/* Product Count Summary & Active Filters */}
+   405→        <motion.div
+   406→          initial={{ opacity: 0, y: -10 }}
+   407→          animate={{ opacity: 1, y: 0 }}
+   408→          className="mb-4"
+   409→        >
+   410→          <div className="flex items-center flex-wrap gap-2">
+   411→            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">
+   412→              {t('products.productsFound').replace('{n}', String(filteredProducts.length))}
+   413→            </p>
+   414→            {/* Active filter tags */}
+   415→            {selectedCategory !== 'all' && (() => {
+   416→              const cat = categories.find((c) => c.slug === selectedCategory);
+   417→              return cat ? (
+   418→                <button
+   419→                  onClick={() => setSelectedCategory('all')}
+   420→                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+   421→                >
+   422→                  {getCategoryName(cat, language)}
+   423→                  <X className="w-3 h-3" />
+   424→                </button>
+   425→              ) : null;
+   426→            })()}
+   427→            {Array.from(selectedBrands).map((brand) => (
+   428→              <button
+   429→                key={brand}
+   430→                onClick={() => toggleBrand(brand)}
+   431→                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+   432→              >
+   433→                {brand}
+   434→                <X className="w-3 h-3" />
+   435→              </button>
+   436→            ))}
+   437→            {inStockOnly && (
+   438→              <button
+   439→                onClick={() => setInStockOnly(false)}
+   440→                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+   441→              >
+   442→                {t('products.inStockOnly')}
+   443→                <X className="w-3 h-3" />
+   444→              </button>
+   445→            )}
+   446→            {search.length > 0 && (
+   447→              <button
+   448→                onClick={() => setSearch('')}
+   449→                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+   450→              >
+   451→                &ldquo;{search}&rdquo;
+   452→                <X className="w-3 h-3" />
+   453→              </button>
+   454→            )}
+   455→          </div>
+   456→        </motion.div>
+   457→
+   458→        {/* Mobile filter button + results count + view toggle */}
+   459→        <div className="flex items-center justify-between mb-6">
+   460→          <p className="text-sm text-gray-500 dark:text-gray-300">
+   461→            <span className="font-semibold dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>{filteredProducts.length}</span>{' '}
+   462→            {language === 'ar' ? 'منتج' : 'produit(s)'}
+   463→          </p>
+   464→          <div className="flex gap-2 items-center">
+   465→            {isFiltering && (
+   466→              <Button
+   467→                variant="ghost"
+   468→                size="sm"
+   469→                onClick={handleClearFilters}
+   470→                className="gap-1.5 text-xs dark:text-[#7AB0E0]"
+   471→                style={{ color: '#1E3A5F' }}
+   472→              >
+   473→                <RotateCcw className="w-3.5 h-3.5" />
+   474→                {t('products.clearFilters')}
+   475→              </Button>
+   476→            )}
+   477→            {/* View toggle - desktop only */}
+   478→            <div className="hidden lg:flex items-center border border-gray-200 dark:border-white/10 rounded-md overflow-hidden">
+   479→              <button
+   480→                onClick={() => setViewMode('grid')}
+   481→                className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-[#1E3A5F] text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+   482→                aria-label={t('products.gridView')}
+   483→              >
+   484→                <LayoutGrid className="w-4 h-4" />
+   485→              </button>
+   486→              <button
+   487→                onClick={() => setViewMode('list')}
+   488→                className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-[#1E3A5F] text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+   489→                aria-label={t('products.listView')}
+   490→              >
+   491→                <List className="w-4 h-4" />
+   492→              </button>
+   493→            </div>
+   494→            {/* Mobile filter button */}
+   495→            <Button
+   496→              variant="outline"
+   497→              size="sm"
+   498→              onClick={() => setShowFilters(true)}
+   499→              className="lg:hidden gap-2 dark:border-white/10 dark:text-gray-300 relative min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
+   500→              aria-label={t('products.filter')}
+   501→            >
+   502→              <Filter className="w-4 h-4" />
+   503→              {t('products.filters')}
+   504→              {activeFilterCount > 0 && (
+   505→                <Badge
+   506→                  className="h-5 min-w-[20px] flex items-center justify-center p-0 text-[10px] font-bold ml-1"
+   507→                  style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   508→                >
+   509→                  {activeFilterCount}
+   510→                </Badge>
+   511→              )}
+   512→            </Button>
+   513→          </div>
+   514→        </div>
+   515→
+   516→        <div className="flex gap-6">
+   517→          {/* Category Sidebar - Desktop */}
+   518→          <motion.div
+   519→            initial={{ opacity: 0, x: -20 }}
+   520→            animate={{ opacity: 1, x: 0 }}
+   521→            transition={{ delay: 0.2 }}
+   522→            className="hidden lg:block w-60 shrink-0"
+   523→          >
+   524→            <div className="bg-white dark:bg-[#162236] rounded-xl shadow-sm dark:shadow-none p-4 sticky top-24">
+   525→              <div className="flex items-center justify-between mb-4">
+   526→                <h3 className="font-semibold text-sm uppercase tracking-wider dark:text-[#7AB0E0] flex items-center gap-2" style={{ color: '#1E3A5F' }}>
+   527→                  {t('products.filters')}
+   528→                  {activeFilterCount > 0 && (
+   529→                    <Badge
+   530→                      className="text-[10px] h-5 min-w-[20px] flex items-center justify-center p-0 font-bold"
+   531→                      style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   532→                    >
+   533→                      {activeFilterCount}
+   534→                    </Badge>
+   535→                  )}
+   536→                </h3>
+   537→                {isFiltering && (
+   538→                  <button
+   539→                    onClick={handleClearFilters}
+   540→                    className="text-xs text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1"
+   541→                  >
+   542→                    <RotateCcw className="w-3 h-3" />
+   543→                    {t('products.clearFilters')}
+   544→                  </button>
+   545→                )}
+   546→              </div>
+   547→              {/* In-Stock Filter Toggle */}
+   548→              <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/10">
+   549→                <label className="flex items-center justify-between cursor-pointer group">
+   550→                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors flex items-center gap-2">
+   551→                    {t('products.inStockOnly')}
+   552→                    <Badge
+   553→                      className="text-[10px] h-4 min-w-[16px] flex items-center justify-center p-0 font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+   554→                    >
+   555→                      {products.filter(p => p.in_stock).length}
+   556→                    </Badge>
+   557→                  </span>
+   558→                  <Switch
+   559→                    checked={inStockOnly}
+   560→                    onCheckedChange={setInStockOnly}
+   561→                  />
+   562→                </label>
+   563→              </div>
+   564→
+   565→              <div className="space-y-1">
+   566→                {/* "Tous" - prominent option */}
+   567→                <button
+   568→                  onClick={() => setSelectedCategory('all')}
+   569→                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+   570→                    selectedCategory === 'all'
+   571→                      ? 'font-semibold shadow-sm'
+   572→                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+   573→                  }`}
+   574→                  style={
+   575→                    selectedCategory === 'all'
+   576→                      ? { backgroundColor: '#1E3A5F', color: '#fff' }
+   577→                      : {}
+   578→                  }
+   579→                >
+   580→                  <span className="flex items-center gap-2">
+   581→                    <Package className="w-4 h-4" />
+   582→                    {t('products.all')}
+   583→                  </span>
+   584→                  <Badge
+   585→                    variant="secondary"
+   586→                    className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
+   587→                      selectedCategory === 'all' ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
+   588→                    }`}
+   589→                  >
+   590→                    {products.length}
+   591→                  </Badge>
+   592→                </button>
+   593→
+   594→                <div className="my-2 border-t border-gray-100 dark:border-white/10" />
+   595→
+   596→                {categories.map((cat, idx) => {
+   597→                  const count = products.filter((p) => p.category_id === cat.id).length;
+   598→                  const isActive = selectedCategory === cat.slug;
+   599→                  const accentColor = categoryColors[idx % categoryColors.length];
+   600→
+   601→                  return (
+   602→                    <motion.button
+   603→                      key={cat.id}
+   604→                      onClick={() => setSelectedCategory(cat.slug)}
+   605→                      animate={{ scale: isActive ? 1.02 : 1 }}
+   606→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   607→                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 group relative overflow-hidden ${
+   608→                        isActive
+   609→                          ? 'font-medium shadow-sm'
+   610→                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+   611→                      }`}
+   612→                      style={
+   613→                        isActive
+   614→                          ? { backgroundColor: `rgba(240,192,90,0.15)`, color: accentColor }
+   615→                          : {}
+   616→                      }
+   617→                    >
+   618→                      {/* Colored left border */}
+   619→                      <div
+   620→                        className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r transition-all duration-200 ${
+   621→                          isActive ? 'h-6' : 'h-0 group-hover:h-3'
+   622→                        }`}
+   623→                        style={{ backgroundColor: isActive ? '#F0C05A' : accentColor }}
+   624→                      />
+   625→                      {/* Active checkmark indicator */}
+   626→                      {isActive && (
+   627→                        <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />
+   628→                      )}
+   629→                      <span className={`${isActive ? '' : 'pl-2'} flex-1`}>{getCategoryName(cat, language)}</span>
+   630→                      <motion.span
+   631→                        key={`${cat.id}-${count}`}
+   632→                        initial={{ scale: 1.3, opacity: 0.5 }}
+   633→                        animate={{ scale: 1, opacity: 1 }}
+   634→                        transition={{ duration: 0.3 }}
+   635→                      >
+   636→                        <Badge
+   637→                          variant="secondary"
+   638→                          className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center ${
+   639→                            isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
+   640→                          }`}
+   641→                          style={isActive ? { backgroundColor: accentColor } : {}}
+   642→                        >
+   643→                          {count}
+   644→                        </Badge>
+   645→                      </motion.span>
+   646→                    </motion.button>
+   647→                  );
+   648→                })}
+   649→              </div>
+   650→
+   651→              {/* Brand Filter in Sidebar */}
+   652→              {brandsWithCounts.length > 0 && (
+   653→                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+   654→                  <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   655→                    {t('catalogue.brands')}
+   656→                  </h4>
+   657→                  <div className="space-y-1">
+   658→                    {/* "Toutes les marques" option */}
+   659→                    <button
+   660→                      onClick={() => setSelectedBrands(new Set())}
+   661→                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+   662→                        selectedBrands.size === 0
+   663→                          ? 'font-semibold shadow-sm'
+   664→                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+   665→                      }`}
+   666→                      style={
+   667→                        selectedBrands.size === 0
+   668→                          ? { backgroundColor: '#1E3A5F', color: '#fff' }
+   669→                          : {}
+   670→                      }
+   671→                    >
+   672→                      <span className="flex items-center gap-2">
+   673→                        <Package className="w-4 h-4" />
+   674→                        {t('catalogue.allBrands')}
+   675→                      </span>
+   676→                    </button>
+   677→
+   678→                    <div className="my-2 border-t border-gray-100 dark:border-white/10" />
+   679→
+   680→                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1" style={{ scrollbarWidth: 'thin' }}>
+   681→                      {brandsWithCounts.map(({ brand, count }) => {
+   682→                        const isActive = selectedBrands.has(brand);
+   683→                        return (
+   684→                          <button
+   685→                            key={brand}
+   686→                            onClick={() => toggleBrand(brand)}
+   687→                            className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 flex items-center justify-between group ${
+   688→                              isActive
+   689→                                ? 'font-medium shadow-sm'
+   690→                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+   691→                            }`}
+   692→                            style={
+   693→                              isActive
+   694→                                ? { backgroundColor: '#F0C05A20', color: '#1E3A5F' }
+   695→                                : {}
+   696→                            }
+   697→                          >
+   698→                            <span className="flex items-center gap-2 truncate">
+   699→                              {isActive && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />}
+   700→                              <span className="truncate">{brand}</span>
+   701→                            </span>
+   702→                            <Badge
+   703→                              variant="secondary"
+   704→                              className={`text-[10px] h-5 min-w-[20px] flex items-center justify-center shrink-0 ml-1 ${
+   705→                                isActive ? 'text-white hover:opacity-90' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300'
+   706→                              }`}
+   707→                              style={isActive ? { backgroundColor: '#F0C05A', color: '#1E3A5F' } : {}}
+   708→                            >
+   709→                              {count}
+   710→                            </Badge>
+   711→                          </button>
+   712→                        );
+   713→                      })}
+   714→                    </div>
+   715→                  </div>
+   716→                </div>
+   717→              )}
+   718→
+   719→              {/* Price Range Filter in Sidebar */}
+   720→              <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
+   721→            </div>
+   722→          </motion.div>
+   723→
+   724→          {/* Mobile Filter Sheet */}
+   725→          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+   726→            <SheetContent
+   727→              side={isRTL ? 'left' : 'right'}
+   728→              className="w-[320px] sm:w-[380px] dark:bg-[#162236] overflow-y-auto"
+   729→            >
+   730→              <SheetHeader>
+   731→                <div className="flex items-center justify-between">
+   732→                  <SheetTitle
+   733→                    className="dark:text-[#7AB0E0] flex items-center gap-2"
+   734→                    style={{ color: '#1E3A5F' }}
+   735→                  >
+   736→                    {t('products.filters')}
+   737→                    {activeFilterCount > 0 && (
+   738→                      <Badge
+   739→                        className="text-[10px] h-5 min-w-[20px] flex items-center justify-center p-0 font-bold"
+   740→                        style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+   741→                      >
+   742→                        {activeFilterCount}
+   743→                      </Badge>
+   744→                    )}
+   745→                  </SheetTitle>
+   746→                  {isFiltering && (
+   747→                    <button
+   748→                      onClick={handleClearFilters}
+   749→                      className="text-xs text-gray-400 hover:text-[#1E3A5F] dark:hover:text-[#7AB0E0] transition-colors flex items-center gap-1"
+   750→                    >
+   751→                      <RotateCcw className="w-3 h-3" />
+   752→                      {t('products.clearFilters')}
+   753→                    </button>
+   754→                  )}
+   755→                </div>
+   756→              </SheetHeader>
+   757→
+   758→              <div className="px-4 mt-2">
+   759→                {/* In-Stock Filter Toggle - Mobile */}
+   760→                <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/10">
+   761→                  <label className="flex items-center justify-between cursor-pointer group">
+   762→                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#1E3A5F] dark:group-hover:text-[#7AB0E0] transition-colors flex items-center gap-2">
+   763→                      {t('products.inStockOnly')}
+   764→                      <Badge
+   765→                        className="text-[10px] h-4 min-w-[16px] flex items-center justify-center p-0 font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+   766→                      >
+   767→                        {products.filter(p => p.in_stock).length}
+   768→                      </Badge>
+   769→                    </span>
+   770→                    <Switch
+   771→                      checked={inStockOnly}
+   772→                      onCheckedChange={setInStockOnly}
+   773→                    />
+   774→                  </label>
+   775→                </div>
+   776→                {/* Categories */}
+   777→                <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   778→                  {t('nav.categories')}
+   779→                </h4>
+   780→                <div className="flex flex-wrap gap-2">
+   781→                  <button
+   782→                    onClick={() => setSelectedCategory('all')}
+   783→                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
+   784→                      selectedCategory === 'all'
+   785→                        ? 'text-white shadow-sm'
+   786→                        : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+   787→                    }`}
+   788→                    style={selectedCategory === 'all' ? { backgroundColor: '#1E3A5F' } : {}}
+   789→                  >
+   790→                    {t('products.all')} ({products.length})
+   791→                  </button>
+   792→                  {categories.map((cat) => {
+   793→                    const count = products.filter((p) => p.category_id === cat.id).length;
+   794→                    const isActive = selectedCategory === cat.slug;
+   795→                    return (
+   796→                      <button
+   797→                        key={cat.id}
+   798→                        onClick={() => setSelectedCategory(cat.slug)}
+   799→                        className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 min-h-[36px] ${
+   800→                          isActive
+   801→                            ? 'shadow-sm'
+   802→                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+   803→                        }`}
+   804→                        style={isActive ? { backgroundColor: 'rgba(240,192,90,0.2)', color: '#1E3A5F' } : {}}
+   805→                      >
+   806→                        {isActive && <Check className="w-3.5 h-3.5 shrink-0" style={{ color: '#F0C05A' }} />}
+   807→                        {getCategoryName(cat, language)} ({count})
+   808→                      </button>
+   809→                    );
+   810→                  })}
+   811→                </div>
+   812→                {/* Brand filter in mobile */}
+   813→                {brandsWithCounts.length > 0 && (
+   814→                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+   815→                    <h4 className="font-semibold text-xs uppercase tracking-wider mb-3 dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+   816→                      {t('catalogue.brands')}
+   817→                    </h4>
+   818→                    <div className="flex flex-wrap gap-2">
+   819→                      <button
+   820→                        onClick={() => setSelectedBrands(new Set())}
+   821→                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+   822→                          selectedBrands.size === 0
+   823→                            ? 'text-white shadow-sm'
+   824→                            : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+   825→                        }`}
+   826→                        style={selectedBrands.size === 0 ? { backgroundColor: '#1E3A5F' } : {}}
+   827→                      >
+   828→                        {t('catalogue.allBrands')}
+   829→                      </button>
+   830→                      {brandsWithCounts.map(({ brand, count }) => {
+   831→                        const isActive = selectedBrands.has(brand);
+   832→                        return (
+   833→                          <button
+   834→                            key={brand}
+   835→                            onClick={() => toggleBrand(brand)}
+   836→                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+   837→                              isActive
+   838→                                ? 'shadow-sm'
+   839→                                : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15'
+   840→                            }`}
+   841→                            style={isActive ? { backgroundColor: 'rgba(240,192,90,0.2)', color: '#1E3A5F' } : {}}
+   842→                          >
+   843→                            {isActive && <Check className="w-3 h-3 shrink-0" style={{ color: '#F0C05A' }} />}
+   844→                            {brand} ({count})
+   845→                          </button>
+   846→                        );
+   847→                      })}
+   848→                    </div>
+   849→                  </div>
+   850→                )}
+   851→                {/* Price Range in mobile filter */}
+   852→                <PriceRangeFilterSection t={t} priceRange={priceRange} setPriceRange={setPriceRange} priceMax={priceMax} includeOnQuote={includeOnQuote} setIncludeOnQuote={setIncludeOnQuote} />
+   853→              </div>
+   854→
+   855→              <SheetFooter className="mt-4">
+   856→                <Button
+   857→                  onClick={() => setShowFilters(false)}
+   858→                  className="w-full text-white font-semibold min-h-[44px]"
+   859→                  style={{ backgroundColor: '#1E3A5F' }}
+   860→                >
+   861→                  {language === 'ar' ? 'عرض النتائج' : 'Voir les résultats'} ({filteredProducts.length})
+   862→                </Button>
+   863→              </SheetFooter>
+   864→            </SheetContent>
+   865→          </Sheet>
+   866→
+   867→          {/* Product Grid */}
+   868→          <div className="flex-1 min-w-0">
+   869→            {filteredProducts.length === 0 ? (
+   870→              <motion.div
+   871→                initial={{ opacity: 0, y: 20 }}
+   872→                animate={{ opacity: 1, y: 0 }}
+   873→                className="text-center py-20"
+   874→              >
+   875→                <div
+   876→                  className="w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center dark:bg-white/5"
+   877→                  style={{ backgroundColor: '#f0f4f8' }}
+   878→                >
+   879→                  <Stethoscope className="w-12 h-12" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+   880→                </div>
+   881→                <p className="text-gray-500 dark:text-gray-300 text-lg font-medium mb-2">{t('products.noResults')}</p>
+   882→                <p className="text-gray-400 dark:text-gray-300 text-sm max-w-md mx-auto mb-6">
+   883→                  {t('products.noResultsTip')}
+   884→                </p>
+   885→                {isFiltering && (
+   886→                  <Button
+   887→                    variant="outline"
+   888→                    onClick={handleClearFilters}
+   889→                    className="gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
+   890→                    style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
+   891→                  >
+   892→                    <RotateCcw className="w-4 h-4" />
+   893→                    {t('products.clearFilters')}
+   894→                  </Button>
+   895→                )}
+   896→              </motion.div>
+   897→            ) : (
+   898→              <AnimatePresence mode="wait">
+   899→                <motion.div
+   900→                  key={viewMode}
+   901→                  initial={{ opacity: 0 }}
+   902→                  animate={{ opacity: 1 }}
+   903→                  exit={{ opacity: 0 }}
+   904→                  transition={{ duration: 0.2 }}
+   905→                  className={viewMode === 'grid'
+   906→                    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5'
+   907→                    : 'flex flex-col gap-3 sm:gap-4'
+   908→                  }
+   909→                >
+   910→                  {filteredProducts.map((product, i) => (
+   911→                    <ProductCard
+   912→                      key={product.id}
+   913→                      product={product}
+   914→                      index={i}
+   915→                      language={language}
+   916→                      getProductName={getProductName}
+   917→                      getProductShortDescription={getProductShortDescription}
+   918→                      formatPrice={formatPrice}
+   919→                      t={t}
+   920→                      navigate={navigate}
+   921→                      addItem={addItem}
+   922→                      isInCompare={isInCompare}
+   923→                      addCompareProduct={addCompareProduct}
+   924→                      removeCompareProduct={removeCompareProduct}
+   925→                      compareFull={productIds.length >= 4}
+   926→                      isInWishlist={isInWishlist}
+   927→                      toggleWishlistItem={toggleWishlistItem}
+   928→                      viewMode={viewMode}
+   929→                      onQuickView={() => {
+   930→                        setQuickViewProduct(product);
+   931→                        setQuickViewOpen(true);
+   932→                        addRecentlyViewed(product.id, product.slug, getProductName(product, language), product.images?.[0] || '', product.price);
+   933→                      }}
+   934→                    />
+   935→                  ))}
+   936→                </motion.div>
+   937→              </AnimatePresence>
+   938→            )}
+   939→          </div>
+   940→        </div>
+   941→      </div>
+   942→      {/* Quick View Modal */}
+   943→      <QuickViewModal
+   944→        product={quickViewProduct}
+   945→        open={quickViewOpen}
+   946→        onClose={() => setQuickViewOpen(false)}
+   947→      />
+   948→    </div>
+   949→    </ContentWithLoading>
+   950→  );
+   951→}
+   952→
+   953→function ProductCard({
+   954→  product,
+   955→  index,
+   956→  language,
+   957→  getProductName,
+   958→  getProductShortDescription,
+   959→  formatPrice,
+   960→  t,
+   961→  navigate,
+   962→  addItem,
+   963→  isInCompare,
+   964→  addCompareProduct,
+   965→  removeCompareProduct,
+   966→  compareFull,
+   967→  isInWishlist,
+   968→  toggleWishlistItem,
+   969→  viewMode = 'grid',
+   970→  onQuickView,
+   971→}: {
+   972→  product: Product;
+   973→  index: number;
+   974→  language: string;
+   975→  getProductName: (p: Product, lang: any) => string;
+   976→  getProductShortDescription: (p: Product, lang: any) => string;
+   977→  formatPrice: (p: number | undefined) => string | null;
+   978→  t: (k: string) => string;
+   979→  navigate: (p: string) => void;
+   980→  addItem: (item: any) => void;
+   981→  isInCompare: (id: string) => boolean;
+   982→  addCompareProduct: (id: string) => void;
+   983→  removeCompareProduct: (id: string) => void;
+   984→  compareFull: boolean;
+   985→  isInWishlist: (slug: string) => boolean;
+   986→  toggleWishlistItem: (slug: string) => void;
+   987→  viewMode?: ViewMode;
+   988→  onQuickView: () => void;
+   989→}) {
+   990→  const priceDisplay = formatPrice(product.price);
+   991→  const isOnQuote = !priceDisplay; // price is 0 or missing
+   992→  const [isHovered, setIsHovered] = useState(false);
+   993→
+   994→  const isListView = viewMode === 'list';
+   995→
+   996→  const categoryAccent = categoryColors[index % categoryColors.length];
+   997→
+   998→  const handleMouseLeave = useCallback(() => {
+   999→    setIsHovered(false);
+  1000→  }, []);
+  1001→
+  1002→  const handleMouseEnter = useCallback(() => {
+  1003→    setIsHovered(true);
+  1004→  }, []);
+  1005→
+  1006→  if (isListView) {
+  1007→    return (
+  1008→      <motion.div
+  1009→        initial={{ opacity: 0, y: 40 }}
+  1010→        whileInView={{ opacity: 1, y: 0 }}
+  1011→        viewport={{ once: true, margin: '-80px' }}
+  1012→        transition={{ delay: Math.min(index * 0.05, 0.2), duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+  1013→      >
+  1014→        <Card
+  1015→          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative card-lift"
+  1016→          onClick={() => navigate(`/product/${product.slug}`)}
+  1017→          onMouseLeave={handleMouseLeave}
+  1018→          onMouseEnter={handleMouseEnter}
+  1019→        >
+  1020→          {/* Category color accent bottom border */}
+  1021→          <div
+  1022→            className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300"
+  1023→            style={{ backgroundColor: isHovered ? categoryAccent : 'transparent' }}
+  1024→          />
+  1025→          <div className="flex flex-row">
+  1026→            {/* Image area - compact for list view */}
+  1027→            <div className="w-32 sm:w-44 shrink-0 relative overflow-hidden">
+  1028→              {product.images && product.images.length > 0 ? (
+  1029→                <img
+  1030→                  src={product.images[0]}
+  1031→                  alt={getProductName(product, language)}
+  1032→                  loading="lazy"
+  1033→                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+  1034→                />
+  1035→              ) : (
+  1036→                <div
+  1037→                  className="w-full h-full min-h-[120px] flex items-center justify-center"
+  1038→                  style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)' }}
+  1039→                >
+  1040→                  <Package className="w-10 h-10 text-white/40" />
+  1041→                </div>
+  1042→              )}
+  1043→              {/* Badges on image */}
+  1044→              <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-[2]">
+  1045→                {product.is_new && (
+  1046→                  <Badge className="text-[9px] px-1.5 py-0 border-0 text-white" style={{ backgroundColor: '#3B8C6E' }}>
+  1047→                    {t('products.new')}
+  1048→                  </Badge>
+  1049→                )}
+  1050→                {product.is_best_seller && (
+  1051→                  <Badge className="text-[9px] px-1.5 py-0 border-0 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+  1052→                    {t('products.bestSeller')}
+  1053→                  </Badge>
+  1054→                )}
+  1055→              </div>
+  1056→              {product.in_stock ? (
+  1057→                <Badge variant="outline" className="absolute top-2 left-2 text-[9px] px-1.5 py-0 bg-white/90 dark:bg-[#162236]/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 backdrop-blur-sm z-[2]">
+  1058→                  {t('products.inStock')}
+  1059→                </Badge>
+  1060→              ) : (
+  1061→                <Badge variant="destructive" className="absolute top-2 left-2 text-[9px] px-1.5 py-0 z-[2]">
+  1062→                  {t('products.outOfStock')}
+  1063→                </Badge>
+  1064→              )}
+  1065→            </div>
+  1066→            {/* Info area */}
+  1067→            <CardContent className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
+  1068→              {/* Brand badge */}
+  1069→              {product.brand && (
+  1070→                <Badge
+  1071→                  className="text-[9px] px-1.5 py-0 h-4 border-0 font-semibold uppercase tracking-wider w-fit mb-1"
+  1072→                  style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
+  1073→                >
+  1074→                  {product.brand}
+  1075→                </Badge>
+  1076→              )}
+  1077→              <h3
+  1078→                className="font-semibold text-sm mb-1 line-clamp-1 leading-snug dark:text-white"
+  1079→                style={{ color: '#1E3A5F' }}
+  1080→              >
+  1081→                {getProductName(product, language)}
+  1082→              </h3>
+  1083→              {product.rating && (
+  1084→                <div className="mb-1">
+  1085→                  <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+  1086→                </div>
+  1087→              )}
+  1088→              <p className="text-xs text-gray-500 dark:text-gray-300 mb-2 line-clamp-2 flex-1">
+  1089→                {getProductShortDescription(product, language)}
+  1090→              </p>
+  1091→              {/* Price + Actions */}
+  1092→              <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-white/10">
+  1093→                <div className="flex-1 min-w-0">
+  1094→                  {priceDisplay ? (
+  1095→                    <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1096→                      {priceDisplay}
+  1097→                    </span>
+  1098→                  ) : (
+  1099→                    <span
+  1100→                      className="text-xs font-semibold px-2 py-0.5 rounded"
+  1101→                      style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+  1102→                    >
+  1103→                      {t('products.priceOnQuote')}
+  1104→                    </span>
+  1105→                  )}
+  1106→                </div>
+  1107→                <div className="flex items-center gap-1.5">
+  1108→                  <Button
+  1109→                    size="sm"
+  1110→                    variant="outline"
+  1111→                    className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+  1112→                      isInCompare(product.id)
+  1113→                        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+  1114→                        : 'text-gray-400 dark:text-gray-300'
+  1115→                    }`}
+  1116→                    disabled={!isInCompare(product.id) && compareFull}
+  1117→                    aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
+  1118→                    onClick={(e) => {
+  1119→                      e.stopPropagation();
+  1120→                      if (isInCompare(product.id)) removeCompareProduct(product.id);
+  1121→                      else addCompareProduct(product.id);
+  1122→                    }}
+  1123→                  >
+  1124→                    {isInCompare(product.id) ? <Check className="w-3.5 h-3.5" /> : <GitCompareArrows className="w-3.5 h-3.5" />}
+  1125→                  </Button>
+  1126→                  <Button
+  1127→                    size="sm"
+  1128→                    className="text-xs h-8 gap-1.5 shadow-sm min-h-[36px] font-semibold"
+  1129→                    style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+  1130→                    onClick={(e) => {
+  1131→                      e.stopPropagation();
+  1132→                      addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
+  1133→                    }}
+  1134→                  >
+  1135→                    <ShoppingCart className="w-3.5 h-3.5" />
+  1136→                    {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
+  1137→                  </Button>
+  1138→                </div>
+  1139→              </div>
+  1140→            </CardContent>
+  1141→          </div>
+  1142→        </Card>
+  1143→      </motion.div>
+  1144→    );
+  1145→  }
+  1146→
+  1147→  // Grid view (default)
+  1148→
+  1149→  return (
+  1150→    <motion.div
+  1151→      initial={{ opacity: 0, y: 40 }}
+  1152→      whileInView={{ opacity: 1, y: 0 }}
+  1153→      viewport={{ once: true, margin: '-80px' }}
+  1154→      transition={{ delay: Math.min(index * 0.08, 0.3), duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+  1155→    >
+  1156→      <div
+  1157→        className="tilt-card gold-bottom-hover"
+  1158→        onMouseLeave={handleMouseLeave}
+  1159→        onMouseEnter={handleMouseEnter}
+  1160→      >
+  1161→        <Card
+  1162→          className="group border-0 shadow-sm dark:shadow-none dark:bg-[#162236] transition-all duration-300 overflow-hidden h-full flex flex-col cursor-pointer hover:ring-2 hover:ring-amber-400/50 dark:hover:ring-amber-500/40 relative card-lift"
+  1163→          onClick={() => navigate(`/product/${product.slug}`)}
+  1164→        >
+  1165→          {/* Category color accent bottom border */}
+  1166→          <div
+  1167→            className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300 z-10"
+  1168→            style={{ backgroundColor: isHovered ? categoryAccent : 'transparent' }}
+  1169→          />
+  1170→          {/* Image area */}
+  1171→          <div className="h-48 relative overflow-hidden">
+  1172→            {product.images && product.images.length > 0 ? (
+  1173→              <img
+  1174→                src={product.images[0]}
+  1175→                alt={getProductName(product, language)}
+  1176→                loading="lazy"
+  1177→                className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? 'scale-105' : 'scale-100'}`}
+  1178→              />
+  1179→          ) : (
+  1180→            <div
+  1181→              className="w-full h-full flex items-center justify-center"
+  1182→              style={{
+  1183→                background: 'linear-gradient(135deg, #1E3A5F 0%, #2A5F8F 60%, #3A7CB8 100%)',
+  1184→              }}
+  1185→            >
+  1186→              <div className="text-center">
+  1187→                <Package className="w-14 h-14 text-white/40 mx-auto mb-1" />
+  1188→                <p className="text-white/30 text-xs font-medium tracking-wider uppercase">ODG</p>
+  1189→              </div>
+  1190→            </div>
+  1191→          )}
+  1192→
+  1193→          {/* Top-right: Nouveau & Best-seller badges */}
+  1194→          <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end z-[2]">
+  1195→            {product.is_new && (
+  1196→              <Badge className="text-[10px] px-2 py-0.5 border-0 text-white" style={{ backgroundColor: '#3B8C6E' }}>
+  1197→                {t('products.new')}
+  1198→              </Badge>
+  1199→            )}
+  1200→            {product.is_best_seller && (
+  1201→              <Badge className="text-[10px] px-2 py-0.5 border-0 font-semibold" style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}>
+  1202→                {t('products.bestSeller')}
+  1203→              </Badge>
+  1204→            )}
+  1205→          </div>
+  1206→
+  1207→          {/* Wishlist heart button - bottom-right of image */}
+  1208→          <motion.button
+  1209→            whileHover={{ scale: 1.2 }}
+  1210→            whileTap={{ scale: 0.85 }}
+  1211→            className={`absolute bottom-3 right-3 z-[3] w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+  1212→              isInWishlist(product.slug)
+  1213→                ? 'bg-white/90 dark:bg-[#162236]/90 text-rose-500'
+  1214→                : 'bg-white/70 dark:bg-[#162236]/70 text-white/50 hover:text-rose-400'
+  1215→            }`}
+  1216→            aria-label={isInWishlist(product.slug) ? t('products.removeFromWishlist') : t('products.addToWishlist')}
+  1217→            onClick={(e) => {
+  1218→              e.stopPropagation();
+  1219→              toggleWishlistItem(product.slug);
+  1220→            }}
+  1221→          >
+  1222→            <Heart
+  1223→              className="w-4 h-4"
+  1224→              fill={isInWishlist(product.slug) ? 'currentColor' : 'none'}
+  1225→              strokeWidth={isInWishlist(product.slug) ? 0 : 2}
+  1226→            />
+  1227→          </motion.button>
+  1228→
+  1229→          {/* Top-left: Stock badge */}
+  1230→          <div className="absolute top-3 left-3 z-[2]">
+  1231→            {product.in_stock ? (
+  1232→              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-white/90 dark:bg-[#162236]/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 backdrop-blur-sm">
+  1233→                {t('products.inStock')}
+  1234→              </Badge>
+  1235→            ) : (
+  1236→              <Badge variant="destructive" className="text-[10px] px-2 py-0.5">
+  1237→                {t('products.outOfStock')}
+  1238→              </Badge>
+  1239→            )}
+  1240→          </div>
+  1241→
+  1242→          {/* "Sur devis" badge when no price */}
+  1243→          {isOnQuote && (
+  1244→            <div className="absolute bottom-3 left-3">
+  1245→              <Badge
+  1246→                className="text-[10px] px-2.5 py-0.5 border-0 font-semibold shadow-sm"
+  1247→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+  1248→              >
+  1249→                <FileText className="w-3 h-3 mr-1" />
+  1250→                {t('products.priceOnQuote')}
+  1251→              </Badge>
+  1252→            </div>
+  1253→          )}
+  1254→
+  1255→          {/* Quick View button - visible on hover (desktop), always on mobile */}
+  1256→          <button
+  1257→            className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-white/90 dark:bg-[#162236]/90 backdrop-blur-sm shadow-md flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-[#1a2d45] hover:scale-110 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:opacity-100"
+  1258→            onClick={(e) => {
+  1259→              e.stopPropagation();
+  1260→              onQuickView();
+  1261→            }}
+  1262→            aria-label={t('products.quickView')}
+  1263→            title={t('products.quickView')}
+  1264→          >
+  1265→            <Eye className="w-4 h-4" style={{ color: '#1E3A5F' }} />
+  1266→          </button>
+  1267→
+  1268→          {/* Hover overlay with gradient + quick-action bar */}
+  1269→          <div className="absolute inset-0 transition-all duration-300 pointer-events-none">
+  1270→            {/* Gradient overlay from transparent to dark at the bottom */}
+  1271→            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+  1272→            {/* Bottom gradient overlay */}
+  1273→            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  1274→            {/* Quick-action bar that slides up */}
+  1275→            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 p-2.5 translate-y-full group-hover:translate-y-0 transition-all duration-300 pointer-events-auto">
+  1276→              <Button
+  1277→                size="sm"
+  1278→                className="flex-1 h-8 text-xs font-semibold shadow-lg gap-1"
+  1279→                style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
+  1280→                onClick={(e) => {
+  1281→                  e.stopPropagation();
+  1282→                  navigate(`/product/${product.slug}`);
+  1283→                }}
+  1284→              >
+  1285→                <Eye className="w-3.5 h-3.5" />
+  1286→                {t('products.viewDetails')}
+  1287→              </Button>
+  1288→              <Button
+  1289→                size="sm"
+  1290→                className="h-8 px-3 text-xs font-semibold shadow-lg gap-1"
+  1291→                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+  1292→                onClick={(e) => {
+  1293→                  e.stopPropagation();
+  1294→                  addItem({ id: product.id, slug: product.slug, name: getProductName(product, language), price: product.price, image: product.images?.[0] || '' });
+  1295→                }}
+  1296→              >
+  1297→                <ShoppingCart className="w-3.5 h-3.5" />
+  1298→                {t('products.addQuote')}
+  1299→              </Button>
+  1300→            </div>
+  1301→          </div>
+  1302→        </div>
+  1303→
+  1304→        <CardContent className="p-4 flex flex-col flex-1">
+  1305→          {/* Brand badge */}
+  1306→          {product.brand && (
+  1307→            <Badge
+  1308→              className="text-[9px] px-1.5 py-0 h-4 border-0 font-semibold uppercase tracking-wider w-fit mb-1.5"
+  1309→              style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#F0C05A' }}
+  1310→            >
+  1311→              {product.brand}
+  1312→            </Badge>
+  1313→          )}
+  1314→
+  1315→          {/* Product name */}
+  1316→          <h3
+  1317→            className="font-semibold text-sm mb-1 line-clamp-2 leading-snug dark:text-white"
+  1318→            style={{ color: '#1E3A5F' }}
+  1319→          >
+  1320→            {getProductName(product, language)}
+  1321→          </h3>
+  1322→
+  1323→          {/* Star rating */}
+  1324→          {product.rating && (
+  1325→            <div className="mb-1">
+  1326→              <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
+  1327→            </div>
+  1328→          )}
+  1329→
+  1330→          {/* Short description */}
+  1331→          <p className="text-xs text-gray-500 dark:text-gray-300 mb-3 line-clamp-2 flex-1">
+  1332→            {getProductShortDescription(product, language)}
+  1333→          </p>
+  1334→
+  1335→          {/* Price + Action row */}
+  1336→          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-white/10">
+  1337→            <div className="flex-1 min-w-0">
+  1338→              {priceDisplay ? (
+  1339→                <span className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
+  1340→                  {priceDisplay}
+  1341→                </span>
+  1342→              ) : (
+  1343→                <span
+  1344→                  className="text-xs font-semibold px-2 py-0.5 rounded"
+  1345→                  style={{ backgroundColor: '#F0C05A20', color: '#1E3A5F' }}
+  1346→                >
+  1347→                  {t('products.priceOnQuote')}
+  1348→                </span>
+  1349→              )}
+  1350→            </div>
+  1351→            <div className="flex items-center gap-1.5">
+  1352→              {/* Compare button */}
+  1353→              <Button
+  1354→                size="sm"
+  1355→                variant="outline"
+  1356→                className={`text-xs h-8 w-8 p-0 border-gray-200 dark:border-white/10 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none ${
+  1357→                  isInCompare(product.id)
+  1358→                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+  1359→                    : 'text-gray-400 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
+  1360→                }`}
+  1361→                disabled={!isInCompare(product.id) && compareFull}
+  1362→                aria-label={isInCompare(product.id) ? t('compare.remove') : t('compare.add')}
+  1363→                title={
+  1364→                  isInCompare(product.id)
+  1365→                    ? t('compare.remove')
+  1366→                    : compareFull
+  1367→                    ? t('compare.maxReached')
+  1368→                    : t('compare.add')
+  1369→                }
+  1370→                onClick={(e) => {
+  1371→                  e.stopPropagation();
+  1372→                  if (isInCompare(product.id)) {
+  1373→                    removeCompareProduct(product.id);
+  1374→                  } else {
+  1375→                    addCompareProduct(product.id);
+  1376→                  }
+  1377→                }}
+  1378→              >
+  1379→                {isInCompare(product.id) ? (
+  1380→                  <Check className="w-3.5 h-3.5" />
+  1381→                ) : (
+  1382→                  <GitCompareArrows className="w-3.5 h-3.5" />
+  1383→                )}
+  1384→              </Button>
+  1385→              {/* Add to Quote button */}
+  1386→              <Button
+  1387→                size="sm"
+  1388→                className="text-xs h-8 gap-1.5 shadow-sm font-semibold min-h-[36px] transition-all hover:shadow-md"
+  1389→                style={{ backgroundColor: '#1E3A5F', color: '#fff' }}
+  1390→                onClick={(e) => {
+  1391→                  e.stopPropagation();
+  1392→                  addItem({
+  1393→                    id: product.id,
+  1394→                    slug: product.slug,
+  1395→                    name: getProductName(product, language),
+  1396→                    price: product.price,
+  1397→                    image: product.images?.[0] || '',
+  1398→                  });
+  1399→                }}
+  1400→              >
+  1401→                <ShoppingCart className="w-3.5 h-3.5" />
+  1402→                {isOnQuote ? t('products.priceOnQuote') : t('products.addQuote')}
+  1403→              </Button>
+  1404→            </div>
+  1405→          </div>
+  1406→        </CardContent>
+  1407→      </Card>
+  1408→      </div>
+  1409→    </motion.div>
+  1410→  );
+  1411→}
+  1412→

@@ -22,7 +22,6 @@ import BlogPage from '@/components/dental/BlogPage';
 import ArticleDetailPage from '@/components/dental/ArticleDetailPage';
 import AboutPage from '@/components/dental/AboutPage';
 import ContactPage from '@/components/dental/ContactPage';
-import QuoteWizardPage from '@/components/dental/QuoteWizardPage';
 import PromotionsPage from '@/components/dental/PromotionsPage';
 import ServicesPage from '@/components/dental/ServicesPage';
 import ClinicWizardPage from '@/components/dental/ClinicWizardPage';
@@ -43,7 +42,6 @@ const routeTitles: Record<string, string> = {
   article: 'Article | ODG',
   about: 'À propos | ODG',
   contact: 'Contact | ODG',
-  devis: 'Demander un devis | ODG',
   'mentions-legales': 'Mentions légales | ODG',
   'politique-confidentialite': 'Politique de confidentialité | ODG',
   'conditions-vente': 'Conditions générales de vente | ODG',
@@ -129,8 +127,6 @@ function AppContent() {
         return <AboutPage />;
       case 'contact':
         return <ContactPage />;
-      case 'devis':
-        return <QuoteWizardPage />;
       case 'wishlist':
         return <WishlistPage />;
       case 'promotions':

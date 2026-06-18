@@ -661,7 +661,7 @@ export default function ClinicWizardPage() {
                   <div className="mt-6 text-center">
                     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                       <Button
-                        onClick={() => navigate('/devis')}
+                        onClick={() => navigate('/contact')}
                         className="h-12 px-8 font-semibold text-base text-white shadow-lg"
                         style={{ backgroundColor: '#3B8C6E' }}
                       >

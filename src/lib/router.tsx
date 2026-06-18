@@ -12,7 +12,6 @@ export type RouteName =
   | 'article'
   | 'about'
   | 'contact'
-  | 'devis'
   | 'admin-login'
   | 'admin-dashboard'
   | 'admin-products'
@@ -21,7 +20,6 @@ export type RouteName =
   | 'admin-blog'
   | 'admin-blog-new'
   | 'admin-blog-edit'
-  | 'admin-quotes'
   | 'admin-messages'
   | 'admin-categories'
   | 'admin-settings'
@@ -76,7 +74,6 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     article: 'article',
     about: 'about',
     contact: 'contact',
-    devis: 'devis',
     'admin-login': 'admin-login',
     'admin': 'admin-dashboard',
     'admin-dashboard': 'admin-dashboard',
@@ -86,7 +83,6 @@ function parsePath(path: string): { route: RouteName; params: RouteParams } {
     'admin-blog': 'admin-blog',
     'admin-blog-new': 'admin-blog-new',
     'admin-blog-edit': 'admin-blog-edit',
-    'admin-quotes': 'admin-quotes',
     'admin-messages': 'admin-messages',
     'admin-categories': 'admin-categories',
     'admin-settings': 'admin-settings',

@@ -51,7 +51,6 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { useCompare } from '@/hooks/useCompare';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -157,7 +156,6 @@ export default function ProductDetailPage() {
   const { t, language, isRTL } = useTranslation();
   const { params, navigate, goBack } = useRouter();
   const { products, categories, getProductName, getProductDescription, getProductShortDescription, getCategoryName, loading } = useData();
-  const addItem = useQuoteCart((s) => s.addItem);
   const { addProduct: addCompareProduct, removeProduct: removeCompareProduct, isInCompare, productIds } = useCompare();
   const { addProduct: addRecentlyViewed, items: recentlyViewedItems, clearAll: clearRecentlyViewed } = useRecentlyViewed();
   const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlist();
@@ -721,16 +719,7 @@ export default function ProductDetailPage() {
                 size="lg"
                 className="w-full h-12 text-base font-bold shadow-lg gap-2"
                 style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-                onClick={() => {
-                  addItem({
-                    id: product.id,
-                    slug: product.slug,
-                    name: getProductName(product, language),
-                    price: product.price,
-                    image: product.images?.[0] || '',
-                  });
-                  navigate('/devis');
-                }}
+                onClick={() => navigate('/contact')}
               >
                 <FileText className="w-5 h-5" />
                 {t('products.requestQuote')}
@@ -743,15 +732,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   className="flex-1 h-12 text-sm font-semibold gap-2 dark:border-gray-600 dark:text-gray-300 focus-visible:ring-2 focus-visible:ring-[#F0C05A] focus-visible:ring-offset-2 focus-visible:outline-none"
                   style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
-                  onClick={() => {
-                    addItem({
-                      id: product.id,
-                      slug: product.slug,
-                      name: getProductName(product, language),
-                      price: product.price,
-                      image: product.images?.[0] || '',
-                    });
-                  }}
+                  onClick={() => navigate('/contact')}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   {t('products.addQuote')}
@@ -920,7 +901,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   className="w-full h-12 text-base font-semibold gap-2 dark:border-white/10 dark:text-[#7AB0E0]"
                   style={{ borderColor: '#1E3A5F', color: '#1E3A5F' }}
-                  onClick={() => navigate('/devis')}
+                  onClick={() => navigate('/contact')}
                 >
                   <FileText className="w-5 h-5" />
                   {t('products.requestQuote')}
@@ -1704,15 +1685,7 @@ export default function ProductDetailPage() {
           <Button
             className="h-10 px-5 font-semibold shadow-md shrink-0"
             style={{ backgroundColor: '#F0C05A', color: '#1E3A5F' }}
-            onClick={() => {
-              addItem({
-                id: product.id,
-                slug: product.slug,
-                name: getProductName(product, language),
-                price: product.price,
-                image: product.images?.[0] || '',
-              });
-            }}
+            onClick={() => navigate('/contact')}
           >
             <ShoppingCart className="w-4 h-4 mr-1.5" />
             {t('products.addToQuoteSticky')}

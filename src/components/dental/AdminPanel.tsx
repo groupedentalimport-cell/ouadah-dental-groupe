@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Package,
   FileText,
-  ClipboardList,
   Settings,
   LogOut,
   Plus,
@@ -42,9 +41,7 @@ import {
   Hash,
   Image as ImageIcon,
   Tag,
-  DollarSign,
   BarChart3,
-  FileCheck,
   Loader2,
   Bell,
   Download,
@@ -83,8 +80,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
@@ -115,19 +111,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
 
-type AdminTab = 'dashboard' | 'products' | 'blog' | 'quotes' | 'settings';
+type AdminTab = 'dashboard' | 'products' | 'blog' | 'settings';
 
 const NAVY = '#1E3A5F';
 const GOLD = '#F0C05A';
@@ -142,16 +127,6 @@ const tabVariants = {
   exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
 };
 
-// Mock data for charts
-const monthlyQuotesData = [
-  { name: 'Jan', quotes: 8, revenue: 2400000 },
-  { name: 'Fév', quotes: 12, revenue: 3600000 },
-  { name: 'Mar', quotes: 15, revenue: 4500000 },
-  { name: 'Avr', quotes: 10, revenue: 3000000 },
-  { name: 'Mai', quotes: 18, revenue: 5400000 },
-  { name: 'Jun', quotes: 22, revenue: 6600000 },
-];
-
 // Mock data for recent orders
 const recentOrders = [
   { id: 'ORD-001', client: 'Dr. Benali', product: 'Fauteuil Osstem', date: '15/06/2026', status: 'delivered' },
@@ -163,10 +138,8 @@ const recentOrders = [
 
 // Mock notifications
 const mockNotifications = [
-  { id: 1, icon: ClipboardList, text: 'Nouvelle demande de devis', time: 'Il y a 5 min', color: GOLD, read: false },
   { id: 2, icon: Package, text: 'Produit en rupture de stock', time: 'Il y a 1h', color: DANGER, read: false },
   { id: 3, icon: MessageSquare, text: 'Nouveau message client', time: 'Il y a 3h', color: NAVY, read: true },
-  { id: 4, icon: CheckCircle2, text: 'Devis #12 traité avec succès', time: 'Hier', color: SUCCESS, read: true },
 ];
 
 // Animated Counter Component
@@ -206,7 +179,6 @@ export default function AdminPanel() {
     const hash = window.location.hash.slice(1);
     if (hash.includes('admin-products')) return 'products';
     if (hash.includes('admin-blog')) return 'blog';
-    if (hash.includes('admin-quotes')) return 'quotes';
     if (hash.includes('admin-settings')) return 'settings';
     return 'dashboard';
   }
@@ -249,7 +221,6 @@ export default function AdminPanel() {
     { id: 'dashboard' as AdminTab, icon: LayoutDashboard, label: t('nav.dashboard'), path: '/admin-dashboard' },
     { id: 'products' as AdminTab, icon: Package, label: t('nav.products'), path: '/admin-products' },
     { id: 'blog' as AdminTab, icon: FileText, label: t('nav.blogPosts'), path: '/admin-blog' },
-    { id: 'quotes' as AdminTab, icon: ClipboardList, label: t('nav.quotes'), path: '/admin-quotes' },
     { id: 'settings' as AdminTab, icon: Settings, label: t('nav.settings'), path: '/admin-settings' },
   ];
 
@@ -397,7 +368,6 @@ export default function AdminPanel() {
                 {activeTab === 'dashboard' && 'Vue d\'ensemble de votre activité'}
                 {activeTab === 'products' && 'Gérez votre catalogue de produits'}
                 {activeTab === 'blog' && 'Rédigez et gérez vos articles'}
-                {activeTab === 'quotes' && 'Suivez les demandes de devis'}
                 {activeTab === 'settings' && 'Configurez votre site'}
               </p>
             </div>
@@ -468,11 +438,6 @@ export default function AdminPanel() {
             {activeTab === 'blog' && (
               <motion.div key="blog" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                 <BlogTab blogPosts={blogPosts} language={language} t={t} refresh={refresh} />
-              </motion.div>
-            )}
-            {activeTab === 'quotes' && (
-              <motion.div key="quotes" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
-                <QuotesTab t={t} refresh={refresh} />
               </motion.div>
             )}
             {activeTab === 'settings' && (
@@ -733,21 +698,18 @@ function AdminLogin({ onLogin, t }: { onLogin: (email: string, password: string)
 function DashboardTab({ products, blogPosts, t, navigate, language }: { products: any[]; blogPosts: any[]; t: (k: string) => string; navigate: (path: string) => void; language: string }) {
   const stats = [
     { icon: Package, label: t('admin.dashboard.totalProducts'), value: products.length, trend: '+2', trendUp: true, color: NAVY, bg: '#EEF2F7' },
-    { icon: ClipboardList, label: t('admin.dashboard.totalQuotes'), value: 12, trend: '+5', trendUp: true, color: SUCCESS, bg: '#ECFDF5' },
-    { icon: TrendingUp, label: t('admin.dashboard.newQuotes'), value: 3, trend: '+1', trendUp: true, color: GOLD, bg: '#FFFBEB' },
     { icon: BookOpen, label: t('admin.dashboard.totalBlog'), value: blogPosts.length, trend: '0', trendUp: true, color: WARNING, bg: '#FFF7ED' },
   ];
 
   const quickActions = [
     { icon: Plus, label: 'Ajouter produit', color: NAVY, onClick: () => navigate('/admin-products') },
     { icon: FileText, label: 'Nouvel article', color: SUCCESS, onClick: () => navigate('/admin-blog') },
-    { icon: ClipboardList, label: 'Voir les devis', color: WARNING, onClick: () => navigate('/admin-quotes') },
     { icon: Settings, label: 'Paramètres', color: '#6B7280', onClick: () => navigate('/admin-settings') },
   ];
 
   const recentActivity = [
     { icon: Package, text: 'Nouveau produit ajouté', time: 'Il y a 2h', color: NAVY },
-    { icon: MessageSquare, text: 'Nouvelle demande de devis', time: 'Il y a 5h', color: GOLD },
+    { icon: MessageSquare, text: 'Nouveau message client', time: 'Il y a 5h', color: GOLD },
     { icon: FileText, text: 'Article de blog publié', time: 'Hier', color: SUCCESS },
     { icon: Users, text: 'Nouveau client enregistré', time: 'Il y a 2 jours', color: WARNING },
   ];
@@ -806,47 +768,6 @@ function DashboardTab({ products, blogPosts, t, navigate, language }: { products
           })}
         </div>
       </div>
-
-      {/* Monthly Quotes Chart */}
-      <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
-        <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${NAVY}12` }}>
-              <BarChart3 className="w-4 h-4" style={{ color: NAVY }} />
-            </div>
-            <div>
-              <CardTitle className="text-sm font-semibold" style={{ color: NAVY }}>
-                {t('admin.monthly_quotes')}
-              </CardTitle>
-              <p className="text-[10px] text-gray-400">6 derniers mois</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-[10px] px-2 py-0.5" style={{ borderColor: SUCCESS, color: SUCCESS }}>
-            +32%
-          </Badge>
-        </div>
-        <CardContent className="p-5">
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyQuotesData}>
-                <defs>
-                  <linearGradient id="colorQuotes" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={NAVY} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={NAVY} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                />
-                <Area type="monotone" dataKey="quotes" stroke={NAVY} strokeWidth={2} fillOpacity={1} fill="url(#colorQuotes)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Recent Orders Table + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1747,200 +1668,6 @@ function BlogTab({ blogPosts, language, t, refresh }: any) {
               </Card>
             </motion.div>
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============ Quotes Tab ============
-function QuotesTab({ t, refresh }: { t: (k: string) => string; refresh: () => void }) {
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('all');
-
-  useEffect(() => {
-    const fetchQuotes = async () => {
-      try {
-        const res = await fetch('/api/quotes/list?statut=all');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.quotes) setQuotes(data.quotes);
-        }
-      } catch {
-        // silently fail
-      }
-      setLoading(false);
-    };
-    fetchQuotes();
-  }, [refresh]);
-
-  const updateStatus = async (id: string, statut: string) => {
-    try {
-      const res = await fetch('/api/quotes/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, statut }),
-      });
-      if (res.ok) {
-        setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, statut } : q)));
-        toast.success('Statut mis à jour');
-      } else {
-        toast.error('Erreur lors de la mise à jour');
-      }
-    } catch {
-      toast.error('Erreur lors de la mise à jour');
-    }
-  };
-
-  const statusConfig: Record<string, { bg: string; color: string; label: string; icon: any }> = {
-    nouveau: { bg: '#DBEAFE', color: '#2563EB', label: t('admin.quotes.new'), icon: AlertCircle },
-    en_cours: { bg: '#FEF3C7', color: WARNING, label: t('admin.quotes.inProgress'), icon: Clock },
-    traite: { bg: '#D1FAE5', color: SUCCESS, label: t('admin.quotes.processed'), icon: CheckCircle2 },
-    archive: { bg: '#F3F4F6', color: '#6B7280', label: t('admin.quotes.archived'), icon: FileCheck },
-  };
-
-  const filteredQuotes = filterStatus === 'all' ? quotes : quotes.filter(q => q.statut === filterStatus);
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48 rounded-lg" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="border-0 shadow-sm rounded-xl">
-              <CardContent className="p-5 space-y-3">
-                <Skeleton className="h-4 w-3/4 rounded" />
-                <Skeleton className="h-3 w-1/2 rounded" />
-                <Skeleton className="h-3 w-2/3 rounded" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="font-bold text-lg" style={{ color: NAVY }}>{t('admin.quotes.title')}</h2>
-          <div className="h-0.5 w-12 rounded-full mt-1" style={{ backgroundColor: GOLD }} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="text-xs px-3 py-1 border-0" style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}>
-            {quotes.filter(q => q.statut === 'nouveau').length} Nouveaux
-          </Badge>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40 h-8 rounded-lg text-xs">
-              <SelectValue placeholder="Filtrer" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="nouveau">{t('admin.quotes.new')}</SelectItem>
-              <SelectItem value="en_cours">{t('admin.quotes.inProgress')}</SelectItem>
-              <SelectItem value="traite">{t('admin.quotes.processed')}</SelectItem>
-              <SelectItem value="archive">{t('admin.quotes.archived')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {filteredQuotes.length === 0 ? (
-        <Card className="border-0 shadow-sm rounded-xl">
-          <CardContent className="p-12 text-center">
-            <ClipboardList className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-400 text-sm">Aucun devis pour le moment</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredQuotes.map((quote, i) => {
-            const sc = statusConfig[quote.statut] || statusConfig.nouveau;
-            const StatusIcon = sc.icon;
-            return (
-              <motion.div
-                key={quote.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <Card className="border-0 shadow-sm rounded-xl hover:shadow-md transition-all duration-300 overflow-hidden">
-                  {/* Status accent line */}
-                  <div className="h-1" style={{ backgroundColor: sc.color }} />
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate" style={{ color: NAVY }}>
-                          {quote.nom}
-                        </h3>
-                      </div>
-                      <Badge
-                        className="text-[10px] px-2 py-0.5 border-0 font-medium shrink-0 flex items-center gap-1"
-                        style={{ backgroundColor: sc.bg, color: sc.color }}
-                      >
-                        <StatusIcon className="w-3 h-3" />
-                        {sc.label}
-                      </Badge>
-                    </div>
-
-                    {/* Customer info */}
-                    <div className="space-y-1.5 mb-4">
-                      {quote.email && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Mail className="w-3 h-3 text-gray-400 shrink-0" />
-                          <span className="truncate">{quote.email}</span>
-                        </div>
-                      )}
-                      {quote.telephone && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Phone className="w-3 h-3 text-gray-400 shrink-0" />
-                          {quote.telephone}
-                        </div>
-                      )}
-                      {quote.wilaya && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
-                          {quote.wilaya} {quote.type_client ? `• ${quote.type_client}` : ''}
-                        </div>
-                      )}
-                    </div>
-
-                    {quote.message && (
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-4 bg-gray-50 p-2 rounded-lg">
-                        {quote.message}
-                      </p>
-                    )}
-
-                    <Separator className="mb-3" />
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('fr-FR') : ''}
-                      </div>
-                      <Select
-                        value={quote.statut}
-                        onValueChange={(v) => updateStatus(quote.id, v)}
-                      >
-                        <SelectTrigger className="w-32 h-7 text-[10px] rounded-lg">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="nouveau">{t('admin.quotes.new')}</SelectItem>
-                          <SelectItem value="en_cours">{t('admin.quotes.inProgress')}</SelectItem>
-                          <SelectItem value="traite">{t('admin.quotes.processed')}</SelectItem>
-                          <SelectItem value="archive">{t('admin.quotes.archived')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
         </div>
       )}
     </div>
