@@ -60,16 +60,16 @@ const specialtyOptions = [
   { id: 'implant', labelFr: 'Implantologie', labelAr: 'زراعة الأسنان', recommended: ['Armchair', 'Scan', 'Shield', 'Wrench'] },
 ];
 
-// Equipment categories with estimated price ranges per unit
+// Equipment categories (tarifs communiqués sur devis uniquement)
 const equipmentCategories = [
-  { id: 'Armchair', labelFr: 'Fauteuils dentaires', labelAr: 'كراسي الأسنان', icon: 'Armchair', priceMin: 1500000, priceMax: 5000000 },
-  { id: 'Monitor', labelFr: 'Moniteurs intra-oraux', labelAr: 'كاميرات داخل الفم', icon: 'Monitor', priceMin: 300000, priceMax: 1500000 },
-  { id: 'Scan', labelFr: 'Scanners / Radiologie', labelAr: 'أجهزة المسح / الأشعة', icon: 'Scan', priceMin: 2000000, priceMax: 8000000 },
-  { id: 'Shield', labelFr: 'Stérilisation', labelAr: 'التعقيم', icon: 'Shield', priceMin: 500000, priceMax: 3000000 },
-  { id: 'Wind', labelFr: 'Compresseurs', labelAr: 'الضواغط', icon: 'Wind', priceMin: 400000, priceMax: 2000000 },
-  { id: 'Package', labelFr: 'Petit matériel', labelAr: 'معدات صغيرة', icon: 'Package', priceMin: 100000, priceMax: 800000 },
-  { id: 'Wrench', labelFr: 'Instruments / Micromoteurs', labelAr: 'أدوات / محركات دقيقة', icon: 'Wrench', priceMin: 200000, priceMax: 2000000 },
-  { id: 'Lamp', labelFr: 'Éclairage', labelAr: 'الإضاءة', icon: 'Lamp', priceMin: 150000, priceMax: 1000000 },
+  { id: 'Armchair', labelFr: 'Fauteuils dentaires', labelAr: 'كراسي الأسنان', icon: 'Armchair' },
+  { id: 'Monitor', labelFr: 'Moniteurs intra-oraux', labelAr: 'كاميرات داخل الفم', icon: 'Monitor' },
+  { id: 'Scan', labelFr: 'Scanners / Radiologie', labelAr: 'أجهزة المسح / الأشعة', icon: 'Scan' },
+  { id: 'Shield', labelFr: 'Stérilisation', labelAr: 'التعقيم', icon: 'Shield' },
+  { id: 'Wind', labelFr: 'Compresseurs', labelAr: 'الضواغط', icon: 'Wind' },
+  { id: 'Package', labelFr: 'Petit matériel', labelAr: 'معدات صغيرة', icon: 'Package' },
+  { id: 'Wrench', labelFr: 'Instruments / Micromoteurs', labelAr: 'أدوات / محركات دقيقة', icon: 'Wrench' },
+  { id: 'Lamp', labelFr: 'Éclairage', labelAr: 'الإضاءة', icon: 'Lamp' },
 ];
 
 export default function ClinicWizardPage() {
@@ -129,29 +129,6 @@ export default function ClinicWizardPage() {
     setSpecialties((prev) =>
       prev.includes(specId) ? prev.filter((s) => s !== specId) : [...prev, specId]
     );
-  };
-
-  // Calculate estimated price range
-  const priceEstimate = useMemo(() => {
-    let minTotal = 0;
-    let maxTotal = 0;
-    selectedCategories.forEach((catId) => {
-      const cat = equipmentCategories.find((c) => c.id === catId);
-      if (cat) {
-        // Scale price by operatory count for certain categories
-        const scale = cat.id === 'Armchair' ? operatoryCount : 1;
-        minTotal += cat.priceMin * scale;
-        maxTotal += cat.priceMax * scale;
-      }
-    });
-    return { min: minTotal, max: maxTotal };
-  }, [selectedCategories, operatoryCount]);
-
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return (price / 1000000).toFixed(1).replace('.0', '') + 'M DA';
-    }
-    return price.toLocaleString('fr-DZ') + ' DA';
   };
 
   // Validation
@@ -627,33 +604,33 @@ export default function ClinicWizardPage() {
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {language === 'ar' ? 'تقدير' : 'Estimation'}
-                            </div>
-                            <div className="font-bold text-sm dark:text-[#7AB0E0]" style={{ color: '#1E3A5F' }}>
-                              {formatPrice(cat.priceMin * scale)} - {formatPrice(cat.priceMax * scale)}
-                            </div>
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide"
+                              style={{ backgroundColor: 'rgba(240,192,90,0.15)', color: '#1E3A5F' }}
+                            >
+                              {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
+                            </span>
                           </div>
                         </motion.div>
                       );
                     })}
                   </div>
 
-                  {/* Total Estimate */}
+                  {/* Devis - pas d'estimation de prix publique */}
                   <div
                     className="p-6 rounded-xl text-center"
                     style={{ backgroundColor: '#1E3A5F' }}
                   >
                     <div className="text-blue-200 text-sm mb-2">
-                      {language === 'ar' ? 'التكلفة المقدرة الإجمالية' : 'Estimation totale'}
+                      {language === 'ar' ? 'التكلفة الإجمالية' : 'Coût total de votre équipement'}
                     </div>
                     <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                      {formatPrice(priceEstimate.min)} - {formatPrice(priceEstimate.max)}
+                      {language === 'ar' ? 'عند الطلب' : 'Sur devis'}
                     </div>
                     <div className="text-blue-300 text-xs">
                       {language === 'ar'
-                        ? '* هذا تقدير تقريبي، العرض الفعلي قد يختلف'
-                        : '* Ceci est une estimation, le devis final peut varier'}
+                        ? '* أرسل طلبك لتلقي عرض سعر مفصل خلال 24 ساعة'
+                        : '* Envoyez votre demande pour recevoir un devis détaillé sous 24h'}
                     </div>
                   </div>
 
