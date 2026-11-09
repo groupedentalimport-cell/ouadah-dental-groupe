@@ -62,7 +62,7 @@ export default function QuoteWizardPage() {
   const progress = (step / totalSteps) * 100;
 
   const formatPrice = (price: number | undefined) => {
-    if (price == null || isNaN(price)) return '— DA';
+    if (price == null || isNaN(price) || price === 0) return t('products.priceOnQuote');
     return price.toLocaleString('fr-DZ') + ' DA';
   };
 
