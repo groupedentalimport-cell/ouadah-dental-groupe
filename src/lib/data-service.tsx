@@ -1,4 +1,4 @@
-'use client';
+'use client';'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -216,6 +216,8 @@ const defaultCategories: Category[] = [
 ];
 
 // Default featured products for when Supabase is not available
+// Politique tarifaire : aucun prix public n'est affiché sur le site.
+// price: 0 => les composants affichent « Sur devis » partout. Ne jamais remettre de prix en dur ici.
 const defaultProducts: Product[] = [
   {
     id: '1',
@@ -227,7 +229,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Fauteuil dentaire haut de gamme avec écran tactile et positionnement automatique',
     short_description_ar: 'كرسي أسنان فاخر بشاشة لمس ووضعية تلقائية',
     category_id: '1',
-    price: 3500000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
@@ -270,7 +272,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Unité dentaire nouvelle génération avec interface tactile intuitive',
     short_description_ar: 'وحدة أسنان من الجيل الجديد بواجهة لمس بديهية',
     category_id: '2',
-    price: 4200000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
@@ -311,7 +313,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Radio panoramique numérique haute résolution avec faible exposition',
     short_description_ar: 'أشعة بانورامية رقمية عالية الدقة مع تعرض منخفض',
     category_id: '3',
-    price: 5800000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Résolution', label_ar: 'الدقة', value: '16 bit' },
@@ -350,7 +352,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Autoclave Classe B avec cycle rapide et traçabilité complète',
     short_description_ar: 'أوتوكلاف فئة ب مع دورة سريعة وتتبع كامل',
     category_id: '4',
-    price: 1800000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Capacité', label_ar: 'السعة', value: '23 litres' },
@@ -389,7 +391,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Compresseur dentaire silencieux avec débit d\'air haute performance',
     short_description_ar: 'ضاغط أسنان صامت مع تدفق هواء عالي الأداء',
     category_id: '5',
-    price: 950000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Débit', label_ar: 'التدفق', value: '80 L/min' },
@@ -428,7 +430,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Lampe de polymérisation LED haute performance',
     short_description_ar: 'مصباح بلمرة LED عالي الأداء',
     category_id: '6',
-    price: 45000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Longueur d\'onde', label_ar: 'طول الموجة', value: '420-480 nm' },
@@ -467,7 +469,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Fauteuil dentaire entry-level, abordable et fiable pour petits cabinets',
     short_description_ar: 'كرسي أسنان دخلي، اقتصادي وموثوق للعيادات الصغيرة',
     category_id: '1',
-    price: 1800000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
@@ -506,7 +508,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Unité dentaire compacte idéale pour les petits espaces',
     short_description_ar: 'وحدة أسنان مدمجة مثالية للمساحات الصغيرة',
     category_id: '2',
-    price: 2800000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
@@ -545,7 +547,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Unité dentaire haut de gamme avec capteurs intelligents et bras 6 axes',
     short_description_ar: 'وحدة أسنان فاخرة بمستشعرات ذكية وذراع 6 محاور',
     category_id: '2',
-    price: 5500000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '220V / 50Hz' },
@@ -584,7 +586,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Capteur RVG haute résolution compatible tous logiciels',
     short_description_ar: 'مستشعر RVG عالي الدقة متوافق مع جميع البرامج',
     category_id: '3',
-    price: 850000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Résolution', label_ar: 'الدقة', value: '26 lp/mm' },
@@ -662,7 +664,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Thermodésinfecteur conforme EN ISO 15883 pour instruments dentaires',
     short_description_ar: 'جهاز تطهير حراري متوافق مع EN ISO 15883 لأدوات الأسنان',
     category_id: '4',
-    price: 1200000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Capacité', label_ar: 'السعة', value: '16 litres' },
@@ -701,7 +703,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Sachets stérilisation auto-adhésifs avec indicateur intégré',
     short_description_ar: 'أكياس تعقيم ذاتية اللصق مع مؤشر مدمج',
     category_id: '4',
-    price: 8500,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Taille', label_ar: 'الحجم', value: '75 x 200 mm' },
@@ -740,7 +742,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Compresseur sans huile 50L pour 2 fauteuils, ultra silencieux',
     short_description_ar: 'ضاغط بدون زيت 50 لتر لكرسيين، فائق الصمت',
     category_id: '5',
-    price: 750000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Réservoir', label_ar: 'الخزان', value: '50 litres' },
@@ -779,7 +781,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Suceur chirurgical haute puissance avec filtration avancée',
     short_description_ar: 'شافط جراحي عالي القوة مع ترشيح متقدم',
     category_id: '5',
-    price: 650000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Puissance', label_ar: 'القوة', value: '1500 W' },
@@ -818,7 +820,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Kit complet de composites nano-hybrides avec teintes Vita',
     short_description_ar: 'طقم كامل من الحشوات النانو هجينة بألوان فيتا',
     category_id: '6',
-    price: 35000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Teintes', label_ar: 'الألوان', value: 'A1, A2, A3, A3.5, B1, B2, C2' },
@@ -857,7 +859,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Matrices interdentaires anatomiques pour restaurations classe II',
     short_description_ar: 'شرائط بين سنوية تشريحية لحشوات الدرجة الثانية',
     category_id: '6',
-    price: 12000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Matériau', label_ar: 'المادة', value: 'Acier inoxydable' },
@@ -896,7 +898,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Kit complet d\'instruments chirurgicaux en acier inox de qualité',
     short_description_ar: 'طقم كامل من الأدوات الجراحية من الستانلس ستيل',
     category_id: '7',
-    price: 85000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Matériau', label_ar: 'المادة', value: 'Acier inox chirurgical' },
@@ -935,7 +937,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Miroir dentaire N°5 haute définition avec manche ergonomique',
     short_description_ar: 'مرآة أسنان رقم 5 عالية الدقة مع مقبض مريح',
     category_id: '7',
-    price: 2500,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Diamètre', label_ar: 'القطر', value: '22 mm' },
@@ -974,7 +976,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Meuble de rangement moderne avec tiroirs silencieux pour cabinet',
     short_description_ar: 'خزانة عصرية مع أدراج صامتة للعيادة',
     category_id: '8',
-    price: 280000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Dimensions', label_ar: 'الأبعاد', value: '80 x 45 x 85 cm' },
@@ -1013,7 +1015,7 @@ const defaultProducts: Product[] = [
     short_description_fr: 'Lampe scialytique LED haute performance sans ombrage',
     short_description_ar: 'مصباح إضاءة LED عالي الأداء بدون ظلال',
     category_id: '8',
-    price: 420000,
+    price: 0,
     images: [],
     specs: [
       { label_fr: 'Intensité', label_ar: 'الشدة', value: '30 000 lux' },
