@@ -49,83 +49,9 @@ interface ComingSoonItem {
   startDate: string;
 }
 
-const activePromotions: PromoItem[] = [
-  {
-    id: 'promo-1',
-    name_fr: 'Fauteuil Dentaire Premium X500',
-    name_ar: 'كرسي أسنان بريميوم X500',
-    image: '',
-    originalPrice: 2850000,
-    promoPrice: 2280000,
-    discount: 20,
-    badge_fr: 'ÉCONOMISEZ 20%',
-    badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
-    brand: 'Ritter',
-    slug: 'fauteuil-ritter-x500',
-    isFree: false,
-  },
-  {
-    id: 'promo-2',
-    name_fr: 'Radio Panoramique Numérique',
-    name_ar: 'أشعة بانورامية رقمية',
-    image: '',
-    originalPrice: 3500000,
-    promoPrice: 2975000,
-    discount: 15,
-    badge_fr: 'ÉCONOMISEZ 15%',
-    badge_ar: 'وفّر 15%',
-    expiresAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-    brand: 'Owandy',
-    slug: 'radio-owandy-pano',
-    isFree: false,
-  },
-  {
-    id: 'promo-3',
-    name_fr: 'Autoclave Classe B + Formation Gratuite',
-    name_ar: 'جهاز تعقيم فئة ب + تكوين مجاني',
-    image: '',
-    originalPrice: 980000,
-    promoPrice: 980000,
-    discount: 0,
-    badge_fr: 'FORMATION GRATUITE',
-    badge_ar: 'تدريب مجاني',
-    expiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
-    brand: 'W&H',
-    slug: 'autoclave-wh-classb',
-    isFree: true,
-  },
-  {
-    id: 'promo-4',
-    name_fr: 'Unité Dentaire Complete Evo',
-    name_ar: 'وحدة أسنان كاملة إيفو',
-    image: '',
-    originalPrice: 1950000,
-    promoPrice: 1560000,
-    discount: 20,
-    badge_fr: 'ÉCONOMISEZ 20%',
-    badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    brand: 'V2S',
-    slug: 'unite-v2s-evo',
-    isFree: false,
-  },
-  {
-    id: 'promo-5',
-    name_fr: 'Pack Starter Cabinet Dentaire',
-    name_ar: 'باقة انطلاق عيادة أسنان',
-    image: '',
-    originalPrice: 5200000,
-    promoPrice: 4160000,
-    discount: 20,
-    badge_fr: 'ÉCONOMISEZ 20%',
-    badge_ar: 'وفّر 20%',
-    expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-    brand: 'ODG Pack',
-    slug: 'pack-starter-cabinet',
-    isFree: false,
-  },
-];
+// Politique tarifaire : aucune promotion avec prix n'est affichée publiquement (les tarifs sont sur devis).
+// N'ajouter ici que des promotions réelles validées, gérées depuis une source de données — plus jamais en dur.
+const activePromotions: PromoItem[] = [];
 
 const comingSoonItems: ComingSoonItem[] = [
   {
@@ -355,6 +281,37 @@ export default function PromotionsPage() {
             <Zap className="w-6 h-6 ml-2" style={{ color: '#F0C05A' }} />
           </motion.div>
 
+          {activePromotions.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center justify-center text-center py-14 px-6 rounded-2xl border border-dashed"
+              style={{ borderColor: 'rgba(30,58,95,0.2)' }}
+            >
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(30,58,95,0.08)' }}>
+                <Gift className="w-8 h-8" style={{ color: '#1E3A5F', opacity: 0.4 }} />
+              </div>
+              <p className="text-base font-semibold mb-1 dark:text-white" style={{ color: '#1E3A5F' }}>
+                {language === 'ar' ? 'لا توجد عروض ترويجية حالياً' : 'Aucune promotion active pour le moment'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-md">
+                {language === 'ar'
+                  ? 'اتصل بنا للحصول على عرض سعر مخصص لكل معدات عيادتك.'
+                  : 'Contactez-nous pour obtenir un devis personnalisé pour tout votre équipement.'}
+              </p>
+              <Button
+                onClick={() => navigate('/contact')}
+                className="text-white font-semibold text-sm h-10 border-0"
+                style={{ backgroundColor: '#1E3A5F' }}
+              >
+                {language === 'ar' ? 'اطلب عرض السعر' : 'Demander un devis'}
+                <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''} ml-1.5`} />
+              </Button>
+            </motion.div>
+          )}
+
+          {activePromotions.length > 0 && (
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -480,10 +437,12 @@ export default function PromotionsPage() {
               </motion.div>
             ))}
           </motion.div>
+          )}
         </div>
       </section>
 
       {/* ==================== HERO COUNTDOWN - Featured Deal ==================== */}
+      {activePromotions.length > 0 && (
       <section
         className="py-12 sm:py-16 relative overflow-hidden"
         style={{
@@ -536,6 +495,7 @@ export default function PromotionsPage() {
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* Wave divider */}
       <div className="bg-white dark:bg-[#0f1d2e]">
